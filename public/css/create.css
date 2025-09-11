@@ -1,0 +1,170 @@
+.upload-area {
+    border: 3px dashed #dee2e6;
+    border-radius: 10px;
+    padding: 40px;
+    text-align: center;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    background: #f8f9fa;
+}
+
+.upload-area:hover,
+.upload-area.dragover {
+    border-color: #0d6efd;
+    background: #e7f3ff;
+}
+
+.upload-area.active {
+    border-color: #198754;
+    background: #d1e7dd;
+}
+
+.camera-section {
+    display: none;
+    text-align: center;
+}
+
+.camera-preview {
+    max-width: 100%;
+    border-radius: 8px;
+    margin: 10px 0;
+}
+
+.preview-container {
+    display: none;
+    margin-top: 20px;
+}
+
+/*Cuando tiene imagenes mostrar la seccion*/
+.preview-container.has-images {
+    display: block;
+}
+
+.image-preview {
+    position: relative;
+    display: inline-block;
+    margin: 10px;
+    border: 2px solid #dee2e6;
+    border-radius: 8px;
+    overflow: hidden;
+    background: white;
+}
+
+.image-preview img {
+    width: 150px;
+    height: 150px;
+    object-fit: cover;
+    display: block;
+}
+
+.image-preview .overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0,0,0,0.7);
+    color: white;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    opacity: 0;
+    transition: opacity 0.3s;
+    padding: 10px;
+}
+
+.image-preview:hover .overlay {
+    opacity: 1;
+}
+
+.remove-btn {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    background: #dc3545;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 25px;
+    height: 25px;
+    font-size: 12px;
+    cursor: pointer;
+}
+
+.progress-container {
+    display: none;
+    margin-top: 20px;
+}
+
+.btn-camera {
+    background: #6f42c1;
+    border-color: #6f42c1;
+}
+
+.btn-camera:hover {
+    background: #5a2d91;
+    border-color: #5a2d91;
+}
+
+.image-info {
+    background: #f8f9fa;
+    padding: 10px;
+    margin-top: 10px;
+    border-radius: 5px;
+    border: 1px solid #dee2e6;
+}
+
+.step-indicator {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 30px;
+}
+
+.step {
+    display: flex;
+    align-items: center;
+    margin: 0 15px;
+    color: #6c757d;
+}
+
+.step.active {
+    color: #0d6efd;
+    font-weight: bold;
+}
+
+.step.completed {
+    color: #198754;
+}
+
+.step-number {
+    background: #6c757d;
+    color: white;
+    border-radius: 50%;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 10px;
+    font-size: 14px;
+}
+
+.step.active .step-number {
+    background: #0d6efd;
+}
+
+.step.completed .step-number {
+    background: #198754;
+}
+
+@media (max-width: 768px) {
+    .image-preview img {
+        width: 120px;
+        height: 120px;
+    }
+
+    .upload-area {
+        padding: 20px;
+    }
+}

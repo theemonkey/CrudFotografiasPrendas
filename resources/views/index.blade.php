@@ -1,82 +1,11 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Galería de Imágenes</title>
-    <meta name="csrf-token" content="{{ csrf_token() }}">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.css">
-    <style>
-        .image-card {
-            position: relative;
-            overflow: hidden;
-            border-radius: 8px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-            transition: transform 0.2s;
-        }
+@extends('layout/plantilla')
 
-        .image-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 16px rgba(0,0,0,0.15);
-        }
+@section('tituloPagina', 'Index')
 
-        .image-overlay {
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0,0,0,0.7);
-            color: white;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            opacity: 0;
-            transition: opacity 0.3s;
-        }
+@section('contenido')
 
-        .image-card:hover .image-overlay {
-            opacity: 1;
-        }
-
-        .stage-badge {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            z-index: 10;
-        }
-
-        .order-badge {
-            position: absolute;
-            top: 10px;
-            left: 10px;
-            z-index: 10;
-        }
-
-        .sortable-ghost {
-            opacity: 0.4;
-        }
-
-        .fab-button {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            z-index: 1000;
-        }
-
-        @media (max-width: 768px) {
-            .col-md-3 {
-                margin-bottom: 1rem;
-            }
-        }
-    </style>
-</head>
-<body>
-    <div class="container-fluid py-4">
-        <div class="row mb-4">
+    <div class="card">
+        <div class="card-body">
             <div class="col-12">
                 <h1 class="mb-3">
                     <i class="fas fa-images"></i> Galería de Imágenes
@@ -98,16 +27,16 @@
                                 </select>
                             </div>
                             <div class="col-md-2 d-flex align-items-end">
-                                <button type="submit" class="btn btn-primary">
+                                <button type="submit" class="btn btn-custom btn-primary-custom">
                                     <i class="fas fa-filter"></i> Filtrar
                                 </button>
                             </div>
                             <div class="col-md-6 d-flex align-items-end justify-content-end">
                                 <div class="btn-group" role="group">
-                                    <button type="button" class="btn btn-outline-secondary" id="toggleSort">
+                                    <button type="button" class="btn btn-custom btn-secondary-custom" id="toggleSort">
                                         <i class="fas fa-sort"></i> Ordenar
                                     </button>
-                                    <button type="button" class="btn btn-outline-primary" onclick="window.location.href='{{ route('images.create') }}'">
+                                    <button type="button" class="btn btn-custom btn-primary-custom" onclick="window.location.href='{{ route('images.create') }}'">
                                         <i class="fas fa-plus"></i> Agregar Imágenes
                                     </button>
                                 </div>
@@ -158,7 +87,7 @@
                         <i class="fas fa-images fa-3x text-muted mb-3"></i>
                         <h3 class="text-muted">No hay imágenes</h3>
                         <p class="text-muted">Comienza agregando algunas imágenes a tu galería</p>
-                        <a href="{{ route('images.create') }}" class="btn btn-primary">
+                        <a href="{{ route('images.create') }}" class="btn btn-custom btn-primary-custom">
                             <i class="fas fa-plus"></i> Agregar Primera Imagen
                         </a>
                     </div>
@@ -350,5 +279,5 @@
             }, 5000);
         }
     </script>
-</body>
-</html>
+
+@endsection

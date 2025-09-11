@@ -40,7 +40,7 @@ class Image extends Model
     //Scope para ordenar por posicion
     public function scopeOrdered($query)
     {
-        return $query->orderedBy('orden_posicion');
+        return $query->orderBy('orden_posicion');
     }
 
     //Scope para filtrar por etapa

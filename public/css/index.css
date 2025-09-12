@@ -25,14 +25,14 @@
 .image-card {
     position: relative;
     overflow: hidden;
-    border-radius: 8px;
+    border-radius: 10px;
     box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    transition: transform 0.2s;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
 .image-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.2);
 }
 
 .image-overlay {
@@ -52,7 +52,81 @@
 }
 
 .image-card:hover .image-overlay {
-    opacity: 1;
+    opacity: 1 !important;
+}
+
+.image-container {
+    background: #f8f9fa;
+}
+
+.gallery-image-click:hover {
+    transform: scale(1.02);
+    transition: transform 0.3s ease;
+}
+
+/* Botones de acción */
+.btn-sm {
+    font-size: 0.75rem;
+    padding: 0.25rem 0.4rem;
+    border-radius: 4px;
+}
+
+.btn-info {
+    background-color: #17a2b8;
+    border-color: #17a2b8;
+    color: white;
+}
+
+.btn-info:hover {
+    background-color: #138496;
+    border-color: #117a8b;
+    color: white;
+}
+
+/* Badges */
+.badge {
+    font-size: 0.7em;
+    padding: 0.375rem 0.5rem;
+}
+
+/* Sortable styles */
+.sortable-ghost {
+    opacity: 0.4;
+    transform: rotate(5deg);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .btn-sm {
+        font-size: 0.7rem;
+        padding: 0.2rem 0.3rem;
+    }
+
+    .image-overlay p {
+        font-size: 0.8rem;
+    }
+}
+
+/* Alertas */
+#alertContainer {
+    z-index: 1055;
+    max-width: 350px;
+}
+
+#alertContainer .alert {
+    margin-bottom: 0.5rem;
+    animation: slideInRight 0.3s ease;
+}
+
+@keyframes slideInRight {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
 }
 
 .stage-badge {
@@ -134,3 +208,77 @@
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 /*======>>>>FIN ESTILOS BOTONES INDEX<<<<======*/
+
+/*====ESTILOS MODAL VER IMAGEN COMPLETA====*/
+.modal-xl {
+    max-width: 95vw;
+}
+
+#imageModal .modal-content {
+    border: none;
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+#modalImage {
+    border-radius: 8px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+}
+
+.modal-backdrop {
+    background-color: rgba(0,0,0,0.8);
+}
+
+@media (max-width: 768px) {
+    #modalImage {
+        max-height: 70vh;
+    }
+
+    .modal-header {
+        padding: 0.75rem;
+    }
+
+    .position-absolute.bottom-0 {
+        position: relative !important;
+        background: rgba(0,0,0,0.9) !important;
+    }
+}
+
+/* ========>>>>>> Efectos hover para las imágenes <<<<<<<<<<========*/
+.gallery-image {
+    transition: all 0.3s ease;
+}
+
+.gallery-image:hover {
+    transform: scale(1.05);
+    cursor: pointer;
+}
+
+/* Card hover effects */
+.card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.15) !important;
+    transition: all 0.3s ease;
+}
+
+/* Badge styles */
+.badge {
+    font-size: 0.7em;
+    padding: 0.375rem 0.5rem;
+}
+
+/* Loading indicator para el modal */
+.modal-loading {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 9999;
+}
+
+/* Responsive adjustments */
+@media (max-width: 576px) {
+    .col-sm-6 {
+        flex: 0 0 100%;
+    }
+}

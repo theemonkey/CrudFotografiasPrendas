@@ -35,10 +35,10 @@
                     <div class="row">
                         <div class="col-md-8">
                             <h6><i class="fas fa-info-circle"></i> Información de la Imagen</h6>
-                            <p class="mb-1"><strong>Descripción:</strong> {{ $image->description }}</p>
-                            <p class="mb-1"><strong>Etapa:</strong> {{ ucfirst(str_replace('_', ' ', $image->clothing_stage)) }}</p>
-                            <p class="mb-1"><strong>Orden:</strong> {{ $image->order_position }}</p>
-                            <p class="mb-0"><strong>Archivo original:</strong> {{ $image->original_name }}</p>
+                            <p class="mb-1"><strong>Descripción:</strong> {{ $image->descripcion ?? 'Sin descripcion' }}</p>
+                            <p class="mb-1"><strong>Etapa:</strong> {{ ucfirst(str_replace('_', ' ', $image->etapa_prenda)) }}</p>
+                            <p class="mb-1"><strong>Orden:</strong> {{ $image->orden_posicion }}</p>
+                            <p class="mb-0"><strong>Archivo original:</strong> {{ $image->nombre_original }}</p>
                         </div>
                         <div class="col-md-4 text-end">
                             <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#editInfoModal">
@@ -155,22 +155,22 @@
                         @csrf
                         @method('PUT')
                         <div class="mb-3">
-                            <label for="description" class="form-label">Descripción</label>
-                            <input type="text" class="form-control" id="description" name="description" value="{{ $image->description }}" required>
+                            <label for="descripcion" class="form-label">Descripción</label>
+                            <input type="text" class="form-control" id="descripcion" name="descripcion" value="{{ $image->descripcion }}" required>
                         </div>
                         <div class="mb-3">
-                            <label for="clothing_stage" class="form-label">Etapa de Prenda</label>
-                            <select class="form-select" id="clothing_stage" name="clothing_stage" required>
+                            <label for="etapa_prenda" class="form-label">Etapa de Prenda</label>
+                            <select class="form-select" id="etapa_prenda" name="etapa_prenda" required>
                                 @foreach($stages as $stage)
-                                    <option value="{{ $stage }}" {{ $image->clothing_stage === $stage ? 'selected' : '' }}>
+                                    <option value="{{ $stage }}" {{ $image->etapa_prenda === $stage ? 'selected' : '' }}>
                                         {{ ucfirst(str_replace('_', ' ', $stage)) }}
                                     </option>
                                 @endforeach
                             </select>
                         </div>
                         <div class="mb-3">
-                            <label for="order_position" class="form-label">Posición de Orden</label>
-                            <input type="number" class="form-control" id="order_position" name="order_position" value="{{ $image->order_position }}" min="1" required>
+                            <label for="orden_posicion" class="form-label">Posición de Orden</label>
+                            <input type="number" class="form-control" id="orden_posicion" name="orden_posicion" value="{{ $image->orden_posicion }}" min="1" required>
                         </div>
                     </form>
                 </div>
@@ -353,6 +353,7 @@
                         headers: {
                             'Content-Type': 'application/json',
                             'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+
                         },
                         body: JSON.stringify({
                             image_id: this.imageId,

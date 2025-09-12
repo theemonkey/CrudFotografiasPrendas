@@ -44,10 +44,10 @@
     position: relative;
     display: inline-block;
     margin: 10px;
-    border: 2px solid #dee2e6;
+    border: 2px solid #ddd;
     border-radius: 8px;
     overflow: hidden;
-    background: white;
+    /*background: whit;*/
 }
 
 .image-preview img {
@@ -57,7 +57,7 @@
     display: block;
 }
 
-.image-preview .overlay {
+.overlay {
     position: absolute;
     top: 0;
     left: 0;
@@ -71,7 +71,9 @@
     align-items: center;
     opacity: 0;
     transition: opacity 0.3s;
-    padding: 10px;
+    font-size: 11px;
+    text-align: center;
+    padding: 5px;
 }
 
 .image-preview:hover .overlay {
@@ -90,6 +92,20 @@
     height: 25px;
     font-size: 12px;
     cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+    transition: all 0.2s ease;
+}
+
+.remove-btn:hover {
+    background: #c82333;
+    transform: scale(1.1);
+}
+
+.remove-btn:active {
+    transform: scale(0.95)
 }
 
 .progress-container {

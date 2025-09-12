@@ -333,7 +333,7 @@
                         previewDiv.className = 'image-preview';
                         previewDiv.innerHTML = `
                             <img src="${e.target.result}" alt="Preview ${index + 1}">
-                            <button type="button" class="remove-btn" onclick="imageUploader.removeImage('${fileObj.id}')">
+                            <button type="button" class="remove-btn" data-file-id="${fileObj.id}">
                                 <i class="fas fa-times"></i>
                             </button>
                             <div class="overlay">
@@ -341,6 +341,15 @@
                                 <small>${(fileObj.file.size / 1024 / 1024).toFixed(2)} MB</small>
                             </div>
                         `;
+
+                        // Agregar evento al boton de eliminar
+                        const removeBtn = previewDiv.querySelector('.remove-btn');
+                        removeBtn.addEventListener('click', (e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            this.removeImage(fileObj.id);
+                        });
+
                         previewArea.appendChild(previewDiv);
                     };
                     reader.readAsDataURL(fileObj.file);
@@ -523,6 +532,25 @@
             async submitForm() {
                 const formData = new FormData();
                 const globalStage = document.getElementById('globalStage').value;
+
+                // Validacion del lado cliente
+                if (!globalStage) {
+                    alert('Por favor selecciona una etapa de prenda');
+                    return;
+                }
+
+                if (this.selectedFiles.length === 0) {
+                    alert('Por favor selecciona al menos una imagen');
+                    return;
+                }
+
+                // Verificar que todas las imágenes tengan descripción
+                for (let i = 0; i < this.selectedFiles.length; i++) {
+                    if (!this.selectedFiles[i].description.trim()) {
+                        alert(`Por favor agrega una descripción para la imagen ${i + 1}`);
+                        return;
+                    }
+                }
 
                 // Agregar archivos con nombres segun controlador
                 this.selectedFiles.forEach((fileObj, index) => {

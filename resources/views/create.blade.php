@@ -176,6 +176,7 @@
                 this.selectedFiles = [];
                 this.currentStep = 1;
                 this.cameraStream = null;
+                this.isProcessing = false; //Flag evita procesamiento multiple
                 this.init();
             }
 
@@ -186,9 +187,12 @@
             }
 
             setupEventListeners() {
-                // File input
-                document.getElementById('fileInput').addEventListener('change', (e) => {
-                    this.handleFileSelect(e.target.files);
+                // File input con mejor manejo para evitar conflictos
+                const fileInput = document.getElementById('fileInput');
+                fileInput.addEventListener('change', (e) => {
+                    if (e.target.files && e.target.files.length > 0 && !this.isProcessing) {
+                        this.handleFileSelect(e.target.files);
+                    }
                 });
 
                 // Camera controls
@@ -228,11 +232,15 @@
                 uploadArea.addEventListener('drop', (e) => {
                     e.preventDefault();
                     uploadArea.classList.remove('dragover');
-                    this.handleFileSelect(e.dataTransfer.files);
+                    if (!this.isProcessing) {
+                        this.handleFileSelect(e.dataTransfer.files);
+                    }
                 });
 
-                uploadArea.addEventListener('click', () => {
-                    document.getElementById('fileInput').click();
+                uploadArea.addEventListener('click', (e) => {
+                    if(!e.target.closest('button')) {
+                        document.getElementById('fileInput').click();
+                    }
                 });
             }
 
@@ -251,8 +259,32 @@
             }
 
             handleFileSelect(files) {
-                for (let file of files) {
-                    if (file.type.startsWith('image/')) {
+                    // Evitar procesamiento múltiple
+                    if (this.isProcessing) {
+                        return;
+                    }
+
+                    this.isProcessing = true;
+
+                    // Convertir FileList a Array para mejor manejo
+                    const fileArray = Array.from(files);
+
+                    // Filtrar solo imágenes válidas
+                    const validFiles = fileArray.filter(file => {
+                        if (!file.type.startsWith('image/')) {
+                            console.warn(`Archivo ${file.name} no es una imagen válida`);
+                            return false;
+                        }
+                        if (file.size > 10 * 1024 * 1024) { // 10MB
+                            console.warn(`Archivo ${file.name} es muy grande (máximo 10MB)`);
+                            alert(`El archivo ${file.name} es muy grande. Máximo permitido: 10MB`);
+                            return false;
+                        }
+                        return true;
+                    });
+
+                    // Agregar archivos válidos
+                    validFiles.forEach(file => {
                         const fileObj = {
                             file: file,
                             id: 'img_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9),
@@ -261,14 +293,23 @@
                             stage: ''
                         };
                         this.selectedFiles.push(fileObj);
+                    });
+
+                    // Limpiar el input para permitir seleccionar los mismos archivos de nuevo
+                    const fileInput = document.getElementById('fileInput');
+                    fileInput.value = '';
+
+                    // Usar setTimeout para asegurar que la UI se actualice correctamente
+                    setTimeout(() => {
+                    this.updatePreview();
+                    this.updateImageCount();
+                    //Solo mostrar si hay imagenes
+                    if (this.selectedFiles.length > 0){
+                        this.showPreviewContainer();
                     }
-                }
-                this.updatePreview();
-                this.updateImageCount();
-                //Solo mostrar si hay imagenes
-                if (this.selectedFiles.length > 0){
-                    this.showPreviewContainer();
-                }
+                    // liberar flag de procesamiento
+                    this.isProcessing = false;
+                }, 100);
             }
 
             async startCamera() {
@@ -609,14 +650,11 @@
             }
         }
 
-        // Inicializar la aplicación
-        const imageUploader = new ImageUploader();
+        // Inicializar la aplicación cuando el DOM este listo
+         document.addEventListener('DOMContentLoaded', function() {
+            const imageUploader = new ImageUploader();
+        });
 
-        // Configurar CSRF para todas las peticiones AJAX
-        /*const token = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-        if (token) {
-            window.axios = axios;
-            window.axios.defaults.headers.common['X-CSRF-TOKEN'] = token;
-        }*/
+        //const imageUploader = new ImageUploader();
     </script>
 @endsection

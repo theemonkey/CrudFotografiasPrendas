@@ -76,7 +76,7 @@
                             <p class="text-center mb-2">{{ Str::limit($image->descripcion, 50) }}</p>
                             <div class="btn-group btn-group-sm">
                                 <!-- Botón Ver (que abre el modal) -->
-                                <button class="btn btn-info btn-sm gallery-image"
+                                <button type="button" class="btn btn-info btn-sm view-image-btn"
                                         data-image-id="{{ $image->id }}"
                                         data-full-url="{{ asset('storage/' . $image->tamanio_completo) }}"
                                         data-description="{{ $image->descripcion }}"
@@ -193,60 +193,45 @@
             }
         });
 
-        // ========== CLASE IMAGEMODAL ==========
-        class ImageModal {
-            constructor() {
-                this.modal = new bootstrap.Modal(document.getElementById('imageModal'));
-                this.initializeEvents();
-            }
+        // ====Manejo de clicks para el modal====
+        // Funcion para abrir el modal
+        function openImageModal(element) {
+                const $element = $(element);
 
-            initializeEvents() {
-                // Click en imagen (img tag)
-                $(document).on('click', 'img.gallery-image', (e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    this.showImage(e.target);
-                });
-
-                // Click en botón ver (button tag)
-                $(document).on('click', 'button.gallery-image', (e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    this.showImage(e.target);
-                });
-
-                // Tecla ESC para cerrar
-                $(document).on('keydown', (e) => {
-                    if (e.key === 'Escape') {
-                        this.modal.hide();
-                    }
-                });
-            }
-
-            showImage(element) {
+                // Obtener datos del elemento clickeado
                 const imageData = {
-                    id: $(element).data('image-id'),
-                    fullUrl: $(element).data('full-url'),
-                    description: $(element).data('description'),
-                    stage: $(element).data('stage'),
-                    order: $(element).data('order'),
-                    size: $(element).data('size'),
-                    editUrl: $(element).data('edit-url')
+                    id: $element.data('image-id'),
+                    fullUrl: $element.data('full-url'),
+                    description: $element.data('description'),
+                    stage: $element.data('stage'),
+                    order: $element.data('order'),
+                    size: $element.data('size'),
+                    editUrl: $element.data('edit-url')
                 };
+
+                console.log('Abriendo modal con datos:', imageData);
+
+                // Validar que se tenga los datos necesarios
+                if (!imageData.id || !imageData.fullUrl) {
+                    console.error('Datos de imagen incompletos: ', imageData);
+                    return;
+                }
 
                 // Actualizar contenido del modal
                 $('#modalImage').attr('src', imageData.fullUrl);
-                $('#modalImageTitle').text(imageData.description);
-                $('#modalImageDescription').text(imageData.description);
-                $('#modalImageStage').text(this.formatStage(imageData.stage));
-                $('#modalImageOrder').text(`Orden: ${imageData.order}`);
-                $('#modalImageSize').text(this.formatFileSize(imageData.size));
-                $('#modalEditButton').attr('href', imageData.editUrl);
+                $('#modalImageTitle').text(imageData.description || 'Sin descripción');
+                $('#modalImageDescription').text(imageData.description || 'Sin descripción');
+                $('#modalImageStage').text(formatStage(imageData.stage));
+                $('#modalImageOrder').text(`Orden: ${imageData.order || 'N/A'}`);
+                $('#modalImageSize').text(formatFileSize(imageData.size));
+                $('#modalEditButton').attr('href', imageData.editUrl || '#');
 
-                this.modal.show();
+                // Mostrar el modal
+                $('#imageModal').modal('show');
             }
 
-            formatStage(stage) {
+            // Funcion para formatear la etapa
+            function formatStage(stage) {
                 const stages = {
                     'diseño': 'Diseño',
                     'confeccion': 'Confección',
@@ -254,20 +239,56 @@
                     'control_calidad': 'Control de Calidad',
                     'empaque': 'Empaque'
                 };
-                return stages[stage] || stage;
+                return stages[stage] || stage || 'N/A';
             }
 
-            formatFileSize(bytes) {
+            // Funcion para formatear el tamaño del archivo
+            function formatFileSize(bytes) {
                 if (!bytes || bytes === 0) return '0 Bytes';
                 const k = 1024;
                 const sizes = ['Bytes', 'KB', 'MB', 'GB'];
                 const i = Math.floor(Math.log(bytes) / Math.log(k));
                 return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
             }
-        }
 
-        // Inicializar ImageModal
-        const imageModal = new ImageModal();
+        //====>> Event listeners para abrir el modal <<====
+        // 1. Click en imagen directamente
+        $(document).on('click', 'img.clickable-image', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            openImageModal(this);
+        });
+
+        // 2. Click en boton ver
+        $(document).on('click', '.view-image-btn', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            openImageModal(this);
+        });
+
+        // 3. Click en icono dentro del boton ver
+        $(document).on('click', '.view-image-btn i', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            const button = $(this).closest('.view-image-btn');
+            console.log('Click en icono del botón ver ID:', button.data('image-id'));
+            openImageModal(button[0]);
+        });
+
+        // 4. TAMBIÉN capturar clicks en elementos con clase gallery-image (por si acaso)
+        $(document).on('click', '.gallery-image', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            console.log('Click en gallery-image ID:', $(this).data('image-id'));
+            openImageModal(this);
+        });
+
+        // Tecla ESC para cerrar modal
+        $(document).on('keydown', function(e) {
+            if (e.key === 'Escape') {
+                $('#imageModal').modal('hide');
+            }
+        });
 
         // ========== FUNCIONES GLOBALES ==========
 
@@ -358,7 +379,7 @@
                 if (imageId) {
                     orderData.push({
                         id: imageId,
-                        orden_posicion: index + 1 // CORREGIDO: usar orden_posicion
+                        orden_posicion: index + 1
                     });
                 }
             });

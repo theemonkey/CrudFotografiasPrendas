@@ -4,203 +4,217 @@
 
 @section('contenido')
 
-
-<!-- Modal de Gestión de Imágenes -->
-<div class="modal fade" id="imagesManagementModal" tabindex="-1" aria-labelledby="imagesManagementModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-fullscreen-custom">
-        <div class="modal-content">
-            <div class="modal-header bg-primary text-white">
-                <h5 class="modal-title" id="imagesManagementModalLabel">
-                    <i class="fas fa-camera me-2"></i>
-                    Fotografias de prendas
-                </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+<!-- Contenido de pagina -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h2 class="mb-1">
+                    <i class="fas fa-camera me-2 text-primary"></i>
+                    Fotografías de Prendas
+                </h2>
+                <p class="text-muted mb-0">
+                    Gestión y visualización de fotografías de productos
+                </p>
             </div>
 
-            <div class="modal-body">
-                <!-- Sección Superior Sticky -->
-                <div class="sticky-header">
-                    <!-- Fecha de Creación de Registro -->
-                    <div class="row align-items-end mb-3">
-                            <div class="col-md-6">
-                                <label class="form-label">
-                                    <i class="fas fa-calendar-alt me-1"></i>
-                                    Fecha creación de registro
-                                </label>
-                                <div class="input-group">
-                                    <input type="text" class="form-control" id="dateRange" placeholder="01-09-2025 - 30-09-2025" readonly>
-                                    <button class="btn btn-outline-secondary" type="button" id="editDateRange" title="Editar fecha">
-                                        <i class="fas fa-calendar-alt"></i>
-                                    </button>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <!-- Botones de Subida -->
-                                <label class="form-label">Subir Imágenes</label>
-                                <div class="upload-buttons">
-                                    <div class="upload-btn" id="cameraUpload">
-                                        <i class="fas fa-camera"></i>
-                                        <span>Cámara</span>
-                                        <input type="file" accept="image/*" capture="camera" style="display: none;" id="cameraInput">
-                                    </div>
-                                    <div class="upload-btn" id="fileUpload">
-                                        <i class="fas fa-folder"></i>
-                                        <span>Archivo</span>
-                                        <input type="file" accept="image/*" multiple style="display: none;" id="fileInput">
-                                    </div>
-                                </div>
-                            </div>
-                    </div>
-
-                    <!-- Búsqueda Global -->
-                    <div class="row align-items-end search-actions-row">
-                        <div class="col-md-7">
-                            <label class="form-label">Buscar Ord. SIT / P.O / O.C</label>
-                            <div class="input-group input-group-sm">
-                                <input type="text" class="form-control" id="globalSearch" placeholder="Buscar por SIT, P.O, O.C, descripción...">
-                                <button class="btn btn-primary" type="button" id="searchBtn">
-                                    <i class="fas fa-search"></i>
-                                </button>
-                                 <button class="btn btn-danger" type="button" id="clearSearch">
-                                        <i class="fas fa-times"></i>
-                                </button>
-                            </div>
+            <!-- Botones de accion -->
+            <div class="d-flex gap-2 align-items-center flex-wrap">
+                <!-- Botones de Subida de Imágenes -->
+                <div class="upload-section me-3">
+                    <label class="form-label mb-2 d-block text-center">
+                        <small class="text-muted">Subir Imágenes</small>
+                    </label>
+                    <div class="upload-buttons d-flex gap-2">
+                        <div class="upload-btn" id="cameraUpload" title="Tomar foto con cámara">
+                            <i class="fas fa-camera"></i>
+                            <span>Cámara</span>
+                            <input type="file" accept="image/*" capture="camera" style="display: none;" id="cameraInput">
                         </div>
-                        <div class="col-md-5">
-                            <!-- Botones de Acción -->
-                            <div class="action-buttons-container">
-                                <button class="btn btn-pink" id="exportAllBtn">
-                                    <i class="fas fa-download me-1"></i>
-                                    Exportar todo
-                                </button>
-                                <button class="btn btn-danger" id="clearFiltersBtn">
-                                    <i class="fas fa-filter me-1"></i>
-                                    Filtros
-                                </button>
-                                <div class="btn-group">
-                                    <button class="btn btn-warning dropdown-toggle" type="button" data-bs-toggle="dropdown">
-                                        <i class="fas fa-columns me-1"></i>
-                                        Columnas
-                                    </button>
-                                    <ul class="dropdown-menu" id="columnsDropdown">
-                                        <li><label class="dropdown-item"><input type="checkbox" checked class="me-2" data-column="imagen">Imagen</label></li>
-                                        <li><label class="dropdown-item"><input type="checkbox" checked class="me-2" data-column="orden-sit">Orden SIT</label></li>
-                                        <li><label class="dropdown-item"><input type="checkbox" checked class="me-2" data-column="po">P.O</label></li>
-                                        <li><label class="dropdown-item"><input type="checkbox" checked class="me-2" data-column="oc">O.C</label></li>
-                                        <li><label class="dropdown-item"><input type="checkbox" checked class="me-2" data-column="descripcion">Descripción</label></li>
-                                        <li><label class="dropdown-item"><input type="checkbox" checked class="me-2" data-column="tipo-fotografia">Tipo Fotografía</label></li>
-                                        <li><label class="dropdown-item"><input type="checkbox" checked class="me-2" data-column="acciones">Acciones</label></li>
-                                    </ul>
-                                </div>
-                                <button class="btn btn-success" id="exportSelectedBtn">
-                                    <i class="fas fa-file-export me-1"></i>
-                                    Exportar
-                                </button>
-                            </div>
+                        <div class="upload-btn" id="fileUpload" title="Seleccionar archivos">
+                            <i class="fas fa-folder"></i>
+                            <span>Archivo</span>
+                            <input type="file" accept="image/*" multiple style="display: none;" id="fileInput">
                         </div>
-                    </div>
-
-                    <!-- Filtros Activos -->
-                    <div id="activeFilters" class="mb-2" style="display: none;">
-                        <strong>Filtros activos:</strong>
-                        <div id="filterBadges" class="d-inline"></div>
-                        <button class="btn btn-sm btn-outline-danger ms-2" id="clearAllFilters">
-                            <i class="fas fa-times"></i> Limpiar todos
-                        </button>
                     </div>
                 </div>
 
-                <!-- Tabla -->
-                <div class="table-container">
-                    <table class="table table-hover images-table mb-0">
-                        <thead>
+                <!-- Separador visual -->
+                <div class="vr me-3" style="height: 60px;"></div>
+
+                <button class="btn btn-success" onclick="exportAll()">
+                    <i class="fas fa-download me-1"></i>
+                    Exportar todo
+                </button>
+
+                <button class="btn btn-danger" onclick="showFilters()">
+                    <i class="fas fa-filter me-1"></i>
+                    Filtros
+                </button>
+
+                <div class="btn-group">
+                    <button class="btn btn-warning dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                        <i class="fas fa-columns me-1"></i>
+                        Columnas
+                    </button>
+                    <ul class="dropdown-menu" id="columnsDropdown">
+                        <li><label class="dropdown-item"><input type="checkbox" checked class="me-2" data-column="imagen">Imagen</label></li>
+                        <li><label class="dropdown-item"><input type="checkbox" checked class="me-2" data-column="orden-sit">Orden SIT</label></li>
+                        <li><label class="dropdown-item"><input type="checkbox" checked class="me-2" data-column="po">P.O</label></li>
+                        <li><label class="dropdown-item"><input type="checkbox" checked class="me-2" data-column="oc">O.C</label></li>
+                        <li><label class="dropdown-item"><input type="checkbox" checked class="me-2" data-column="descripcion">Descripción</label></li>
+                        <li><label class="dropdown-item"><input type="checkbox" checked class="me-2" data-column="tipo-fotografia">Tipo Fotografía</label></li>
+                        <li><label class="dropdown-item"><input type="checkbox" checked class="me-2" data-column="acciones">Acciones</label></li>
+                    </ul>
+                </div>
+
+                <button class="btn btn-success" onclick="exportSelected()">
+                    <i class="fas fa-file-export me-1"></i>
+                    Exportar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Filtro datos por fecha -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                <div class="row align-items-end">
+                    <div class="col-md-4">
+                        <label class="form-label">Fecha creación de registro</label>
+                        <div class="input-group">
+                            <input type="date" class="form-control" id="fechaInicio">
+                            <span class="input-group-text">-</span>
+                            <input type="date" class="form-control" id="fechaFin">
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Buscar Ord. SIT / P.O / O.C</label>
+                        <div class="input-group">
+                            <input type="text" class="form-control" placeholder="Buscar..." id="searchInput">
+                            <button class="btn btn-primary" onclick="searchRecords()">
+                                <i class="fas fa-search"></i>
+                            </button>
+                            <button class="btn btn-outline-danger" onclick="clearSearch()">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <button class="btn btn-info w-100" onclick="applyDateFilter()">
+                            <i class="fas fa-calendar-check me-1"></i>
+                            Aplicar
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Datos Tabla -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover images-table">
+                        <thead class="table-light">
                             <tr>
-                                <th width="4%">
-                                    <input type="checkbox" id="selectAll" class="form-check-input">
+                                <th data-column="imagen">
+                                    <i class="fas fa-image me-1"></i>
+                                    IMAGEN
                                 </th>
-                                <th width="8%" data-column="imagen">IMAGEN</th>
-                                <th width="12%" data-column="orden-sit">
+                                <th data-column="orden-sit">
+                                    <i class="fas fa-hashtag me-1"></i>
                                     ORDEN SIT
-                                    <i class="fas fa-sort ms-1 text-muted" data-sort="orden_sit"></i>
                                 </th>
-                                <th width="12%" data-column="po">
+                                <th data-column="po">
+                                    <i class="fas fa-file-alt me-1"></i>
                                     P.O
-                                    <i class="fas fa-sort ms-1 text-muted" data-sort="po"></i>
                                 </th>
-                                <th width="12%" data-column="oc">
+                                <th data-column="oc">
+                                    <i class="fas fa-clipboard me-1"></i>
                                     O.C
-                                    <i class="fas fa-sort ms-1 text-muted" data-sort="oc"></i>
                                 </th>
-                                <th width="20%" data-column="descripcion">
+                                <th data-column="descripcion">
+                                    <i class="fas fa-align-left me-1"></i>
                                     DESCRIPCIÓN
-                                    <i class="fas fa-sort ms-1 text-muted" data-sort="descripcion"></i>
                                 </th>
-                                <th width="15%" data-column="tipo-fotografia">
+                                <th data-column="tipo-fotografia">
+                                    <i class="fas fa-camera me-1"></i>
                                     TIPO FOTOGRAFÍA
-                                    <i class="fas fa-sort ms-1 text-muted" data-sort="tipo_fotografia"></i>
                                 </th>
-                                <th width="17%" data-column="acciones">ACCIONES</th>
+                                <th data-column="acciones">
+                                    <i class="fas fa-cogs me-1"></i>
+                                    ACCIONES
+                                </th>
                             </tr>
                             <!-- Fila de filtros -->
                             <tr class="bg-light">
-                                <td></td>
                                 <td data-column="imagen">
-                                    <small class="text-muted"></small>
+                                    <input type="text" class="form-control form-control-sm" placeholder="Buscar">
                                 </td>
                                 <td data-column="orden-sit">
-                                    <input type="text" class="form-control search-input" placeholder="Buscar" data-filter="orden_sit">
+                                    <input type="text" class="form-control form-control-sm" placeholder="Buscar">
                                 </td>
                                 <td data-column="po">
-                                    <input type="text" class="form-control search-input" placeholder="Buscar" data-filter="po">
+                                    <input type="text" class="form-control form-control-sm" placeholder="Buscar">
                                 </td>
                                 <td data-column="oc">
-                                    <input type="text" class="form-control search-input" placeholder="Buscar" data-filter="oc">
+                                    <input type="text" class="form-control form-control-sm" placeholder="Buscar">
                                 </td>
                                 <td data-column="descripcion">
-                                    <input type="text" class="form-control search-input" placeholder="Buscar" data-filter="descripcion">
+                                    <input type="text" class="form-control form-control-sm" placeholder="Buscar">
                                 </td>
                                 <td data-column="tipo-fotografia">
-                                    <select class="form-select search-input custom-select" data-filter="tipo_fotografia">
-                                        <option value="">Todos</option>
-                                        <option value="PRENDA FINAL">PRENDA FINAL</option>
-                                        <option value="MUESTRA">MUESTRA</option>
-                                        <option value="PROCESO">PROCESO</option>
-                                        <option value="DEFECTO">DEFECTO</option>
-                                    </select>
+                                    <input type="text" class="form-control form-control-sm" placeholder="Buscar">
                                 </td>
                                 <td data-column="acciones">
-                                    <small class="text-muted"></small>
+                                    <input type="text" class="form-control form-control-sm" placeholder="Buscar">
                                 </td>
                             </tr>
                         </thead>
                         <tbody id="imagesTableBody">
-                            <!-- Datos de ejemplo -->
-                            <tr>
-                                <td><input type="checkbox" class="form-check-input row-select"></td>
+                            <!-- Fila de ejemplo 1 - CORREGIDA -->
+                            <tr data-image-id="img_example_1">
                                 <td data-column="imagen">
-                                    <img src="https://via.placeholder.com/60x60/4CAF50/white?text=" alt="Prenda" class="image-thumbnail" data-bs-toggle="modal" data-bs-target="#imagePreviewModal">
+                                    <img src="images/shirt-blue.jpg"
+                                         alt="Camisa azul"
+                                         class="img-thumbnail preview-image"
+                                         style="width: 60px; height: 60px; cursor: pointer;"
+                                         onclick="openImageLightbox(this.src, this.alt, 'Camisa azul clásica', 'PRENDA FINAL')">
                                 </td>
-                                <td data-column="orden-sit">10006482</td>
+                                <td data-column="orden-sit">10060482</td>
                                 <td data-column="po">6000101385</td>
-                                <td data-column="oc">42000020624</td>
+                                <td data-column="oc">4200020624</td>
                                 <td data-column="descripcion">CAM FORM UNIC</td>
                                 <td data-column="tipo-fotografia">PRENDA FINAL</td>
                                 <td data-column="acciones">
-                                    <button class="btn btn-danger btn-sm btn-action" title="Eliminar" onclick="deleteImage(1)">
-                                        <i class="fas fa-times"></i> Eliminar
+                                    <button class="btn btn-danger btn-sm me-1" onclick="deleteImage(this)" title="Eliminar imagen">
+                                        <i class="fas fa-trash"></i> Eliminar
                                     </button>
-                                    <button class="btn btn-warning btn-sm btn-action" title="Editar" onclick="editImage(1)">
+                                    <button class="btn btn-warning btn-sm me-1" onclick="editImage(this)" title="Editar información">
                                         <i class="fas fa-edit"></i> Editar
                                     </button>
-                                    <button class="btn btn-success btn-sm btn-action" title="Comentario" onclick="addComment(1)">
-                                        <i class="fas fa-comment"></i>
+                                    <button class="btn btn-info btn-sm comment-btn" onclick="openCommentsModal(this)" title="Ver/Agregar comentarios">
+                                        <i class="fas fa-comments"></i>
+                                        <span class="comment-count" data-count="2">2</span>
                                     </button>
                                 </td>
                             </tr>
-                            <tr>
-                                <td><input type="checkbox" class="form-check-input row-select"></td>
+
+                            <!-- Fila de ejemplo 2 - CORREGIDA -->
+                            <tr data-image-id="img_example_2">
                                 <td data-column="imagen">
-                                    <img src="https://via.placeholder.com/60x60/2196F3/white?text=" alt="Prenda" class="image-thumbnail" data-bs-toggle="modal" data-bs-target="#imagePreviewModal">
+                                    <img src="images/shirt-green.jpg"
+                                         alt="Camisa verde"
+                                         class="img-thumbnail preview-image"
+                                         style="width: 60px; height: 60px; cursor: pointer;"
+                                         onclick="openImageLightbox(this.src, this.alt, 'Camisa verde clásica', 'MUESTRA')">
                                 </td>
                                 <td data-column="orden-sit">10001600</td>
                                 <td data-column="po">3000001545</td>
@@ -208,65 +222,27 @@
                                 <td data-column="descripcion">Muestra Validación</td>
                                 <td data-column="tipo-fotografia">MUESTRA</td>
                                 <td data-column="acciones">
-                                    <button class="btn btn-danger btn-sm btn-action" title="Eliminar" onclick="deleteImage(2)">
-                                        <i class="fas fa-times"></i> Eliminar
+                                    <button class="btn btn-danger btn-sm me-1" onclick="deleteImage(this)" title="Eliminar imagen">
+                                        <i class="fas fa-trash"></i> Eliminar
                                     </button>
-                                    <button class="btn btn-warning btn-sm btn-action" title="Editar" onclick="editImage(2)">
+                                    <button class="btn btn-warning btn-sm me-1" onclick="editImage(this)" title="Editar información">
                                         <i class="fas fa-edit"></i> Editar
                                     </button>
-                                    <button class="btn btn-success btn-sm btn-action" title="Comentario" onclick="addComment(2)">
-                                        <i class="fas fa-comment"></i>
+                                    <button class="btn btn-info btn-sm comment-btn" onclick="openCommentsModal(this)" title="Ver/Agregar comentarios">
+                                        <i class="fas fa-comments"></i>
+                                        <span class="comment-count" data-count="0"></span>
                                     </button>
                                 </td>
                             </tr>
-                            <tr>
-                                <td><input type="checkbox" class="form-check-input row-select"></td>
+
+                            <!-- Fila de ejemplo 3 - CORREGIDA -->
+                            <tr data-image-id="img_example_3">
                                 <td data-column="imagen">
-                                    <img src="https://via.placeholder.com/60x60/FF9800/white?text=" alt="Prenda" class="image-thumbnail" data-bs-toggle="modal" data-bs-target="#imagePreviewModal">
-                                </td>
-                                <td data-column="orden-sit">10031630</td>
-                                <td data-column="po">6000057975</td>
-                                <td data-column="oc">4000066739</td>
-                                <td data-column="descripcion">GORRA NO</td>
-                                <td data-column="tipo-fotografia">PRENDA FINAL</td>
-                                <td data-column="acciones">
-                                    <button class="btn btn-danger btn-sm btn-action" title="Eliminar" onclick="deleteImage(3)">
-                                        <i class="fas fa-times"></i> Eliminar
-                                    </button>
-                                    <button class="btn btn-warning btn-sm btn-action" title="Editar" onclick="editImage(3)">
-                                        <i class="fas fa-edit"></i> Editar
-                                    </button>
-                                    <button class="btn btn-success btn-sm btn-action" title="Comentario" onclick="addComment(3)">
-                                        <i class="fas fa-comment"></i>
-                                    </button>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td><input type="checkbox" class="form-check-input row-select"></td>
-                                <td data-column="imagen">
-                                    <img src="https://via.placeholder.com/60x60/E91E63/white?text=" alt="Prenda" class="image-thumbnail" data-bs-toggle="modal" data-bs-target="#imagePreviewModal">
-                                </td>
-                                <td data-column="orden-sit">10032970</td>
-                                <td data-column="po">6000060366</td>
-                                <td data-column="oc">5511000299</td>
-                                <td data-column="descripcion">BERMUDA UNIC</td>
-                                <td data-column="tipo-fotografia">PRENDA FINAL</td>
-                                <td data-column="acciones">
-                                    <button class="btn btn-danger btn-sm btn-action" title="Eliminar" onclick="deleteImage(4)">
-                                        <i class="fas fa-times"></i> Eliminar
-                                    </button>
-                                    <button class="btn btn-warning btn-sm btn-action" title="Editar" onclick="editImage(4)">
-                                        <i class="fas fa-edit"></i> Editar
-                                    </button>
-                                    <button class="btn btn-success btn-sm btn-action" title="Comentario" onclick="addComment(4)">
-                                        <i class="fas fa-comment"></i>
-                                    </button>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td><input type="checkbox" class="form-check-input row-select"></td>
-                                <td data-column="imagen">
-                                    <img src="https://via.placeholder.com/60x60/9C27B0/white?text=" alt="Prenda" class="image-thumbnail" data-bs-toggle="modal" data-bs-target="#imagePreviewModal">
+                                    <img src="images/shirt-white.jpg"
+                                         alt="Camisa Blanca"
+                                         class="img-thumbnail preview-image"
+                                         style="width: 60px; height: 60px; cursor: pointer;"
+                                         onclick="openImageLightbox(this.src, this.alt, 'Camisa polo', 'PRENDA FINAL')">
                                 </td>
                                 <td data-column="orden-sit">10047396</td>
                                 <td data-column="po">6000081373</td>
@@ -274,14 +250,15 @@
                                 <td data-column="descripcion">POLO BUSINESS</td>
                                 <td data-column="tipo-fotografia">PRENDA FINAL</td>
                                 <td data-column="acciones">
-                                    <button class="btn btn-danger btn-sm btn-action" title="Eliminar" onclick="deleteImage(5)">
-                                        <i class="fas fa-times"></i> Eliminar
+                                    <button class="btn btn-danger btn-sm me-1" onclick="deleteImage(this)" title="Eliminar imagen">
+                                        <i class="fas fa-trash"></i> Eliminar
                                     </button>
-                                    <button class="btn btn-warning btn-sm btn-action" title="Editar" onclick="editImage(5)">
+                                    <button class="btn btn-warning btn-sm me-1" onclick="editImage(this)" title="Editar información">
                                         <i class="fas fa-edit"></i> Editar
                                     </button>
-                                    <button class="btn btn-success btn-sm btn-action" title="Comentario" onclick="addComment(5)">
-                                        <i class="fas fa-comment"></i>
+                                    <button class="btn btn-info btn-sm comment-btn" onclick="openCommentsModal(this)" title="Ver/Agregar comentarios">
+                                        <i class="fas fa-comments"></i>
+                                        <span class="comment-count" data-count="0"></span>
                                     </button>
                                 </td>
                             </tr>
@@ -289,214 +266,487 @@
                     </table>
                 </div>
 
-                <!-- Paginación -->
-                <div class="row mt-3 align-items-center">
+                <!-- Paginacion -->
+                <div class="d-flex justify-content-between align-items-center mt-3">
+                    <div>
+                        <span class="text-muted">Mostrando registros del 1 al 3 de un total de 3</span>
+                    </div>
+                    <nav>
+                        <ul class="pagination mb-0">
+                            <li class="page-item disabled">
+                                <span class="page-link">Anterior</span>
+                            </li>
+                            <li class="page-item active">
+                                <span class="page-link">1</span>
+                            </li>
+                            <li class="page-item">
+                                <a class="page-link" href="#">2</a>
+                            </li>
+                            <li class="page-item">
+                                <a class="page-link" href="#">3</a>
+                            </li>
+                            <li class="page-item">
+                                <a class="page-link" href="#">Siguiente</a>
+                            </li>
+                        </ul>
+                    </nav>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Lightbox para visualizar imágenes -->
+<div id="imageLightbox" class="lightbox-overlay" style="display: none;">
+    <div class="lightbox-content">
+        <div class="lightbox-header">
+            <h5 id="lightboxTitle">Vista Previa de Imagen</h5>
+            <button onclick="closeLightbox()" class="btn-close-lightbox">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="lightbox-body">
+            <img id="lightboxImage" src="" alt="" class="lightbox-image">
+            <div class="lightbox-info">
+                <div class="row">
                     <div class="col-md-6">
-                        <div class="pagination-info">
-                            Mostrando registros del <strong>1</strong> al <strong>5</strong> de un total de <strong>5</strong>
+                        <strong>Descripción:</strong>
+                        <p id="lightboxDescription">-</p>
+                    </div>
+                    <div class="col-md-6">
+                        <strong>Tipo:</strong>
+                        <p id="lightboxType">-</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="lightbox-footer">
+            <button onclick="closeLightbox()" class="btn btn-secondary">
+                <i class="fas fa-times me-1"></i>
+                Cerrar
+            </button>
+            <button onclick="downloadImage()" class="btn btn-primary">
+                <i class="fas fa-download me-1"></i>
+                Descargar
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Container de notificaciones -->
+<div id="notificationContainer" class="position-fixed top-0 end-0 p-3" style="z-index: 9999;"></div>
+
+<!-- MODAL DE COMENTARIOS -->
+<div class="modal fade" id="commentsModal" tabindex="-1" aria-labelledby="commentsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="commentsModalLabel">
+                    <i class="fas fa-comments me-2"></i>
+                    Comentarios y Observaciones
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <!-- Información de la imagen -->
+                <div class="row mb-4">
+                    <div class="col-md-3">
+                        <img id="commentImagePreview" src="" alt="" class="img-fluid rounded border">
+                    </div>
+                    <div class="col-md-9">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <strong>Orden SIT:</strong>
+                                <p id="commentOrdenSit" class="mb-1">-</p>
+                            </div>
+                            <div class="col-md-6">
+                                <strong>P.O:</strong>
+                                <p id="commentPO" class="mb-1">-</p>
+                            </div>
+                            <div class="col-md-6">
+                                <strong>O.C:</strong>
+                                <p id="commentOC" class="mb-1">-</p>
+                            </div>
+                            <div class="col-md-6">
+                                <strong>Tipo:</strong>
+                                <p id="commentTipo" class="mb-1">-</p>
+                            </div>
+                            <div class="col-12">
+                                <strong>Descripción:</strong>
+                                <p id="commentDescripcion" class="mb-0">-</p>
+                            </div>
                         </div>
                     </div>
-                    <div class="col-md-6">
-                        <nav aria-label="Paginación">
-                            <ul class="pagination justify-content-end mb-0">
-                                <li class="page-item disabled">
-                                    <a class="page-link" href="#" tabindex="-1" aria-disabled="true">Anterior</a>
-                                </li>
-                                <li class="page-item active"><a class="page-link" href="#">1</a></li>
-                                <li class="page-item"><a class="page-link" href="#">2</a></li>
-                                <li class="page-item"><a class="page-link" href="#">3</a></li>
-                                <li class="page-item"><a class="page-link" href="#">4</a></li>
-                                <li class="page-item"><a class="page-link" href="#">5</a></li>
-                                <li class="page-item disabled"><a class="page-link" href="#">...</a></li>
-                                <li class="page-item"><a class="page-link" href="#">4514</a></li>
-                                <li class="page-item">
-                                    <a class="page-link" href="#">Siguiente</a>
-                                </li>
-                            </ul>
-                        </nav>
+                </div>
+
+                <hr>
+
+                <!-- Agregar nuevo comentario -->
+                <div class="card mb-4">
+                    <div class="card-header bg-light">
+                        <h6 class="mb-0">
+                            <i class="fas fa-plus-circle me-2"></i>
+                            Agregar Nuevo Comentario
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <form id="commentForm">
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Tipo de Observación</label>
+                                    <select class="form-select" id="commentType" required>
+                                        <option value="">Seleccionar tipo</option>
+                                        <option value="quality">Calidad</option>
+                                        <option value="technical">Técnico</option>
+                                        <option value="production">Producción</option>
+                                        <option value="design">Diseño</option>
+                                        <option value="general">General</option>
+                                        <option value="urgent">Urgente</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Prioridad</label>
+                                    <select class="form-select" id="commentPriority" required>
+                                        <option value="low">Baja</option>
+                                        <option value="medium" selected>Media</option>
+                                        <option value="high">Alta</option>
+                                        <option value="critical">Crítica</option>
+                                    </select>
+                                </div>
+                                <div class="col-12 mb-3">
+                                    <label class="form-label">Comentario/Observación</label>
+                                    <textarea class="form-control" id="commentText" rows="3"
+                                              placeholder="Escribe tu comentario o observación aquí..." required></textarea>
+                                    <div class="form-text">
+                                        <small><span id="charCount">0</span>/500 caracteres</small>
+                                    </div>
+                                </div>
+                                <div class="col-12">
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="fas fa-save me-1"></i>
+                                        Agregar Comentario
+                                    </button>
+                                    <button type="button" class="btn btn-outline-secondary ms-2" onclick="clearCommentForm()">
+                                        <i class="fas fa-eraser me-1"></i>
+                                        Limpiar
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Lista de comentarios existentes -->
+                <div class="card">
+                    <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                        <h6 class="mb-0">
+                            <i class="fas fa-list me-2"></i>
+                            Comentarios Existentes
+                            <span class="badge bg-secondary ms-2" id="totalCommentsCount">0</span>
+                        </h6>
+                        <div class="btn-group btn-group-sm">
+                            <button class="btn btn-outline-primary" onclick="sortComments('newest')" title="Más recientes primero">
+                                <i class="fas fa-sort-amount-down"></i>
+                            </button>
+                            <button class="btn btn-outline-primary" onclick="sortComments('oldest')" title="Más antiguos primero">
+                                <i class="fas fa-sort-amount-up"></i>
+                            </button>
+                            <button class="btn btn-outline-primary" onclick="filterCommentsByPriority()" title="Filtrar por prioridad">
+                                <i class="fas fa-filter"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-body p-0">
+                        <div id="commentsList" class="comments-list">
+                            <!-- Los comentarios se cargarán aquí dinámicamente -->
+                            <div class="text-center text-muted p-4" id="noCommentsMessage">
+                                <i class="fas fa-comment-slash fa-2x mb-2"></i>
+                                <p>No hay comentarios para esta imagen</p>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
-
-            <div class="modal-footer py-2">
-                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cerrar</button>
-                <button type="button" class="btn btn-primary btn-sm">Guardar Cambios</button>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Modal de Vista Previa de Imagen -->
-<div class="modal fade" id="imagePreviewModal" tabindex="-1" aria-labelledby="imagePreviewModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="imagePreviewModalLabel">Vista Previa de Imagen</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body text-center">
-                <img id="previewImage" src="" alt="Vista previa" class="img-fluid" style="max-height: 70vh;">
-                <div class="mt-3">
-                    <p><strong>Descripción:</strong> <span id="previewDescription"></span></p>
-                    <p><strong>Tipo:</strong> <span id="previewType"></span></p>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Modal de Edición -->
-<div class="modal fade" id="editImageModal" tabindex="-1" aria-labelledby="editImageModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="editImageModalLabel">Editar Imagen</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <form id="editForm">
-                    <div class="mb-3">
-                        <label for="editOrdenSit" class="form-label">Orden SIT</label>
-                        <input type="text" class="form-control" id="editOrdenSit">
-                    </div>
-                    <div class="mb-3">
-                        <label for="editPO" class="form-label">P.O</label>
-                        <input type="text" class="form-control" id="editPO">
-                    </div>
-                    <div class="mb-3">
-                        <label for="editOC" class="form-label">O.C</label>
-                        <input type="text" class="form-control" id="editOC">
-                    </div>
-                    <div class="mb-3">
-                        <label for="editDescripcion" class="form-label">Descripción</label>
-                        <textarea class="form-control" id="editDescripcion" rows="3"></textarea>
-                    </div>
-                    <div class="mb-3">
-                        <label for="editTipoFotografia" class="form-label">Tipo Fotografía</label>
-                        <select class="form-select" id="editTipoFotografia">
-                            <option value="">Seleccionar tipo</option>
-                            <option value="PRENDA FINAL">PRENDA FINAL</option>
-                            <option value="MUESTRA">MUESTRA</option>
-                            <option value="PROCESO">PROCESO</option>
-                            <option value="DEFECTO">DEFECTO</option>
-                        </select>
-                    </div>
-                </form>
-            </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                <button type="button" class="btn btn-primary" onclick="saveChanges()">Guardar Cambios</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-1"></i>
+                    Cerrar
+                </button>
+                <button type="button" class="btn btn-success" onclick="exportComments()">
+                    <i class="fas fa-file-export me-1"></i>
+                    Exportar Comentarios
+                </button>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Modal de Comentarios -->
-<div class="modal fade" id="commentModal" tabindex="-1" aria-labelledby="commentModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="commentModalLabel">Agregar Comentario</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <form id="commentForm">
-                    <div class="mb-3">
-                        <label for="commentText" class="form-label">Comentario</label>
-                        <textarea class="form-control" id="commentText" rows="4" placeholder="Escribe tu comentario o sugerencia..."></textarea>
-                    </div>
-                </form>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                <button type="button" class="btn btn-primary" onclick="saveComment()">Guardar Comentario</button>
-            </div>
-        </div>
-    </div>
-</div>
+<!-- Meta tag para el usuario actual (para detección automática) -->
+<meta name="current-user" content="{{ auth()->user()->name ?? 'Usuario Sistema' }}">
 
-<!-- Botón para abrir el modal (ejemplo de uso) -->
-<div class="container mt-5">
-    <button type="button" class="btn btn-primary btn-lg" data-bs-toggle="modal" data-bs-target="#imagesManagementModal">
-        <i class="fas fa-camera me-2"></i>
-        Fotografias de prendas
-    </button>
-</div>
-
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
-<script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/es.js"></script>
+{{-- ARCHIVO Javascript para manejo de filtrado por fechas --}}
+<script src="{{ asset('js/fotos-index.js') }}"></script>
+<script src="{{ asset('js/comentarios.js') }}"></script>
 
 <script>
-    // Función mejorada para inicializar el selector de fechas - Filtro por fechas (fecha creacion registro)
-    function initializeDatePicker() {
-        let flatpickrInstance = null;
+    // ===== SCRIPT FUNCIONALIDAD SUBIDA DE IMAGENES =====
+    function initializeUploadButtons() {
+        const cameraUpload = document.getElementById('cameraUpload');
+        const fileUpload = document.getElementById('fileUpload');
+        const cameraInput = document.getElementById('cameraInput');
+        const fileInput = document.getElementById('fileInput');
 
-        // Verificar si ya existe una instancia
-        if (document.getElementById('dateRange')._flatpickr) {
-            document.getElementById('dateRange')._flatpickr.destroy();
+        // Camera upload click
+        if (cameraUpload && cameraInput) {
+            cameraUpload.addEventListener('click', function() {
+                console.log(' Activando cámara...');
+                cameraInput.click();
+            });
+
+            cameraInput.addEventListener('change', function(e) {
+                handleImageUpload(e.target.files, 'camera');
+            });
         }
 
-        // Configurar Flatpickr
-        flatpickrInstance = flatpickr("#dateRange", {
-            mode: "range",
-            dateFormat: "d-m-Y",
-            locale: "es",
-            defaultDate: ["{{ date('d-m-Y', strtotime('-30 days')) }}", "{{ date('d-m-Y') }}"],
-            clickOpens: false, // No abrir automáticamente al hacer click en el input
-            allowInput: false,  // No permitir escritura manual
-            onOpen: function() {
-                document.querySelector('.date-input-container')?.classList.add('date-editing');
-            },
-            onClose: function(selectedDates, dateStr, instance) {
-                // Remover clase de edición cuando se cierre
-                document.querySelector('.date-input-container')?.classList.remove('date-editing');
-                if (dateStr) {
-                    console.log('Fechas seleccionadas: ', dateStr);
-                    // ==>> Espacio para logica de filtrado por fechas
-                    updateActiveFilters('dateRange', dateStr);
-                }
-            }
-        });
+        // File upload click
+        if (fileUpload && fileInput) {
+            fileUpload.addEventListener('click', function() {
+                console.log(' Abriendo selector de archivos...');
+                fileInput.click();
+            });
 
-        // Evento para el botón de editar fecha
-        document.getElementById('editDateRange').addEventListener('click', function() {
-            const container = document.querySelector('.date-input-container');
-
-            if (flatpickrInstance.isOpen) {
-                // Si está abierto, cerrarlo
-                flatpickrInstance.close();
-                container?.classList.remove('date-editing');
-            } else {
-                // Si está cerrado, abrirlo
-                flatpickrInstance.open();
-                container?.classList.add('date-editing');
-            }
-        });
-
-        // También permitir click en el input para abrir
-        document.getElementById('dateRange').addEventListener('click', function() {
-            flatpickrInstance.open();
-        });
-
-        // Funcion para actualizar filtros activos (placeholder)
-        function updateActiveFilters(key, value) {
-            console.log('Filtro actualizado: ', key, value);
-            // Espacio para implementar logica de filtros aqui
+            fileInput.addEventListener('change', function(e) {
+                handleImageUpload(e.target.files, 'file');
+            });
         }
 
-        // Función para limpiar fechas (si la necesitas en otro lugar)
-        window.clearDateRange = function() {
-            flatpickrInstance.clear();
-            document.querySelector('.date-input-container')?.classList.remove('date-editing');
-            updateActiveFilters('dateRange', '');
-        };
+        // Drag and drop functionality
+        initializeDragAndDrop();
 
-        // Función para establecer fechas programáticamente
-        window.setDateRange = function(startDate, endDate) {
-            flatpickrInstance.setDate([startDate, endDate]);
-            updateActiveFilters('dateRange', `${startDate} - ${endDate}`);
-        };
+        console.log(' Sistema de subida inicializado');
     }
+
+    function handleImageUpload(files, source) {
+        if (!files || files.length === 0) {
+            showNotification('No se seleccionaron archivos', 'warning');
+            return;
+        }
+
+        console.log(` Subiendo ${files.length} archivo(s) desde ${source}`);
+
+        // Validar archivos
+        const validFiles = Array.from(files).filter(file => {
+            if (!file.type.startsWith('image/')) {
+                showNotification(`Archivo "${file.name}" no es una imagen válida`, 'error');
+                return false;
+            }
+
+            // Validar tamaño (máximo 10MB)
+            if (file.size > 10 * 1024 * 1024) {
+                showNotification(`Archivo "${file.name}" es demasiado grande (máximo 10MB)`, 'error');
+                return false;
+            }
+
+            return true;
+        });
+
+        if (validFiles.length === 0) {
+            return;
+        }
+
+        // Mostrar estado de carga
+        const uploadBtn = source === 'camera'
+            ? document.getElementById('cameraUpload')
+            : document.getElementById('fileUpload');
+
+        setUploadState(uploadBtn, 'uploading');
+
+        // Procesar archivos
+        const uploadPromises = validFiles.map(file => uploadSingleImage(file));
+
+        Promise.all(uploadPromises)
+            .then(results => {
+                console.log(' Todas las imágenes subidas correctamente');
+                showNotification(`${results.length} imagen(es) subida(s) correctamente`, 'success');
+
+                // Agregar imágenes a la tabla
+                results.forEach(imageData => {
+                    addImageToTable(imageData);
+                });
+
+                setUploadState(uploadBtn, 'success');
+
+                // Reset después de 2 segundos
+                setTimeout(() => {
+                    setUploadState(uploadBtn, 'normal');
+                }, 2000);
+            })
+            .catch(error => {
+                console.error(' Error subiendo imágenes:', error);
+                showNotification('Error al subir las imágenes', 'error');
+                setUploadState(uploadBtn, 'normal');
+            });
+    }
+
+    function uploadSingleImage(file) {
+        return new Promise((resolve, reject) => {
+            const formData = new FormData();
+            formData.append('image', file);
+            formData.append('timestamp', new Date().toISOString());
+
+            // Simular subida (reemplazar con tu endpoint real)
+            setTimeout(() => {
+                // Crear URL temporal para vista previa
+                const imageUrl = URL.createObjectURL(file);
+
+                resolve({
+                    id: Date.now() + Math.random(),
+                    url: imageUrl,
+                    name: file.name,
+                    size: file.size,
+                    uploadDate: new Date().toISOString(),
+                    ordenSit: generateOrderNumber(),
+                    po: generatePONumber(),
+                    oc: generateOCNumber(),
+                    descripcion: 'Imagen subida',
+                    tipoFotografia: 'SUBIDA MANUAL'
+                });
+            }, 1000 + Math.random() * 2000); // Simular tiempo de subida variable
+        });
+    }
+
+    function addImageToTable(imageData) {
+        const tableBody = document.getElementById('imagesTableBody');
+        if (!tableBody) return;
+
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td data-column="imagen">
+                <img src="${imageData.url}"
+                    alt="${imageData.name}"
+                    class="img-thumbnail preview-image"
+                    style="width: 60px; height: 60px; cursor: pointer;"
+                    onclick="openImageLightbox('${imageData.url}', '${imageData.name}', '${imageData.descripcion}', '${imageData.tipoFotografia}')">
+            </td>
+            <td data-column="orden-sit">${imageData.ordenSit}</td>
+            <td data-column="po">${imageData.po}</td>
+            <td data-column="oc">${imageData.oc}</td>
+            <td data-column="descripcion">${imageData.descripcion}</td>
+            <td data-column="tipo-fotografia">
+                <span class="badge bg-info">${imageData.tipoFotografia}</span>
+            </td>
+            <td data-column="acciones">
+                <button class="btn btn-danger btn-sm me-1" onclick="deleteImage(this)">
+                    <i class="fas fa-trash"></i> Eliminar
+                </button>
+                <button class="btn btn-warning btn-sm me-1" onclick="editImage(this)">
+                    <i class="fas fa-edit"></i> Editar
+                </button>
+                <button class="btn btn-success btn-sm" onclick="downloadImageFromRow(this)">
+                    <i class="fas fa-comment"></i>
+                </button>
+            </td>
+        `;
+
+        // Agregar al inicio de la tabla
+        tableBody.insertBefore(row, tableBody.firstChild);
+
+        // Añadir animación
+        row.style.opacity = '0';
+        row.style.transform = 'translateY(-10px)';
+
+        setTimeout(() => {
+            row.style.transition = 'all 0.5s ease';
+            row.style.opacity = '1';
+            row.style.transform = 'translateY(0)';
+        }, 100);
+    }
+
+    function setUploadState(button, state) {
+        if (!button) return;
+
+        // Remover clases anteriores
+        button.classList.remove('active', 'uploading');
+
+        switch (state) {
+            case 'uploading':
+                button.classList.add('uploading');
+                break;
+            case 'success':
+                button.classList.add('active');
+                break;
+            case 'normal':
+            default:
+                // Estado normal, sin clases adicionales
+                break;
+        }
+    }
+
+    function initializeDragAndDrop() {
+        const uploadBtns = document.querySelectorAll('.upload-btn');
+
+        uploadBtns.forEach(btn => {
+            // Prevenir comportamiento por defecto
+            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                btn.addEventListener(eventName, preventDefaults, false);
+            });
+
+            // Highlight en drag over
+            ['dragenter', 'dragover'].forEach(eventName => {
+                btn.addEventListener(eventName, () => btn.classList.add('active'), false);
+            });
+
+            ['dragleave', 'drop'].forEach(eventName => {
+                btn.addEventListener(eventName, () => btn.classList.remove('active'), false);
+            });
+
+            // Handle drop
+            btn.addEventListener('drop', handleDrop, false);
+        });
+    }
+
+    function preventDefaults(e) {
+        e.preventDefault();
+        e.stopPropagation();
+    }
+
+    function handleDrop(e) {
+        const files = e.dataTransfer.files;
+        const isCamera = e.currentTarget.id === 'cameraUpload';
+        handleImageUpload(files, isCamera ? 'camera' : 'file');
+    }
+
+    // Utility functions para generar números
+    function generateOrderNumber() {
+        return '100' + Math.floor(Math.random() * 90000 + 10000);
+    }
+
+    function generatePONumber() {
+        return '6000' + Math.floor(Math.random() * 900000 + 100000);
+    }
+
+    function generateOCNumber() {
+        return '4200' + Math.floor(Math.random() * 9000000 + 1000000);
+    }
+
+    function downloadImageFromRow(button) {
+        const row = button.closest('tr');
+        const img = row.querySelector('img');
+        if (img) {
+            const link = document.createElement('a');
+            link.href = img.src;
+            link.download = img.alt || 'imagen';
+            link.click();
+            showNotification('Descarga iniciada', 'success');
+        }
+    }
+
+    // Agregar a la inicialización principal
+    document.addEventListener("DOMContentLoaded", function() {
+        // ... otras inicializaciones
+        initializeUploadButtons();
+    });
+</>
+
 
 @endsection

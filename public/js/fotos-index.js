@@ -1,6 +1,7 @@
 
-// LOGICA JS REFERENTE AL CONTENIDO DEL INDEX
-document.addEventListener("DOMContentLoaded", function () {
+// LOGICA JS REFERENTE AL CONTENIDO DEL INDEX --->> DEscomentar si se requiere(codigo para filtrado por fechas)
+//ARCHIVO Javascript para manejo de filtrado por fechas
+/*document.addEventListener("DOMContentLoaded", function () {
     console.log(' Inicializando Fotografías de Prendas...');
 
     // Initialize all components
@@ -358,4 +359,4 @@ window.exportAll = exportAll;
 window.exportSelected = exportSelected;
 window.showFilters = showFilters;
 window.deleteImage = deleteImage;
-window.editImage = editImage;
+window.editImage = editImage;*/

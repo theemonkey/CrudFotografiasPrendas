@@ -1,10 +1,329 @@
+/*!
+ * Fotografías de Prendas - Estilos Principales OPTIMIZADO
+ */
 
-.main-content {
-    width: 100%;
-    background: #f8f9fa;
+/* ================================================================
+   UPLOAD BUTTONS STYLES
+   ================================================================ */
+.upload-section {
+    min-width: 140px;
 }
 
-/* Lightbox Styles */
+.upload-buttons {
+    display: flex;
+    gap: 8px;
+}
+
+.upload-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 12px 16px;
+    border: 2px dashed #007bff;
+    border-radius: 8px;
+    background: #f8f9ff;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+    min-width: 65px;
+    text-align: center;
+}
+
+.upload-btn:hover {
+    border-color: #0056b3;
+    background: #e7f1ff;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 123, 255, 0.2);
+}
+
+.upload-btn i {
+    font-size: 18px;
+    color: #007bff;
+    margin-bottom: 4px;
+    transition: color 0.3s ease;
+}
+
+.upload-btn span {
+    font-size: 11px;
+    font-weight: 600;
+    color: #007bff;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.upload-btn.uploading {
+    border-color: #ffc107;
+    background: #fffbf0;
+    pointer-events: none;
+}
+
+.upload-btn.uploading i {
+    animation: pulse 1.5s infinite;
+    color: #ffc107;
+}
+
+.upload-btn.active {
+    border-color: #28a745;
+    background: #f8fff9;
+}
+
+/* ================================================================
+   TABLA PRINCIPAL - ESTRUCTURA Y BORDES
+   ================================================================ */
+.images-table {
+    border-collapse: collapse !important;
+    border-spacing: 0 !important;
+    width: 100% !important;
+    table-layout: fixed !important;
+}
+
+/* Headers */
+.images-table thead th {
+    border-bottom: 2px solid #e9ecef !important;
+    border-left: none !important;
+    border-right: none !important;
+    border-top: none !important;
+    background-color: #f8f9fa !important;
+    padding: 12px 8px !important;
+}
+
+/* Filas del tbody */
+.images-table tbody tr {
+    border-bottom: 1px solid #f0f0f0 !important;
+    transition: background-color 0.2s ease !important;
+    background-color: transparent !important;
+    position: relative !important;
+}
+
+.images-table tbody tr:hover {
+    background-color: #f8f9fa !important;
+}
+
+.images-table tbody tr:last-child {
+    border-bottom: none !important;
+}
+
+/* Celdas - sin bordes laterales */
+.images-table th,
+.images-table td {
+    border-left: none !important;
+    border-right: none !important;
+    border-top: none !important;
+}
+
+.images-table tbody td {
+    margin: 0 !important;
+    padding: 8px !important;
+    vertical-align: middle !important;
+    box-sizing: border-box !important;
+    position: relative !important;
+    z-index: 2 !important;
+}
+
+/* Fila de filtros */
+.images-table tr.bg-light {
+    border-bottom: 1px solid #e9ecef !important;
+    background-color: #f8f9fa !important;
+}
+
+.images-table tr.bg-light td {
+    padding: 8px !important;
+    background-color: #f8f9fa !important;
+}
+
+/* ================================================================
+   COLUMNA DE ACCIONES - BOTONES HORIZONTALES
+   ================================================================ */
+/* Dimensiones fijas para la columna */
+.images-table th[data-column="acciones"],
+.images-table td[data-column="acciones"] {
+    width: 220px !important;
+    min-width: 220px !important;
+    max-width: 220px !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    padding: 8px !important;
+    vertical-align: middle !important;
+}
+
+/* Contenedor flex para botones horizontales */
+.images-table td[data-column="acciones"] .d-flex {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    gap: 4px !important;
+    flex-wrap: nowrap !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: transparent !important;
+    width: 100% !important;
+    height: 100% !important;
+    min-height: 40px !important;
+}
+
+/* Si no hay contenedor d-flex, convertir la celda en flex */
+.images-table td[data-column="acciones"]:not(:has(.d-flex)) {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    gap: 4px !important;
+    flex-wrap: nowrap !important;
+}
+
+/* Estilos de botones individuales */
+.images-table td[data-column="acciones"] .btn {
+    flex-shrink: 0 !important;
+    margin: 0 !important;
+    padding: 4px 8px !important;
+    font-size: 11px !important;
+    line-height: 1.2 !important;
+    border-radius: 3px !important;
+    font-weight: 500 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    min-width: auto !important;
+    white-space: nowrap !important;
+}
+
+/* Colores específicos de botones */
+.images-table td[data-column="acciones"] .btn-danger {
+    background-color: #dc3545 !important;
+    border-color: #dc3545 !important;
+    color: white !important;
+}
+
+.images-table td[data-column="acciones"] .btn-warning {
+    background-color: #ffc107 !important;
+    border-color: #ffc107 !important;
+    color: #212529 !important;
+}
+
+.images-table td[data-column="acciones"] .btn-info {
+    background-color: #17a2b8 !important;
+    border-color: #17a2b8 !important;
+    color: white !important;
+}
+
+/* ================================================================
+   SISTEMA DE COMENTARIOS
+   ================================================================ */
+/* Ocultar el contador rojo viejo */
+.comment-count {
+    display: none !important;
+}
+
+.comments-list {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.comment-item {
+    border-bottom: 1px solid #eee;
+    padding: 15px 20px;
+    transition: background-color 0.3s ease;
+}
+
+.comment-item:hover {
+    background-color: #f8f9fa;
+}
+
+.comment-meta {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+}
+
+.comment-author {
+    font-weight: 600;
+    color: #007bff;
+    font-size: 14px;
+}
+
+.comment-type-badge {
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.comment-priority {
+    font-size: 11px;
+    padding: 2px 6px;
+    border-radius: 10px;
+    font-weight: 600;
+}
+
+/* ================================================================
+   CONTADOR DE COMENTARIOS MEJORADO
+   ================================================================ */
+.comment-btn {
+    position: relative !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+
+/* Contador encima del ícono */
+.comment-btn::after {
+    content: attr(data-comment-count) !important;
+    position: absolute !important;
+    top: -8px !important;
+    right: -6px !important;
+    background: #dc3545 !important;
+    color: white !important;
+    border-radius: 50% !important;
+    padding: 2px 5px !important;
+    font-size: 10px !important;
+    font-weight: bold !important;
+    line-height: 1 !important;
+    min-width: 16px !important;
+    height: 16px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    border: 2px solid white !important;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2) !important;
+    z-index: 10 !important;
+}
+
+/* Ocultar cuando es 0 o vacío */
+.comment-btn[data-comment-count="0"]::after,
+.comment-btn[data-comment-count=""]::after,
+.comment-btn:not([data-comment-count])::after {
+    display: none !important;
+}
+
+/* Mostrar solo cuando hay comentarios */
+.comment-btn[data-comment-count]:not([data-comment-count="0"])::after {
+    display: flex !important;
+}
+
+/* ================================================================
+   PRIORITY COLORS
+   ================================================================ */
+.priority-low { background: #d4edda; color: #155724; }
+.priority-medium { background: #fff3cd; color: #856404; }
+.priority-high { background: #f8d7da; color: #721c24; }
+.priority-critical { background: #721c24; color: white; }
+
+/* ================================================================
+   TYPE COLORS
+   ================================================================ */
+.type-quality { background: #e7f3ff; color: #0066cc; }
+.type-technical { background: #fff2e7; color: #cc6600; }
+.type-production { background: #e7ffe7; color: #006600; }
+.type-design { background: #f3e7ff; color: #6600cc; }
+.type-general { background: #f0f0f0; color: #666; }
+.type-urgent { background: #ffe7e7; color: #cc0000; }
+
+/* ================================================================
+   LIGHTBOX
+   ================================================================ */
 .lightbox-overlay {
     position: fixed;
     top: 0;
@@ -53,11 +372,6 @@
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
 }
 
-.lightbox-info {
-    margin-top: 20px;
-    text-align: left;
-}
-
 .lightbox-footer {
     padding: 15px 30px 25px;
     border-top: 1px solid #eee;
@@ -66,7 +380,41 @@
     gap: 10px;
 }
 
-/* Botón rosa para "Exportar todo" */
+.btn-close-lightbox {
+    background: none;
+    border: none;
+    font-size: 24px;
+    color: #666;
+    cursor: pointer;
+    padding: 5px;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s;
+}
+
+.btn-close-lightbox:hover {
+    background: #f8f9fa;
+    color: #333;
+}
+
+/* ================================================================
+   UTILITY CLASSES
+   ================================================================ */
+.upload-user-badge {
+    font-size: 10px;
+    color: #6c757d;
+    margin-top: 2px;
+    text-align: center;
+}
+
+.upload-user-badge i {
+    margin-right: 2px;
+}
+
 .btn-pink {
     background-color: #e91e63 !important;
     border-color: #e91e63 !important;
@@ -79,649 +427,51 @@
     color: white !important;
 }
 
-.btn-close-lightbox {
-    background: none;
-    border: none;
-    font-size: 24px;
-    color: #666;
-    cursor: pointer;
-    padding: 5px;
-    border-radius: 50%;
-    width: 40px;
-    height: 40px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.3s;
+.card {
+    border: 1px solid #e9ecef !important;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1) !important;
 }
 
-.btn-close-lightbox:hover {
-    background: #f8f9fa;
-    color: #333;
+.table-responsive {
+    border: none !important;
+    box-shadow: none !important;
 }
 
-/* Animaciones */
-@keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
+.badge {
+    font-weight: normal !important;
+    padding: 4px 8px !important;
 }
 
-@keyframes scaleIn {
-    from {
-        opacity: 0;
-        transform: scale(0.8);
-    }
-    to {
-        opacity: 1;
-        transform: scale(1);
-    }
-}
-
-/* Table Styles */
-.images-table img {
-    transition: transform 0.3s ease;
-}
-
-.images-table img:hover {
-    transform: scale(1.1);
-}
-
-/* Notification Styles */
 .notification {
     min-width: 300px;
     margin-bottom: 10px;
     animation: slideInRight 0.3s ease;
 }
 
-@keyframes slideInRight {
-    from {
-        transform: translateX(100%);
-        opacity: 0;
-    }
-    to {
-        transform: translateX(0);
-        opacity: 1;
-    }
-}
-
-/*Estilos botones de subida*/
-.upload-section {
-    min-width: 140px;
-}
-
-.upload-buttons {
-    display: flex;
-    gap: 8px;
-}
-
-.upload-btn {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 12px 16px;
-    border: 2px dashed #007bff;
-    border-radius: 8px;
-    background: #f8f9ff;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    position: relative;
-    min-width: 65px;
-    text-align: center;
-}
-
-.upload-btn:hover {
-    border-color: #0056b3;
-    background: #e7f1ff;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 123, 255, 0.2);
-}
-
-.upload-btn i {
-    font-size: 18px;
-    color: #007bff;
-    margin-bottom: 4px;
-    transition: color 0.3s ease;
-}
-
-.upload-btn span {
-    font-size: 11px;
-    font-weight: 600;
-    color: #007bff;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-}
-
-.upload-btn:hover i,
-.upload-btn:hover span {
-    color: #0056b3;
-}
-
-/* Active state */
-.upload-btn.active {
-    border-color: #28a745;
-    background: #f8fff9;
-}
-
-.upload-btn.active i,
-.upload-btn.active span {
-    color: #28a745;
-}
-
-/* Comment button styles */
-.comment-btn {
-    position: relative;
-}
-
-/* Uploading state */
-.upload-btn.uploading {
-    border-color: #ffc107;
-    background: #fffbf0;
-    pointer-events: none;
-}
-
-.upload-btn.uploading i {
-    animation: pulse 1.5s infinite;
-    color: #ffc107;
-}
-
-.upload-btn.uploading span {
-    color: #ffc107;
-}
-
-/* Vertical separator */
-.vr {
-    background-color: #dee2e6;
-    opacity: 0.75;
-    width: 1px;
-}
-
-/*====>>>>ESTILOS MODAL COMENTARIOS DE IMAGEN  <<<<====*/
-/* Comments System Styles */
-.comment-count {
-    display: inline-block;
-    background: #dc3545;
-    color: white;
-    border-radius: 50%;
-    width: 18px;
-    height: 18px;
-    font-size: 10px;
-    line-height: 18px;
-    text-align: center;
-    margin-left: 4px;
-    font-weight: bold;
-    position: relative;
-    top: -2px;
-}
-
-.comment-count[data-count="0"] {
-    display: none;
-}
-
-.comments-list {
-    max-height: 400px;
-    overflow-y: auto;
-}
-
-.comment-item {
-    border-bottom: 1px solid #eee;
-    padding: 15px 20px;
-    transition: background-color 0.3s ease;
-}
-
-.comment-item:hover {
-    background-color: #f8f9fa;
-}
-
-.comment-item:last-child {
-    border-bottom: none;
-}
-
-.comment-header {
-    display: flex;
-    justify-content: between;
-    align-items: flex-start;
-    margin-bottom: 8px;
-}
-
-.comment-meta {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin-bottom: 8px;
-}
-
-.comment-type-badge {
-    font-size: 11px;
-    padding: 2px 8px;
-    border-radius: 12px;
-    font-weight: 600;
-    text-transform: uppercase;
-}
-
-.comment-priority {
-    font-size: 11px;
-    padding: 2px 6px;
-    border-radius: 10px;
-    font-weight: 600;
-}
-
-.priority-low {
-    background: #d4edda;
-    color: #155724;
-}
-
-.priority-medium {
-    background: #fff3cd;
-    color: #856404;
-}
-
-.priority-high {
-    background: #f8d7da;
-    color: #721c24;
-}
-
-.priority-critical {
-    background: #721c24;
-    color: white;
-    animation: pulse 2s infinite;
-}
-
-.comment-text {
-    margin: 10px 0;
-    line-height: 1.5;
-    color: #333;
-}
-
-.comment-actions {
-    margin-top: 10px;
-    display: flex;
-    gap: 8px;
-}
-
-.comment-timestamp {
-    font-size: 12px;
-    color: #6c757d;
-    display: flex;
-    align-items: center;
-    gap: 4px;
-}
-
-.comment-author {
-    font-weight: 600;
-    color: #007bff;
-    font-size: 14px;
-}
-
-/* Type badges colors */
-.type-quality { background: #e7f3ff; color: #0066cc; }
-.type-technical { background: #fff2e7; color: #cc6600; }
-.type-production { background: #e7ffe7; color: #006600; }
-.type-design { background: #f3e7ff; color: #6600cc; }
-.type-general { background: #f0f0f0; color: #666; }
-.type-urgent { background: #ffe7e7; color: #cc0000; }
-
-/* Animation for new comments */
-.comment-item.new-comment {
-    animation: slideInFromRight 0.5s ease;
-    background: #e7f5ff;
-}
-
-@keyframes slideInFromRight {
-    from {
-        transform: translateX(100%);
-        opacity: 0;
-    }
-    to {
-        transform: translateX(0);
-        opacity: 1;
-    }
-}
-
-/* Character counter */
-#charCount {
-    font-weight: 600;
-}
-
-#charCount.warning {
-    color: #ffc107;
-}
-
-#charCount.danger {
-    color: #dc3545;
-}
+/* ================================================================
+   ANIMACIONES Y EFECTOS HOVER
+   ================================================================ */
 
-/* Responsive adjustments */
-@media (max-width: 768px) {
-    .comment-meta {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 6px;
-    }
-
-    .comment-actions {
-        flex-wrap: wrap;
-    }
-
-    .modal-dialog {
-        margin: 10px;
-    }
-}
-
-
-/* Responsive */
-@media (max-width: 768px) {
-    .upload-buttons {
-        flex-direction: column;
-        gap: 6px;
-    }
-
-    .upload-btn {
-        flex-direction: row;
-        padding: 8px 12px;
-        min-width: auto;
-        width: 100%;
-    }
-
-    .upload-btn i {
-        margin-bottom: 0;
-        margin-right: 6px;
-        font-size: 16px;
-    }
-
-    .upload-btn span {
-        font-size: 12px;
-    }
-
-    .vr {
-        display: none;
-    }
-
-    .upload-section {
-        min-width: auto;
-        width: 100%;
-        margin-bottom: 10px;
-    }
-
-    .d-flex.gap-2.align-items-center.flex-wrap {
-        flex-direction: column;
-        align-items: stretch !important;
-    }
-
-    .lightbox-content {
-        max-width: 95%;
-        max-height: 95%;
-    }
-
-    .lightbox-header,
-    .lightbox-body,
-    .lightbox-footer {
-        padding: 15px 20px;
-    }
-}
-
-/* Animacion para subida imagen */
-@keyframes pulse {
-    0%, 100% {
-        transform: scale(1);
-    }
-    50% {
-        transform: scale(1.1);
-    }
-}
-
-/* Indicador de progreso de subida */
-.upload-progress {
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    height: 3px;
-    background: #28a745;
-    border-radius: 0 0 6px 6px;
-    transition: width 0.3s ease;
-}
-
-
-/*=====REVISAR ESTOS ESTILOS Y BORRAR LOS DUPLICADOS========*/
-
-/* Upload Buttons Styles */
-.upload-section {
-    min-width: 140px;
-}
-
-.upload-buttons {
-    display: flex;
-    gap: 8px;
-}
-
-.upload-btn {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 12px 16px;
-    border: 2px dashed #007bff;
-    border-radius: 8px;
-    background: #f8f9ff;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    position: relative;
-    min-width: 65px;
-    text-align: center;
-}
-
-.upload-btn:hover {
-    border-color: #0056b3;
-    background: #e7f1ff;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 123, 255, 0.2);
-}
-
-.upload-btn i {
-    font-size: 18px;
-    color: #007bff;
-    margin-bottom: 4px;
-    transition: color 0.3s ease;
-}
-
-.upload-btn span {
-    font-size: 11px;
-    font-weight: 600;
-    color: #007bff;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-}
-
-.upload-btn:hover i,
-.upload-btn:hover span {
-    color: #0056b3;
-}
-
-.upload-btn.uploading {
-    border-color: #ffc107;
-    background: #fffbf0;
-    pointer-events: none;
-}
-
-.upload-btn.uploading i {
-    animation: pulse 1.5s infinite;
-    color: #ffc107;
-}
-
-.upload-btn.active {
-    border-color: #28a745;
-    background: #f8fff9;
-}
-
-.upload-btn.active i,
-.upload-btn.active span {
-    color: #28a745;
-}
-
-/* Comment button styles */
-.comment-btn {
-    position: relative;
-}
-
-.comment-count {
-    display: inline-block;
-    background: #dc3545;
-    color: white;
-    border-radius: 50%;
-    width: 18px;
-    height: 18px;
-    font-size: 10px;
-    line-height: 18px;
-    text-align: center;
-    margin-left: 4px;
-    font-weight: bold;
-    position: relative;
-    top: -2px;
-}
-
-.comment-count[data-count="0"] {
-    display: none;
-}
-
-/* Lightbox Styles */
-.lightbox-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.9);
-    z-index: 10000;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    animation: fadeIn 0.3s ease;
-}
-
-.lightbox-content {
-    background: white;
-    border-radius: 12px;
-    max-width: 90%;
-    max-height: 90%;
-    display: flex;
-    flex-direction: column;
-    animation: scaleIn 0.3s ease;
-}
-
-.lightbox-header {
-    padding: 20px 30px 0;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    border-bottom: 1px solid #eee;
-    padding-bottom: 15px;
-}
-
-.lightbox-body {
-    padding: 20px 30px;
-    text-align: center;
-    flex-grow: 1;
-    overflow: auto;
-}
-
-.lightbox-image {
-    max-width: 100%;
-    max-height: 500px;
-    object-fit: contain;
-    border-radius: 8px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+.btn-delete:hover,
+.btn-edit:hover,
+.comment-btn:hover {
+    transform: scale(1.1) !important;
+    transition: transform 0.2s ease !important;
 }
 
-.lightbox-footer {
-    padding: 15px 30px 25px;
-    border-top: 1px solid #eee;
-    display: flex;
-    justify-content: space-between;
-    gap: 10px;
+.comment-btn.comment-added::after {
+    animation: commentPulse 0.6s ease !important;
 }
 
-.btn-close-lightbox {
-    background: none;
-    border: none;
-    font-size: 24px;
-    color: #666;
-    cursor: pointer;
-    padding: 5px;
-    border-radius: 50%;
-    width: 40px;
-    height: 40px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.3s;
+/* ================================================================
+   KEYFRAMES ANIMATIONS
+   ================================================================ */
+@keyframes commentPulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.3); }
+    100% { transform: scale(1); }
 }
-
-.btn-close-lightbox:hover {
-    background: #f8f9fa;
-    color: #333;
-}
-
-/* Comments Styles */
-.comments-list {
-    max-height: 400px;
-    overflow-y: auto;
-}
-
-.comment-item {
-    border-bottom: 1px solid #eee;
-    padding: 15px 20px;
-    transition: background-color 0.3s ease;
-}
-
-.comment-item:hover {
-    background-color: #f8f9fa;
-}
-
-.comment-meta {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin-bottom: 8px;
-}
-
-.comment-author {
-    font-weight: 600;
-    color: #007bff;
-    font-size: 14px;
-}
-
-.comment-author.current-user {
-    color: #28a745;
-}
-
-.comment-type-badge {
-    font-size: 11px;
-    padding: 2px 8px;
-    border-radius: 12px;
-    font-weight: 600;
-    text-transform: uppercase;
-}
-
-.comment-priority {
-    font-size: 11px;
-    padding: 2px 6px;
-    border-radius: 10px;
-    font-weight: 600;
-}
-
-.priority-low { background: #d4edda; color: #155724; }
-.priority-medium { background: #fff3cd; color: #856404; }
-.priority-high { background: #f8d7da; color: #721c24; }
-.priority-critical { background: #721c24; color: white; }
-
-.type-quality { background: #e7f3ff; color: #0066cc; }
-.type-technical { background: #fff2e7; color: #cc6600; }
-.type-production { background: #e7ffe7; color: #006600; }
-.type-design { background: #f3e7ff; color: #6600cc; }
-.type-general { background: #f0f0f0; color: #666; }
-.type-urgent { background: #ffe7e7; color: #cc0000; }
 
-/* Animations */
 @keyframes fadeIn {
     from { opacity: 0; }
     to { opacity: 1; }
@@ -737,20 +487,16 @@
     50% { transform: scale(1.1); }
 }
 
-/* Notifications */
-.notification {
-    min-width: 300px;
-    margin-bottom: 10px;
-    animation: slideInRight 0.3s ease;
-}
-
 @keyframes slideInRight {
     from { transform: translateX(100%); opacity: 0; }
     to { transform: translateX(0); opacity: 1; }
 }
 
-/* Responsive */
+/* ================================================================
+   RESPONSIVE DESIGN
+   ================================================================ */
 @media (max-width: 768px) {
+    /* Upload buttons responsive */
     .upload-buttons {
         flex-direction: column;
         gap: 6px;
@@ -769,12 +515,42 @@
         font-size: 16px;
     }
 
-    .vr {
-        display: none;
+    /* Tabla responsive */
+    .images-table tbody td {
+        padding: 6px 4px !important;
+        font-size: 12px !important;
     }
 
+    .images-table td[data-column="acciones"] {
+        width: 200px !important;
+        min-width: 200px !important;
+        max-width: 200px !important;
+    }
+
+    .images-table td[data-column="acciones"] .btn {
+        padding: 3px 6px !important;
+        font-size: 10px !important;
+    }
+
+    /* Contador comentarios responsive */
+    .comment-btn::after {
+        top: -6px !important;
+        right: -4px !important;
+        font-size: 9px !important;
+        min-width: 14px !important;
+        height: 14px !important;
+    }
+
+    /* Lightbox responsive */
     .lightbox-content {
         max-width: 95%;
         max-height: 95%;
+    }
+
+    /* Comment meta responsive */
+    .comment-meta {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 6px;
     }
 }

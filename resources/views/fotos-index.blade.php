@@ -42,7 +42,7 @@
                 <!-- Separador visual -->
                 <div class="vr me-3" style="height: 60px;"></div>
 
-                <button class="btn btn-success" onclick="exportAll()">
+                <button class="btn btn-pink" onclick="exportAll()">
                     <i class="fas fa-download me-1"></i>
                     Exportar todo
                 </button>
@@ -194,20 +194,20 @@
                                 <td data-column="descripcion">CAM FORM UNIC</td>
                                 <td data-column="tipo-fotografia">PRENDA FINAL</td>
                                 <td data-column="acciones">
-                                    <button class="btn btn-danger btn-sm me-1" onclick="deleteImage(this)" title="Eliminar imagen">
+                                    <button class="btn btn-danger btn-sm me-1 btn-delete" onclick="deleteImage(this)" title="Eliminar imagen">
                                         <i class="fas fa-trash"></i> Eliminar
                                     </button>
-                                    <button class="btn btn-warning btn-sm me-1" onclick="editImage(this)" title="Editar información">
+                                    <button class="btn btn-warning btn-sm me-1 btn-edit" onclick="editImage(this)" title="Editar información">
                                         <i class="fas fa-edit"></i> Editar
                                     </button>
                                     <button class="btn btn-info btn-sm comment-btn" onclick="openCommentsModal(this)" title="Ver/Agregar comentarios">
                                         <i class="fas fa-comments"></i>
-                                        <span class="comment-count" data-count="2">2</span>
+                                        <span class="comment-count" data-count="0"></span>
                                     </button>
                                 </td>
                             </tr>
 
-                            <!-- Fila de ejemplo 2 - CORREGIDA -->
+                            <!-- Fila de ejemplo 2 -->
                             <tr data-image-id="img_example_2">
                                 <td data-column="imagen">
                                     <img src="images/shirt-green.jpg"
@@ -222,10 +222,10 @@
                                 <td data-column="descripcion">Muestra Validación</td>
                                 <td data-column="tipo-fotografia">MUESTRA</td>
                                 <td data-column="acciones">
-                                    <button class="btn btn-danger btn-sm me-1" onclick="deleteImage(this)" title="Eliminar imagen">
+                                    <button class="btn btn-danger btn-sm me-1 btn-delete" onclick="deleteImage(this)" title="Eliminar imagen">
                                         <i class="fas fa-trash"></i> Eliminar
                                     </button>
-                                    <button class="btn btn-warning btn-sm me-1" onclick="editImage(this)" title="Editar información">
+                                    <button class="btn btn-warning btn-sm me-1 btn-edit" onclick="editImage(this)" title="Editar información">
                                         <i class="fas fa-edit"></i> Editar
                                     </button>
                                     <button class="btn btn-info btn-sm comment-btn" onclick="openCommentsModal(this)" title="Ver/Agregar comentarios">
@@ -235,7 +235,7 @@
                                 </td>
                             </tr>
 
-                            <!-- Fila de ejemplo 3 - CORREGIDA -->
+                            <!-- Fila de ejemplo 3 -->
                             <tr data-image-id="img_example_3">
                                 <td data-column="imagen">
                                     <img src="images/shirt-white.jpg"
@@ -250,10 +250,10 @@
                                 <td data-column="descripcion">POLO BUSINESS</td>
                                 <td data-column="tipo-fotografia">PRENDA FINAL</td>
                                 <td data-column="acciones">
-                                    <button class="btn btn-danger btn-sm me-1" onclick="deleteImage(this)" title="Eliminar imagen">
+                                    <button class="btn btn-danger btn-sm me-1 btn-delete" onclick="deleteImage(this)" title="Eliminar imagen">
                                         <i class="fas fa-trash"></i> Eliminar
                                     </button>
-                                    <button class="btn btn-warning btn-sm me-1" onclick="editImage(this)" title="Editar información">
+                                    <button class="btn btn-warning btn-sm me-1 btn-edit" onclick="editImage(this)" title="Editar información">
                                         <i class="fas fa-edit"></i> Editar
                                     </button>
                                     <button class="btn btn-info btn-sm comment-btn" onclick="openCommentsModal(this)" title="Ver/Agregar comentarios">
@@ -484,8 +484,7 @@
 <!-- Meta tag para el usuario actual (para detección automática) -->
 <meta name="current-user" content="{{ auth()->user()->name ?? 'Usuario Sistema' }}">
 
-{{-- ARCHIVO Javascript para manejo de filtrado por fechas --}}
-<script src="{{ asset('js/fotos-index.js') }}"></script>
+{{-- ARCHIVO Javascript para manejo de la logica de fotos-index.blade --}}
 <script src="{{ asset('js/comentarios.js') }}"></script>
 
 <script>
@@ -636,15 +635,19 @@
                 <span class="badge bg-info">${imageData.tipoFotografia}</span>
             </td>
             <td data-column="acciones">
-                <button class="btn btn-danger btn-sm me-1" onclick="deleteImage(this)">
+                <button class="btn btn-danger btn-sm me-1 btn-delete" onclick="deleteImage(this)">
                     <i class="fas fa-trash"></i> Eliminar
                 </button>
-                <button class="btn btn-warning btn-sm me-1" onclick="editImage(this)">
+                <button class="btn btn-warning btn-sm me-1 btn-edit" onclick="editImage(this)">
                     <i class="fas fa-edit"></i> Editar
                 </button>
-                <button class="btn btn-success btn-sm" onclick="downloadImageFromRow(this)">
-                    <i class="fas fa-comment"></i>
-                </button>
+                <button class="btn btn-info btn-sm comment-btn"
+                    onclick="openCommentsModal(this)"
+                    title="Ver/Agregar comentarios"
+                    data-comment-count="0"
+                    style="background-color: #17a2b8 !important; border-color: #17a2b8 !important; color: white !important; position: relative;">
+                <i class="fas fa-comments"></i>
+            </button>
             </td>
         `;
 
@@ -746,7 +749,6 @@
         // ... otras inicializaciones
         initializeUploadButtons();
     });
-</>
-
+</script>
 
 @endsection

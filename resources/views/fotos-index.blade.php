@@ -39,9 +39,6 @@
                     </div>
                 </div>
 
-                <!-- Separador visual -->
-                <div class="vr me-3" style="height: 60px;"></div>
-
                 <button class="btn btn-pink" onclick="exportAll()">
                     <i class="fas fa-download me-1"></i>
                     Exportar todo
@@ -78,42 +75,62 @@
 </div>
 
 <!-- Filtro datos por fecha -->
-<div class="row mb-4">
-    <div class="col-12">
-        <div class="card">
-            <div class="card-body">
-                <div class="row align-items-end">
-                    <div class="col-md-4">
-                        <label class="form-label">Fecha creación de registro</label>
-                        <div class="input-group">
-                            <input type="date" class="form-control" id="fechaInicio">
-                            <span class="input-group-text">-</span>
-                            <input type="date" class="form-control" id="fechaFin">
-                        </div>
+<div class="row">
+    <!-- Columna filtro por fecha -->
+    <div class="col-md-3">
+    <div class="form-group">
+        <label class="form-label">
+            <i class="fas fa-calendar-alt me-1"></i>
+            Fecha creación de registro
+        </label>
+
+        <!-- Contenedor principal como en la imagen -->
+        <div class="date-range-unified" id="dateRangeUnified">
+            <!-- Display del rango seleccionado -->
+            <div class="date-range-display-unified" id="dateRangeDisplayUnified">
+                <i class="fas fa-clock me-2"></i>
+                <span id="dateRangeTextUnified">Seleccione fechas</span>
+                <i class="fas fa-chevron-down ms-auto"></i>
+            </div>
+
+            <!-- Panel de calendarios (oculto inicialmente) -->
+            <div class="date-calendars-panel" id="dateCalendarsPanel" style="display: none;">
+                <div class="calendars-container">
+                    <div class="calendar-section">
+                        <label class="calendar-label">Fecha inicio</label>
+                        <input type="date" class="form-control calendar-input" id="fechaInicioUnified">
                     </div>
-                    <div class="col-md-6">
-                        <label class="form-label">Buscar Ord. SIT / P.O / O.C</label>
-                        <div class="input-group">
-                            <input type="text" class="form-control" placeholder="Buscar..." id="searchInput">
-                            <button class="btn btn-primary" onclick="searchRecords()">
-                                <i class="fas fa-search"></i>
-                            </button>
-                            <button class="btn btn-outline-danger" onclick="clearSearch()">
-                                <i class="fas fa-times"></i>
-                            </button>
-                        </div>
+                    <div class="calendar-separator">-</div>
+                    <div class="calendar-section">
+                        <label class="calendar-label">Fecha final</label>
+                        <input type="date" class="form-control calendar-input" id="fechaFinUnified">
                     </div>
-                    <div class="col-md-2">
-                        <button class="btn btn-info w-100" onclick="applyDateFilter()">
-                            <i class="fas fa-calendar-check me-1"></i>
-                            Aplicar
-                        </button>
-                    </div>
+                </div>
+                <div class="calendar-status" id="calendarStatus">
+                    <small class="text-muted">Selecciona ambas fechas para aplicar filtro</small>
                 </div>
             </div>
         </div>
     </div>
 </div>
+
+    <!-- Columna búsqueda -->
+    <div class="col-md-6">
+        <div class="form-group">
+            <label class="form-label">Buscar Ord. SIT / P.O / O.C</label>
+            <div class="input-group">
+                <input type="text" class="form-control" placeholder="Buscar..." id="searchInput">
+                <button class="btn btn-primary" onclick="searchRecords()">
+                    <i class="fas fa-search"></i>
+                </button>
+                <button class="btn btn-outline-danger" onclick="clearSearch()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 
 <!-- Datos Tabla -->
 <div class="row">
@@ -156,7 +173,6 @@
                             <!-- Fila de filtros -->
                             <tr class="bg-light">
                                 <td data-column="imagen">
-                                    <input type="text" class="form-control form-control-sm" placeholder="Buscar">
                                 </td>
                                 <td data-column="orden-sit">
                                     <input type="text" class="form-control form-control-sm" placeholder="Buscar">
@@ -171,10 +187,18 @@
                                     <input type="text" class="form-control form-control-sm" placeholder="Buscar">
                                 </td>
                                 <td data-column="tipo-fotografia">
-                                    <input type="text" class="form-control form-control-sm" placeholder="Buscar">
+                                    <div class="btn-group">
+                                        <button class="btn btn-buscar dropdown-toggle" type="button" data-bs-toggle="dropdown" style="Background-color: white; border: 1px solid #ccc;">
+                                            <i class="fas me-1"></i>
+                                            Buscar
+                                        </button>
+                                        <ul class="dropdown-menu" id="columnsDropdown">
+                                            <li><label class="dropdown-item"><input type="checkbox" checked class="me-2" data-column="Tipo fotografia">Muestra</label></li>
+                                            <li><label class="dropdown-item"><input type="checkbox" checked class="me-2" data-column="Tipo fotografia">Prenda final</label></li>
+                                        </ul>
+                                    </div>
                                 </td>
                                 <td data-column="acciones">
-                                    <input type="text" class="form-control form-control-sm" placeholder="Buscar">
                                 </td>
                             </tr>
                         </thead>
@@ -485,7 +509,10 @@
 <meta name="current-user" content="{{ auth()->user()->name ?? 'Usuario Sistema' }}">
 
 {{-- ARCHIVO Javascript para manejo de la logica de fotos-index.blade --}}
-<script src="{{ asset('js/comentarios.js') }}"></script>
+<script src="{{ asset('js/fotos-index.js') }}"></script>
+
+<!-- Archivo JS para responsive en dispositivos moviles -->
+<script src="{{ asset('js/mobile-cards.js') }}"></script>
 
 <script>
     // ===== SCRIPT FUNCIONALIDAD SUBIDA DE IMAGENES =====
@@ -732,6 +759,7 @@
         return '4200' + Math.floor(Math.random() * 9000000 + 1000000);
     }
 
+    // En caso de querer descargar la imagen
     function downloadImageFromRow(button) {
         const row = button.closest('tr');
         const img = row.querySelector('img');

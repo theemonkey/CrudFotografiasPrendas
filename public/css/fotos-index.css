@@ -1,216 +1,456 @@
 /*!
- * Fotografías de Prendas - Estilos Principales OPTIMIZADO
+ * RESPONSIVE DESIGN
+ * Optimizado para dispositivos desde 320px hasta 1920px
  */
 
 /* ================================================================
-   UPLOAD BUTTONS STYLES
+   RESET Y BASE MOBILE FIRST (320px+)
    ================================================================ */
+
+/* Variables CSS para consistencia */
+:root {
+    --primary-color: #007bff;
+    --secondary-color: #6c757d;
+    --success-color: #28a745;
+    --danger-color: #dc3545;
+    --warning-color: #ffc107;
+    --info-color: #17a2b8;
+    --light-color: #f8f9fa;
+    --dark-color: #343a40;
+
+    --spacing-xs: 4px;
+    --spacing-sm: 8px;
+    --spacing-md: 16px;
+    --spacing-lg: 24px;
+    --spacing-xl: 32px;
+
+    --border-radius: 6px;
+    --box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+/* Base container responsive */
+.container-fluid {
+    padding-left: var(--spacing-sm) !important;
+    padding-right: var(--spacing-sm) !important;
+}
+
+/* ================================================================
+   HEADER Y TÍTULO - MÓVIL PRIMERO
+   ================================================================ */
+
+.page-header {
+    margin-bottom: var(--spacing-md);
+    text-align: center;
+}
+
+.page-header h1 {
+    font-size: 1.5rem !important;
+    margin-bottom: var(--spacing-sm);
+    line-height: 1.3;
+}
+
+.page-header .subtitle {
+    font-size: 0.875rem !important;
+    color: var(--secondary-color);
+    margin-bottom: var(--spacing-md);
+}
+
+/* ================================================================
+   BOTONES DE SUBIDA - MOBILE FIRST
+   ================================================================ */
+
 .upload-section {
-    min-width: 140px;
+    margin-bottom: var(--spacing-md);
+    width: 100%;
 }
 
 .upload-buttons {
     display: flex;
-    gap: 8px;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+    width: 100%;
 }
 
 .upload-btn {
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
     align-items: center;
     justify-content: center;
-    padding: 12px 16px;
-    border: 2px dashed #007bff;
-    border-radius: 8px;
+    padding: var(--spacing-md);
+    border: 2px dashed var(--primary-color);
+    border-radius: var(--border-radius);
     background: #f8f9ff;
     cursor: pointer;
     transition: all 0.3s ease;
-    position: relative;
-    min-width: 65px;
+    width: 100%;
+    min-height: 50px;
     text-align: center;
+}
+
+.upload-btn i {
+    font-size: 18px;
+    color: var(--primary-color);
+    margin-right: var(--spacing-sm);
+}
+
+.upload-btn span {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--primary-color);
 }
 
 .upload-btn:hover {
     border-color: #0056b3;
     background: #e7f1ff;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 123, 255, 0.2);
-}
-
-.upload-btn i {
-    font-size: 18px;
-    color: #007bff;
-    margin-bottom: 4px;
-    transition: color 0.3s ease;
-}
-
-.upload-btn span {
-    font-size: 11px;
-    font-weight: 600;
-    color: #007bff;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-}
-
-.upload-btn.uploading {
-    border-color: #ffc107;
-    background: #fffbf0;
-    pointer-events: none;
-}
-
-.upload-btn.uploading i {
-    animation: pulse 1.5s infinite;
-    color: #ffc107;
-}
-
-.upload-btn.active {
-    border-color: #28a745;
-    background: #f8fff9;
+    transform: none; /* Sin transform en móvil */
 }
 
 /* ================================================================
-   TABLA PRINCIPAL - ESTRUCTURA Y BORDES
+   SECCIÓN DE FILTROS - MOBILE STACK
    ================================================================ */
-.images-table {
-    border-collapse: collapse !important;
-    border-spacing: 0 !important;
+
+.filters-section {
+    margin-bottom: var(--spacing-md);
+}
+
+.filters-row {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+}
+
+.filter-group {
+    width: 100%;
+}
+
+.filter-group label {
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: var(--spacing-xs);
+    display: block;
+}
+
+/* ================================================================
+   BOTONES DE ACCIÓN - MOBILE STACK
+   ================================================================ */
+
+.action-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+    margin-bottom: var(--spacing-md);
+    width: 100%;
+}
+
+.action-buttons .btn {
+    width: 100%;
+    padding: 12px;
+    font-size: 14px;
+    border-radius: var(--border-radius);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-sm);
+}
+
+/* ================================================================
+   FILTRO DE FECHAS - MÓVIL OPTIMIZADO
+   ================================================================ */
+
+.date-range-unified {
+    position: relative;
+    width: 100%;
+}
+
+.date-range-display-unified {
+    background: #fff;
+    border: 1px solid #ced4da;
+    border-radius: var(--border-radius);
+    padding: 12px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    min-height: 48px; /* Más alto para toques en móvil */
+    font-size: 14px;
+    color: #495057;
+    user-select: none;
+    width: 100%;
+}
+
+.date-calendars-panel {
+    position: fixed !important;
+    top: 50% !important;
+    left: 50% !important;
+    transform: translate(-50%, -50%) !important;
+    z-index: 9999 !important;
+    background: white !important;
+    border: 1px solid #ced4da !important;
+    border-radius: 12px !important;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3) !important;
+    padding: var(--spacing-md) !important;
+    width: calc(100vw - 32px) !important;
+    max-width: 350px !important;
+    max-height: 80vh !important;
+    overflow-y: auto !important;
+}
+
+.date-calendars-panel::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: -1;
+}
+
+.calendars-container {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+    margin-bottom: var(--spacing-md);
+}
+
+.calendar-section {
+    width: 100%;
+}
+
+.calendar-label {
+    display: block;
+    font-size: 12px;
+    color: var(--secondary-color);
+    margin-bottom: var(--spacing-xs);
+    font-weight: 500;
+}
+
+.calendar-input {
+    font-size: 16px !important; /* Evita zoom en iOS */
+    padding: 12px !important;
+    border: 1px solid #ced4da !important;
+    border-radius: var(--border-radius) !important;
     width: 100% !important;
-    table-layout: fixed !important;
+    min-height: 48px !important; /* Touch friendly */
+    box-sizing: border-box !important;
 }
 
-/* Headers */
-.images-table thead th {
-    border-bottom: 2px solid #e9ecef !important;
-    border-left: none !important;
-    border-right: none !important;
-    border-top: none !important;
-    background-color: #f8f9fa !important;
-    padding: 12px 8px !important;
+.calendar-separator {
+    display: none; /* Oculto en móvil stack */
 }
 
-/* Filas del tbody */
-.images-table tbody tr {
+/* ================================================================
+   BÚSQUEDA - MÓVIL OPTIMIZADO
+   ================================================================ */
+
+.search-section {
+    margin-bottom: var(--spacing-md);
+}
+
+.search-input-group {
+    display: flex;
+    gap: var(--spacing-xs);
+    width: 100%;
+}
+
+.search-input-group input {
+    flex: 1;
+    font-size: 16px !important; /* Evita zoom en iOS */
+    padding: 12px !important;
+    border: 1px solid #ced4da !important;
+    border-radius: var(--border-radius) !important;
+    min-height: 48px !important;
+}
+
+.search-input-group .btn {
+    padding: 12px 16px !important;
+    min-height: 48px !important;
+    flex-shrink: 0;
+}
+
+/* ================================================================
+   TABLA - MÓVIL CARD LAYOUT
+   ================================================================ */
+
+.table-container {
+    width: 100%;
+    overflow: hidden;
+}
+
+/* Ocultar tabla tradicional en móvil */
+.images-table {
+    display: none !important;
+}
+
+/* Solo mostrar tabla en tablets/desktop */
+@media screen and (min-width: 768px) {
+    .images-table {
+        display: table !important;
+    }
+}
+
+/* Layout de cards para móvil */
+.mobile-cards-container.mobile-only {
+    display: block !important;
+    width: 100% !important;
+    min-height: 100px !important;
+    background: transparent !important;
+}
+
+/* En tablets/desktop, ocultar cards */
+@media screen and (min-width: 767px) {
+    .table-responsive.tablet-up {
+        display: none !important;
+    }
+
+    .mobile-cards-container.mobile-only {
+        display: block !important;
+    }
+}
+
+/*  MOSTRAR tabla en desktop */
+@media screen and (min-width: 768px) {
+    .table-responsive.tablet-up {
+        display: block !important;
+    }
+
+    .mobile-cards-container.mobile-only {
+        display: none !important;
+    }
+}
+
+.mobile-card {
+    background: white !important;
+    border: 1px solid #e9ecef !important;
+    border-radius: 8px !important;
+    margin-bottom: 16px !important;
+    padding: 16px !important;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1) !important;
+    display: block !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+}
+
+.mobile-card-header {
+    display: flex !important;
+    align-items: center !important;
+    gap: 12px !important;
+    margin-bottom: 12px !important;
+    padding-bottom: 12px !important;
     border-bottom: 1px solid #f0f0f0 !important;
-    transition: background-color 0.2s ease !important;
-    background-color: transparent !important;
-    position: relative !important;
 }
 
-.images-table tbody tr:hover {
-    background-color: #f8f9fa !important;
+.mobile-card-image {
+    width: 60px !important;
+    height: 60px !important;
+    border-radius: 6px !important;
+    object-fit: cover !important;
+    cursor: pointer !important;
+    flex-shrink: 0 !important;
 }
 
-.images-table tbody tr:last-child {
+.mobile-card-info {
+    flex: 1 !important;
+    min-width: 0 !important;
+}
+
+.mobile-card-title {
+    font-weight: 600 !important;
+    font-size: 16px !important;
+    color: #343a40 !important;
+    margin-bottom: 4px !important;
+    word-break: break-word !important;
+}
+
+.mobile-card-subtitle {
+    font-size: 14px !important;
+    color: #6c757d !important;
+    word-break: break-word !important;
+}
+
+.mobile-card-body {
+    margin-bottom: 12px !important;
+}
+
+.mobile-card-field {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: flex-start !important;
+    padding: 8px 0 !important;
+    border-bottom: 1px solid #f8f9fa !important;
+    font-size: 14px !important;
+}
+
+.mobile-card-field:last-child {
     border-bottom: none !important;
 }
 
-/* Celdas - sin bordes laterales */
-.images-table th,
-.images-table td {
-    border-left: none !important;
-    border-right: none !important;
-    border-top: none !important;
-}
-
-.images-table tbody td {
-    margin: 0 !important;
-    padding: 8px !important;
-    vertical-align: middle !important;
-    box-sizing: border-box !important;
-    position: relative !important;
-    z-index: 2 !important;
-}
-
-/* Fila de filtros */
-.images-table tr.bg-light {
-    border-bottom: 1px solid #e9ecef !important;
-    background-color: #f8f9fa !important;
-}
-
-.images-table tr.bg-light td {
-    padding: 8px !important;
-    background-color: #f8f9fa !important;
-}
-
-/* ================================================================
-   COLUMNA DE ACCIONES - BOTONES HORIZONTALES
-   ================================================================ */
-/* Dimensiones fijas para la columna */
-.images-table th[data-column="acciones"],
-.images-table td[data-column="acciones"] {
-    width: 220px !important;
-    min-width: 220px !important;
-    max-width: 220px !important;
-    white-space: nowrap !important;
-    overflow: hidden !important;
-    padding: 8px !important;
-    vertical-align: middle !important;
-}
-
-/* Contenedor flex para botones horizontales */
-.images-table td[data-column="acciones"] .d-flex {
-    display: flex !important;
-    flex-direction: row !important;
-    align-items: center !important;
-    justify-content: flex-start !important;
-    gap: 4px !important;
-    flex-wrap: nowrap !important;
-    margin: 0 !important;
-    padding: 0 !important;
-    background: transparent !important;
-    width: 100% !important;
-    height: 100% !important;
-    min-height: 40px !important;
-}
-
-/* Si no hay contenedor d-flex, convertir la celda en flex */
-.images-table td[data-column="acciones"]:not(:has(.d-flex)) {
-    display: flex !important;
-    flex-direction: row !important;
-    align-items: center !important;
-    gap: 4px !important;
-    flex-wrap: nowrap !important;
-}
-
-/* Estilos de botones individuales */
-.images-table td[data-column="acciones"] .btn {
-    flex-shrink: 0 !important;
-    margin: 0 !important;
-    padding: 4px 8px !important;
-    font-size: 11px !important;
-    line-height: 1.2 !important;
-    border-radius: 3px !important;
+.mobile-card-field-label {
     font-weight: 500 !important;
-    display: inline-flex !important;
+    color: #6c757d !important;
+    flex-shrink: 0 !important;
+    margin-right: 12px !important;
+    min-width: 60px !important;
+}
+
+.mobile-card-field-value {
+    text-align: right !important;
+    word-break: break-word !important;
+    flex: 1 !important;
+    color: #343a40 !important;
+}
+
+.mobile-card-actions {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 8px !important;
+    margin-top: 12px !important;
+    padding-top: 12px !important;
+    border-top: 1px solid #f0f0f0 !important;
+}
+
+.mobile-card-actions .btn {
+    flex: 1 !important;
+    min-width: 0 !important;
+    padding: 10px 8px !important;
+    font-size: 12px !important;
+    border-radius: 6px !important;
+    display: flex !important;
     align-items: center !important;
     justify-content: center !important;
-    min-width: auto !important;
-    white-space: nowrap !important;
+    gap: 4px !important;
+    text-align: center !important;
 }
 
-/* Colores específicos de botones */
-.images-table td[data-column="acciones"] .btn-danger {
-    background-color: #dc3545 !important;
-    border-color: #dc3545 !important;
+/* =====================================================================================
+   ESTILOS EXTRAS ->>>>>  BOTON EXPORTAR TODO - Botones(delete,edit,comment)
+   ===================================================================================== */
+.btn-pink {
+    background-color: #e91e63 !important;
+    border-color: #e91e63 !important;
     color: white !important;
 }
 
-.images-table td[data-column="acciones"] .btn-warning {
-    background-color: #ffc107 !important;
-    border-color: #ffc107 !important;
-    color: #212529 !important;
+.btn-pink:hover {
+    background-color: #c2185b !important;
+    border-color: #c2185b !important;
+    color: white !important;
+}
+/*----->>>>> Botones(delete,edit,comment)  */
+.btn-delete:hover,
+.btn-edit:hover,
+.comment-btn:hover {
+    transform: scale(1.1) !important;
+    transition: transform 0.2s ease !important;
 }
 
-.images-table td[data-column="acciones"] .btn-info {
-    background-color: #17a2b8 !important;
-    border-color: #17a2b8 !important;
-    color: white !important;
+.comment-btn.comment-added::after {
+    animation: commentPulse 0.6s ease !important;
 }
 
 /* ================================================================
-   SISTEMA DE COMENTARIOS
+   SISTEMA DE COMENTARIOS ---> VISUAL
    ================================================================ */
-/* Ocultar el contador rojo viejo */
 .comment-count {
     display: none !important;
 }
@@ -259,7 +499,7 @@
 }
 
 /* ================================================================
-   CONTADOR DE COMENTARIOS MEJORADO
+   CONTADOR DE COMENTARIOS
    ================================================================ */
 .comment-btn {
     position: relative !important;
@@ -268,7 +508,6 @@
     justify-content: center !important;
 }
 
-/* Contador encima del ícono */
 .comment-btn::after {
     content: attr(data-comment-count) !important;
     position: absolute !important;
@@ -291,29 +530,24 @@
     z-index: 10 !important;
 }
 
-/* Ocultar cuando es 0 o vacío */
 .comment-btn[data-comment-count="0"]::after,
 .comment-btn[data-comment-count=""]::after,
 .comment-btn:not([data-comment-count])::after {
     display: none !important;
 }
 
-/* Mostrar solo cuando hay comentarios */
 .comment-btn[data-comment-count]:not([data-comment-count="0"])::after {
     display: flex !important;
 }
 
 /* ================================================================
-   PRIORITY COLORS
+   -->> PRIORIDAD; COLORES TIPO COMENTARIO
    ================================================================ */
 .priority-low { background: #d4edda; color: #155724; }
 .priority-medium { background: #fff3cd; color: #856404; }
 .priority-high { background: #f8d7da; color: #721c24; }
 .priority-critical { background: #721c24; color: white; }
 
-/* ================================================================
-   TYPE COLORS
-   ================================================================ */
 .type-quality { background: #e7f3ff; color: #0066cc; }
 .type-technical { background: #fff2e7; color: #cc6600; }
 .type-production { background: #e7ffe7; color: #006600; }
@@ -322,7 +556,7 @@
 .type-urgent { background: #ffe7e7; color: #cc0000; }
 
 /* ================================================================
-   LIGHTBOX
+   LIGHTBOX --> MODAL PARA VER IMAGEN
    ================================================================ */
 .lightbox-overlay {
     position: fixed;
@@ -402,7 +636,7 @@
 }
 
 /* ================================================================
-   UTILITY CLASSES
+   ESTILOS -->> Visual cuando se sube o carga una imagen
    ================================================================ */
 .upload-user-badge {
     font-size: 10px;
@@ -427,6 +661,24 @@
     color: white !important;
 }
 
+.btn-buscar {
+    background-color: #fff;
+    border: 1px solid #ced4da;
+    color: #212529;
+    line-height: 1.5;
+    padding: 0.25rem 0.5rem;
+    height: calc(1.8125rem + 2px);
+}
+
+.btn-buscar:hover,
+.btn-buscar:focus,
+.btn-buscar:active {
+    background-color: #f8f9fa;
+    border-color: #adb5bd;
+    color: #212529;
+    box-shadow: none;
+}
+
 .card {
     border: 1px solid #e9ecef !important;
     box-shadow: 0 1px 3px rgba(0,0,0,0.1) !important;
@@ -449,108 +701,245 @@
 }
 
 /* ================================================================
-   ANIMACIONES Y EFECTOS HOVER
+   COMMENT BUTTON EN MÓVIL
    ================================================================ */
 
-.btn-delete:hover,
-.btn-edit:hover,
-.comment-btn:hover {
-    transform: scale(1.1) !important;
-    transition: transform 0.2s ease !important;
+.mobile-card-actions .comment-btn {
+    position: relative;
 }
 
-.comment-btn.comment-added::after {
-    animation: commentPulse 0.6s ease !important;
+.mobile-card-actions .comment-btn::after {
+    content: attr(data-comment-count);
+    position: absolute;
+    top: -8px;
+    right: -6px;
+    background: var(--danger-color);
+    color: white;
+    border-radius: 50%;
+    padding: 2px 5px;
+    font-size: 10px;
+    font-weight: bold;
+    line-height: 1;
+    min-width: 16px;
+    height: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid white;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+
+.mobile-card-actions .comment-btn[data-comment-count="0"]::after,
+.mobile-card-actions .comment-btn[data-comment-count=""]::after,
+.mobile-card-actions .comment-btn:not([data-comment-count])::after {
+    display: none;
 }
 
 /* ================================================================
-   KEYFRAMES ANIMATIONS
+   PAGINACIÓN - MÓVIL
    ================================================================ */
-@keyframes commentPulse {
-    0% { transform: scale(1); }
-    50% { transform: scale(1.3); }
-    100% { transform: scale(1); }
+
+.pagination-container {
+    margin-top: var(--spacing-md);
+    text-align: center;
 }
 
-@keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
+.pagination {
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: var(--spacing-xs);
 }
 
-@keyframes scaleIn {
-    from { opacity: 0; transform: scale(0.8); }
-    to { opacity: 1; transform: scale(1); }
-}
-
-@keyframes pulse {
-    0%, 100% { transform: scale(1); }
-    50% { transform: scale(1.1); }
-}
-
-@keyframes slideInRight {
-    from { transform: translateX(100%); opacity: 0; }
-    to { transform: translateX(0); opacity: 1; }
+.pagination .page-link {
+    padding: 8px 12px;
+    font-size: 14px;
+    border-radius: var(--border-radius);
+    min-width: 40px;
+    min-height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 /* ================================================================
-   RESPONSIVE DESIGN
+   BREAKPOINTS RESPONSIVE
    ================================================================ */
-@media (max-width: 768px) {
-    /* Upload buttons responsive */
+
+/* Tablets pequeñas (576px+) */
+@media (min-width: 576px) {
+    .container-fluid {
+        padding-left: var(--spacing-md) !important;
+        padding-right: var(--spacing-md) !important;
+    }
+
     .upload-buttons {
-        flex-direction: column;
-        gap: 6px;
+        flex-direction: row;
+        justify-content: center;
     }
 
     .upload-btn {
+        flex: 1;
+        max-width: 150px;
+    }
+
+    .action-buttons {
         flex-direction: row;
-        padding: 8px 12px;
-        min-width: auto;
+        flex-wrap: wrap;
+    }
+
+    .action-buttons .btn {
+        flex: 1;
+        min-width: 120px;
+    }
+
+    .mobile-card-actions {
+        justify-content: flex-end;
+    }
+
+    .mobile-card-actions .btn {
+        flex: none;
+        min-width: 80px;
+    }
+}
+
+/* Tablets (768px+) */
+@media (min-width: 768px) {
+    .page-header h1 {
+        font-size: 2rem !important;
+    }
+
+    .filters-row {
+        flex-direction: row;
+        align-items: flex-end;
+    }
+
+    .filter-group {
+        flex: 1;
+    }
+
+    .date-calendars-panel {
+        position: absolute !important;
+        top: 100% !important;
+        left: 0 !important;
+        right: 0 !important;
+        transform: none !important;
+        width: 100% !important;
+        max-width: 400px !important;
+        max-height: none !important;
+    }
+
+    .date-calendars-panel::before {
+        display: none;
+    }
+
+    .calendars-container {
+        flex-direction: row;
+        align-items: flex-end;
+    }
+
+    .calendar-separator {
+        display: block;
+        margin-top: 20px;
+    }
+
+    /* Mostrar tabla en tablets */
+    .mobile-cards-container {
+        display: none;
+    }
+
+    .images-table {
+        display: table;
         width: 100%;
+        border-collapse: collapse;
     }
 
-    .upload-btn i {
-        margin-bottom: 0;
-        margin-right: 6px;
-        font-size: 16px;
-    }
-
-    /* Tabla responsive */
-    .images-table tbody td {
-        padding: 6px 4px !important;
-        font-size: 12px !important;
+    .images-table th,
+    .images-table td {
+        padding: 8px 12px;
+        border-bottom: 1px solid #e9ecef;
+        vertical-align: middle;
     }
 
     .images-table td[data-column="acciones"] {
-        width: 200px !important;
-        min-width: 200px !important;
-        max-width: 200px !important;
+        width: auto;
     }
 
     .images-table td[data-column="acciones"] .btn {
-        padding: 3px 6px !important;
-        font-size: 10px !important;
+        padding: 4px 8px;
+        font-size: 11px;
+        margin-right: 4px;
+    }
+}
+
+/* Desktop (992px+) */
+@media (min-width: 992px) {
+    .container-fluid {
+        padding-left: var(--spacing-lg) !important;
+        padding-right: var(--spacing-lg) !important;
     }
 
-    /* Contador comentarios responsive */
-    .comment-btn::after {
-        top: -6px !important;
-        right: -4px !important;
-        font-size: 9px !important;
-        min-width: 14px !important;
-        height: 14px !important;
+    .upload-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 123, 255, 0.2);
     }
 
-    /* Lightbox responsive */
-    .lightbox-content {
-        max-width: 95%;
-        max-height: 95%;
+    .images-table td[data-column="acciones"] {
+        width: 220px;
+        min-width: 220px;
+        max-width: 220px;
+    }
+}
+
+/* Desktop grande (1200px+) */
+@media (min-width: 1200px) {
+    .container-fluid {
+        max-width: 1400px;
+        margin: 0 auto;
+    }
+}
+
+/* ================================================================
+   UTILIDADES RESPONSIVE
+   ================================================================ */
+
+/* Ocultar elementos según breakpoint */
+.mobile-only {
+    display: block !important;
+}
+
+.tablet-up {
+    display: none !important;
+}
+
+@media screen and (min-width: 768px) {
+    .mobile-only {
+        display: none !important;
     }
 
-    /* Comment meta responsive */
-    .comment-meta {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 6px;
+    .tablet-up {
+        display: block !important;
     }
+}
+
+/* Espaciado responsive */
+.mb-responsive {
+    margin-bottom: var(--spacing-sm);
+}
+
+@media (min-width: 768px) {
+    .mb-responsive {
+        margin-bottom: var(--spacing-md);
+    }
+}
+
+/* Touch targets mínimos */
+.touch-target {
+    min-height: 44px;
+    min-width: 44px;
+}
+
+/* Scroll horizontal en contenedores pequeños */
+.scroll-horizontal {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
 }

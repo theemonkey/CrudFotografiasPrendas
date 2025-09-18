@@ -1,83 +1,951 @@
+/*!
+ * Fotografías de Prendas - Sistema Completo
+ * Description: Sistema completo para gestión de fotografías de prendas con comentarios
+ *
+ * NOTA: todo el javascript funcional es este
+ */
 
-// LOGICA JS REFERENTE AL CONTENIDO DEL INDEX --->> DEscomentar si se requiere(codigo para filtrado por fechas)
-//ARCHIVO Javascript para manejo de filtrado por fechas
-/*document.addEventListener("DOMContentLoaded", function () {
-    console.log(' Inicializando Fotografías de Prendas...');
+// ================================================================================================
+// VARIABLES GLOBALES Y CONFIGURACIÓN
+// ================================================================================================
 
-    // Initialize all components
-    initializeDatePickers();
-    initializeColumnToggle();
-    initializeLightbox();
-    initializeNotifications();
-    initializeSearch();
+let currentUser = null;
+let currentImageData = null;
+let commentsData = new Map();
+let bootstrapReady = false;
+let uploadInProgress = false; // ✅ NUEVO: Prevenir subidas múltiples
+let uploadCount = 0; // Nuevo para validar carga de imagenes duplicadas (corregir, aun se suben varias imagenes)
+let commentCounterInitialized = false;
 
-    console.log(' Fotografías de Prendas inicializado correctamente');
-});
+const CONFIG = {
+    MAX_FILE_SIZE: 10 * 1024 * 1024,
+    MAX_COMMENT_LENGTH: 500,
+    DEBUG_MODE: true
+};
 
-// ===== DATE PICKER FUNCTIONALITY =====
-function initializeDatePickers() {
-    const fechaInicio = document.getElementById('fechaInicio');
-    const fechaFin = document.getElementById('fechaFin');
+// ================================================================================================
+// FUNCIÓN DE DEBUG AGRESIVO
+// ================================================================================================
 
-    // Set default dates
-    const today = new Date();
-    const thirtyDaysAgo = new Date(today.getTime() - (30 * 24 * 60 * 60 * 1000));
+function debugSystem() {
+    console.log('🔍 === DEBUG SISTEMA ===');
+    console.log('📊 Upload en progreso:', uploadInProgress);
+    console.log('📊 Upload count:', uploadCount);
+    console.log('📊 Bootstrap ready:', bootstrapReady);
+    console.log('📊 Elementos upload:', {
+        cameraUpload: !!document.getElementById('cameraUpload'),
+        fileUpload: !!document.getElementById('fileUpload'),
+        cameraInput: !!document.getElementById('cameraInput'),
+        fileInput: !!document.getElementById('fileInput')
+    });
 
-    if (fechaInicio) {
-        fechaInicio.value = thirtyDaysAgo.toISOString().split('T')[0];
-    }
+    const commentButtons = document.querySelectorAll('.btn-info');
+    console.log('📊 Botones comentarios encontrados:', commentButtons.length);
+    commentButtons.forEach((btn, index) => {
+        console.log(`  - Botón ${index}:`, {
+            onclick: btn.getAttribute('onclick'),
+            classes: btn.className,
+            color: window.getComputedStyle(btn).backgroundColor
+        });
+    });
 
-    if (fechaFin) {
-        fechaFin.value = today.toISOString().split('T')[0];
-    }
-
-    console.log(' Date pickers inicializados');
+    console.log('🔍 === FIN DEBUG ===');
 }
 
-function applyDateFilter() {
-    const fechaInicio = document.getElementById('fechaInicio').value;
-    const fechaFin = document.getElementById('fechaFin').value;
+// ================================================================================================
+// LIMPIEZA TOTAL DE EVENTOS
+// ================================================================================================
 
-    if (!fechaInicio || !fechaFin) {
-        showNotification('Por favor selecciona ambas fechas', 'warning');
-        return;
-    }
+function clearAllUploadEvents() {
+    console.log('🧹 Limpiando TODOS los eventos de subida...');
 
-    if (new Date(fechaInicio) > new Date(fechaFin)) {
-        showNotification('La fecha de inicio debe ser anterior a la fecha fin', 'error');
-        return;
-    }
+    const elements = ['cameraUpload', 'fileUpload', 'cameraInput', 'fileInput'];
 
-    console.log(' Aplicando filtro de fechas:', fechaInicio, 'a', fechaFin);
-    showNotification('Filtro de fechas aplicado correctamente', 'success');
-
-    // Aquí iría la lógica para filtrar los datos
-    // filterTableByDate(fechaInicio, fechaFin);
-}
-
-// ===== COLUMN TOGGLE FUNCTIONALITY =====
-function initializeColumnToggle() {
-    const dropdown = document.getElementById('columnsDropdown');
-
-    if (!dropdown) {
-        console.warn(' Dropdown de columnas no encontrado');
-        return;
-    }
-
-    dropdown.addEventListener('change', function (e) {
-        if (e.target.type === 'checkbox' && e.target.dataset.column) {
-            const columnName = e.target.dataset.column;
-            const isVisible = e.target.checked;
-
-            toggleColumn(columnName, isVisible);
-            showNotification(
-                `Columna "${getColumnDisplayName(columnName)}" ${isVisible ? 'mostrada' : 'ocultada'}`,
-                'info'
-            );
+    elements.forEach(id => {
+        const element = document.getElementById(id);
+        if (element) {
+            // Clonar elemento para eliminar TODOS los event listeners
+            const newElement = element.cloneNode(true);
+            element.parentNode.replaceChild(newElement, element);
+            console.log(`🧹 Elemento ${id} clonado y reemplazado`);
         }
     });
 
-    console.log(' Control de columnas inicializado');
+    console.log('✅ Todos los eventos de subida limpiados');
+}
+
+// ================================================================================================
+// VERIFICACIÓN ROBUSTA DE BOOTSTRAP
+// ================================================================================================
+
+function waitForBootstrap() {
+    return new Promise((resolve, reject) => {
+        let attempts = 0;
+        const maxAttempts = 50;
+
+        function checkBootstrap() {
+            attempts++;
+            console.log(`🔍 Verificando Bootstrap - Intento ${attempts}/${maxAttempts}`);
+
+            if (typeof bootstrap !== 'undefined' && bootstrap.Modal) {
+                console.log('✅ Bootstrap encontrado y funcional');
+                bootstrapReady = true;
+                resolve(true);
+                return;
+            }
+
+            if (attempts >= maxAttempts) {
+                console.error('❌ Bootstrap no se cargó después de múltiples intentos');
+                reject(new Error('Bootstrap no disponible'));
+                return;
+            }
+
+            setTimeout(checkBootstrap, 100);
+        }
+
+        checkBootstrap();
+    });
+}
+
+// ================================================================================================
+// INICIALIZACIÓN CON ESPERA DE BOOTSTRAP
+// ================================================================================================
+
+document.addEventListener("DOMContentLoaded", function () {
+    console.log('🚀 DOM cargado, esperando Bootstrap...');
+
+    if (window.fotografiasSystemInitialized) {
+        console.warn('⚠️ Sistema ya inicializado');
+        return;
+    }
+
+    waitForBootstrap()
+        .then(() => {
+            console.log('✅ Bootstrap confirmado, iniciando sistema...');
+            initializeSystem();
+        })
+        .catch((error) => {
+            console.error('❌ Error esperando Bootstrap:', error);
+            bootstrapReady = false;
+            initializeSystem();
+        });
+});
+
+function initializeSystem() {
+    if (window.fotografiasSystemInitialized) {
+        return;
+    }
+
+    window.fotografiasSystemInitialized = true;
+
+    try {
+        console.log('🔧 Iniciando todos los sistemas...');
+
+        initializeUserSystem();
+        initializeAutoDateFilter();
+        initializeColumnToggle();
+        initializeLightbox();
+        initializeNotifications();
+        initializeSearch();
+        initializeUploadButtons();
+        initializeCommentsSystem();
+        initializeCommentCounterSystem();
+
+        initializeDateRangeUnified();
+
+        console.log('✅ Sistema completo inicializado correctamente');
+
+    } catch (error) {
+        console.error('❌ Error durante la inicialización:', error);
+        showNotification('Error durante la inicialización: ' + error.message, 'error');
+    }
+}
+
+// ================================================================================================
+// SISTEMA DE DETECCIÓN DE USUARIOS
+// ================================================================================================
+
+function initializeUserSystem() {
+    console.log('👤 Inicializando sistema de usuarios...');
+
+    const metaUser = document.querySelector('meta[name="current-user"]');
+    if (metaUser && metaUser.content) {
+        currentUser = {
+            displayName: metaUser.content,
+            username: generateUsernameFromDisplayName(metaUser.content),
+            source: 'meta-tag'
+        };
+        console.log('👤 Usuario detectado desde meta tag:', currentUser);
+    } else {
+        currentUser = {
+            displayName: 'Will-AGW',
+            username: 'will-agw',
+            source: 'fallback-hardcoded'
+        };
+        console.log('👤 Usuario fallback configurado:', currentUser);
+    }
+
+    updateUserInterface(currentUser);
+}
+
+function generateUsernameFromDisplayName(displayName) {
+    if (!displayName) return 'usuario';
+
+    return displayName
+        .toLowerCase()
+        .replace(/\s+/g, '-')
+        .replace(/[^a-z0-9-]/g, '')
+        .substring(0, 20);
+}
+
+function updateUserInterface(user) {
+    console.log(`👤 Usuario activo: ${user.displayName} (${user.username})`);
+
+    const userDisplayElements = document.querySelectorAll('.current-user-display');
+    userDisplayElements.forEach(element => {
+        element.textContent = user.displayName;
+    });
+}
+
+// ================================================================================================
+// SISTEMA DE SUBIDA DE ARCHIVOS - CORREGIDO PARA EVITAR DUPLICADOS
+// ================================================================================================
+
+function initializeUploadButtons() {
+    console.log('📤 Inicializando sistema de subida...');
+
+    const cameraUpload = document.getElementById('cameraUpload');
+    const fileUpload = document.getElementById('fileUpload');
+    const cameraInput = document.getElementById('cameraInput');
+    const fileInput = document.getElementById('fileInput');
+
+    console.log('📤 Elementos encontrados:', {
+        cameraUpload: !!cameraUpload,
+        fileUpload: !!fileUpload,
+        cameraInput: !!cameraInput,
+        fileInput: !!fileInput
+    });
+
+    if (!cameraUpload || !fileUpload || !cameraInput || !fileInput) {
+        console.error('❌ Elementos de subida no encontrados');
+        return;
+    }
+
+    // ✅ CORREGIDO: Limpiar TODOS los eventos previos
+    cameraUpload.onclick = null;
+    fileUpload.onclick = null;
+    cameraInput.onchange = null;
+    fileInput.onchange = null;
+
+    // Remover todos los listeners duplicados
+    cameraUpload.removeEventListener('click', handleCameraClick);
+    fileUpload.removeEventListener('click', handleFileClick);
+    cameraInput.removeEventListener('change', handleCameraChange);
+    fileInput.removeEventListener('change', handleFileChange);
+
+    // ✅ CORREGIDO: Agregar eventos únicos con prevención de duplicados
+    cameraUpload.addEventListener('click', handleCameraClick, { once: false });
+    fileUpload.addEventListener('click', handleFileClick, { once: false });
+    cameraInput.addEventListener('change', handleCameraChange, { once: false });
+    fileInput.addEventListener('change', handleFileChange, { once: false });
+
+    console.log('✅ Sistema de subida inicializado sin duplicados');
+}
+
+// ✅ CORREGIDO: Funciones separadas para cada evento
+function handleCameraClick(e) {
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (uploadInProgress) {
+        console.log('⚠️ Subida en progreso, ignorando click');
+        return;
+    }
+
+    console.log('📸 Click en botón cámara');
+    const cameraInput = document.getElementById('cameraInput');
+    if (cameraInput) {
+        cameraInput.click();
+    }
+}
+
+function handleFileClick(e) {
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (uploadInProgress) {
+        console.log('⚠️ Subida en progreso, ignorando click');
+        return;
+    }
+
+    console.log('📁 Click en botón archivo');
+    const fileInput = document.getElementById('fileInput');
+    if (fileInput) {
+        fileInput.click();
+    }
+}
+
+function handleCameraChange(e) {
+    console.log('📸 Cambio en input cámara:', e.target.files.length);
+    if (e.target.files.length > 0 && !uploadInProgress) {
+        handleImageUpload(e.target.files, 'camera');
+        e.target.value = ''; // Limpiar para permitir seleccionar la misma imagen
+    }
+}
+
+function handleFileChange(e) {
+    console.log('📁 Cambio en input archivo:', e.target.files.length);
+    if (e.target.files.length > 0 && !uploadInProgress) {
+        handleImageUpload(e.target.files, 'file');
+        e.target.value = ''; // Limpiar para permitir seleccionar la misma imagen
+    }
+}
+
+function handleImageUpload(files, source) {
+    // ✅ CORREGIDO: Prevenir múltiples subidas
+    if (uploadInProgress) {
+        console.log('⚠️ Subida ya en progreso, cancelando');
+        return;
+    }
+
+    uploadInProgress = true;
+    console.log(`📤 handleImageUpload llamado con ${files.length} archivo(s) desde ${source}`);
+
+    if (!files || files.length === 0) {
+        uploadInProgress = false;
+        showNotification('No se seleccionaron archivos', 'warning');
+        return;
+    }
+
+    const file = files[0]; // Solo el primer archivo
+    console.log(`📤 Procesando archivo: ${file.name} (${file.size} bytes, tipo: ${file.type})`);
+
+    // Validar archivo
+    if (!file.type.startsWith('image/')) {
+        uploadInProgress = false;
+        showNotification('El archivo debe ser una imagen', 'error');
+        console.error('❌ Archivo no es imagen:', file.type);
+        return;
+    }
+
+    if (file.size > CONFIG.MAX_FILE_SIZE) {
+        uploadInProgress = false;
+        showNotification('El archivo es demasiado grande (máximo 10MB)', 'error');
+        console.error('❌ Archivo muy grande:', file.size);
+        return;
+    }
+
+    // Mostrar estado de subida
+    const uploadBtn = source === 'camera'
+        ? document.getElementById('cameraUpload')
+        : document.getElementById('fileUpload');
+
+    if (uploadBtn) {
+        uploadBtn.classList.add('uploading');
+        console.log('📤 Estado de subida activado');
+    }
+
+    // Crear datos de imagen
+    try {
+        const imageUrl = URL.createObjectURL(file);
+        const imageData = {
+            id: generateUniqueImageId(),
+            url: imageUrl,
+            name: file.name,
+            size: file.size,
+            uploadDate: new Date().toISOString(),
+            ordenSit: generateOrderNumber(),
+            po: generatePONumber(),
+            oc: generateOCNumber(),
+            descripcion: 'Imagen subida',
+            tipoFotografia: 'SUBIDA MANUAL'
+        };
+
+        console.log('📤 Datos de imagen creados:', imageData);
+
+        // ✅ CORREGIDO: Simular delay y luego agregar SOLO UNA vez
+        setTimeout(() => {
+            addImageToTable(imageData);
+
+            if (uploadBtn) {
+                uploadBtn.classList.remove('uploading');
+                uploadBtn.classList.add('active');
+                setTimeout(() => {
+                    uploadBtn.classList.remove('active');
+                }, 2000);
+            }
+
+            // ✅ IMPORTANTE: Liberar el flag de subida
+            uploadInProgress = false;
+
+            showNotification(`Imagen "${file.name}" subida correctamente`, 'success');
+            console.log('✅ Imagen agregada a tabla exitosamente');
+        }, 1500); // Delay para evitar duplicados
+
+    } catch (error) {
+        console.error('❌ Error procesando imagen:', error);
+        showNotification('Error al procesar la imagen: ' + error.message, 'error');
+
+        if (uploadBtn) {
+            uploadBtn.classList.remove('uploading');
+        }
+
+        uploadInProgress = false;
+    }
+}
+
+function addImageToTable(imageData) {
+    const tableBody = document.getElementById('imagesTableBody');
+    if (!tableBody) {
+        console.error(' Tabla no encontrada');
+        return;
+    }
+
+    const row = document.createElement('tr');
+    row.dataset.imageId = imageData.id;
+    row.dataset.uploadDate = imageData.uploadDate;
+
+    row.innerHTML = `
+        <td data-column="imagen">
+            <img src="${imageData.url}"
+                 alt="${imageData.name}"
+                 class="img-thumbnail preview-image"
+                 style="width: 60px; height: 60px; cursor: pointer;"
+                 onclick="openImageLightbox('${imageData.url}', '${imageData.name}', '${imageData.descripcion}', '${imageData.tipoFotografia}')">
+            <div class="upload-user-badge" title="Subido por ${currentUser.displayName}">
+                <i class="fas fa-user"></i> ${currentUser.username}
+            </div>
+        </td>
+        <td data-column="orden-sit">${imageData.ordenSit}</td>
+        <td data-column="po">${imageData.po}</td>
+        <td data-column="oc">${imageData.oc}</td>
+        <td data-column="descripcion">${imageData.descripcion}</td>
+        <td data-column="tipo-fotografia">
+            <span class="badge bg-info">${imageData.tipoFotografia}</span>
+        </td>
+        <td data-column="acciones">
+            <button class="btn btn-danger btn-sm me-1 btn-delete" onclick="deleteImage(this)" title="Eliminar imagen">
+                <i class="fas fa-trash"></i> Eliminar
+            </button>
+            <button class="btn btn-warning btn-sm me-1 btn-edit" onclick="editImage(this)" title="Editar información">
+                <i class="fas fa-edit"></i> Editar
+            </button>
+            <button class="btn btn-info btn-sm comment-btn"
+                    onclick="openCommentsModal(this)"
+                    title="Ver/Agregar comentarios"
+                    data-comment-count="0"
+                    style="background-color: #17a2b8 !important; border-color: #17a2b8 !important; color: white !important; position: relative;">
+                <i class="fas fa-comments"></i>
+            </button>
+        </td>
+    `;
+
+    // VERIFICAR que no existe ya esta imagen
+    const existingRow = tableBody.querySelector(`tr[data-image-id="${imageData.id}"]`);
+    if (existingRow) {
+        console.log(' Imagen ya existe en tabla, no agregando duplicado');
+        return;
+    }
+
+    tableBody.insertBefore(row, tableBody.firstChild);
+
+    // Animación
+    row.style.opacity = '0';
+    row.style.transform = 'translateY(-10px)';
+    setTimeout(() => {
+        row.style.transition = 'all 0.5s ease';
+        row.style.opacity = '1';
+        row.style.transform = 'translateY(0)';
+    }, 100);
+
+    console.log(` Imagen agregada a tabla: ${imageData.id}`);
+}
+
+function generateUniqueImageId() {
+    return `img_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+}
+
+function generateOrderNumber() {
+    return '100' + Math.floor(Math.random() * 90000 + 10000);
+}
+
+function generatePONumber() {
+    return '6000' + Math.floor(Math.random() * 900000 + 100000);
+}
+
+function generateOCNumber() {
+    return '4200' + Math.floor(Math.random() * 9000000 + 1000000);
+}
+
+// ================================================================================================
+// SISTEMA DE COMENTARIOS CON VERIFICACIÓN BOOTSTRAP
+// ================================================================================================
+
+function initializeCommentsSystem() {
+    console.log('💬 Inicializando sistema de comentarios...');
+
+    const commentForm = document.getElementById('commentForm');
+    if (commentForm) {
+        commentForm.onsubmit = null;
+        commentForm.onsubmit = function (e) {
+            e.preventDefault();
+            handleCommentSubmit(e);
+        };
+        console.log('✅ Formulario de comentarios configurado');
+    }
+
+    const commentText = document.getElementById('commentText');
+    if (commentText) {
+        commentText.oninput = updateCharacterCount;
+    }
+
+    console.log('✅ Sistema de comentarios inicializado');
+}
+
+// ✅ AGREGAR esta función después de initializeCommentsSystem():
+
+function initializeCommentCounterSystem() {
+    console.log('📊 Inicializando sistema de contador de comentarios...');
+
+    if (commentCounterInitialized) {
+        console.log('⚠️ Sistema de contador ya inicializado');
+        return;
+    }
+
+    // Corregir botones existentes
+    fixExistingCommentButtons();
+
+    commentCounterInitialized = true;
+    console.log('✅ Sistema de contador inicializado');
+}
+
+function fixExistingCommentButtons() {
+    console.log('🔧 Corrigiendo botones existentes...');
+
+    const commentButtons = document.querySelectorAll('.comment-btn, .comment-btn-override, .comment-btn-fixed, button[onclick*="openCommentsModal"]');
+
+    commentButtons.forEach((button, index) => {
+        // Obtener contador actual del span viejo
+        const oldBadge = button.querySelector('.comment-count');
+        let currentCount = 0;
+
+        if (oldBadge) {
+            currentCount = parseInt(oldBadge.getAttribute('data-count') || '0');
+            oldBadge.remove(); // Eliminar el span rojo
+        }
+
+        // Establecer el contador en el atributo data
+        button.setAttribute('data-comment-count', currentCount);
+        button.style.position = 'relative';
+
+        // Limpiar contenido y dejar solo el ícono
+        button.innerHTML = '<i class="fas fa-comments"></i>';
+
+        console.log(`✅ Botón ${index} corregido con contador: ${currentCount}`);
+    });
+}
+
+
+//=====================================================//
+
+function openCommentsModal(button) {
+    console.log('💬 openCommentsModal llamado');
+    console.log('💬 Bootstrap disponible:', bootstrapReady, typeof bootstrap);
+
+    // ✅ CORREGIDO: Verificación más robusta
+    if (!bootstrapReady || typeof bootstrap === 'undefined' || !bootstrap.Modal) {
+        console.error('❌ Bootstrap Modal no disponible');
+
+        // Intentar esperar un poco más
+        setTimeout(() => {
+            if (typeof bootstrap !== 'undefined' && bootstrap.Modal) {
+                console.log('✅ Bootstrap apareció, reintentando...');
+                bootstrapReady = true;
+                openCommentsModal(button);
+            } else {
+                showNotification('Error: Modal no disponible. Recarga la página.', 'error');
+            }
+        }, 500);
+        return;
+    }
+
+    const row = button.closest('tr');
+    if (!row) {
+        showNotification('Error: No se encontró la fila', 'error');
+        return;
+    }
+
+    const imageData = extractImageDataFromRow(row);
+    if (!imageData) {
+        showNotification('Error: No se pudieron extraer datos', 'error');
+        return;
+    }
+
+    currentImageData = imageData;
+    console.log('💬 Datos extraídos:', imageData);
+
+    updateCommentsModalInfo(imageData);
+    loadCommentsForImage(imageData.id);
+
+    const modalElement = document.getElementById('commentsModal');
+    if (!modalElement) {
+        showNotification('Error: Modal no encontrado en el DOM', 'error');
+        return;
+    }
+
+    try {
+        console.log('💬 Creando instancia de Bootstrap Modal...');
+        const modal = new bootstrap.Modal(modalElement, {
+            backdrop: true,
+            keyboard: true
+        });
+
+        console.log('💬 Mostrando modal...');
+        modal.show();
+        console.log('✅ Modal abierto correctamente');
+
+    } catch (error) {
+        console.error('❌ Error abriendo modal:', error);
+
+        // Fallback manual
+        modalElement.classList.add('show');
+        modalElement.style.display = 'block';
+        modalElement.style.backgroundColor = 'rgba(0,0,0,0.5)';
+        document.body.classList.add('modal-open');
+
+        showNotification('Modal abierto en modo de compatibilidad', 'warning');
+
+        modalElement.onclick = function (e) {
+            if (e.target === modalElement) {
+                closeCommentsModalManually();
+            }
+        };
+    }
+}
+
+function closeCommentsModalManually() {
+    const modalElement = document.getElementById('commentsModal');
+    if (modalElement) {
+        modalElement.classList.remove('show');
+        modalElement.style.display = 'none';
+        document.body.classList.remove('modal-open');
+    }
+}
+
+function extractImageDataFromRow(row) {
+    const img = row.querySelector('img');
+    const ordenSitCell = row.querySelector('[data-column="orden-sit"]');
+    const poCell = row.querySelector('[data-column="po"]');
+    const ocCell = row.querySelector('[data-column="oc"]');
+    const descripcionCell = row.querySelector('[data-column="descripcion"]');
+    const tipoCell = row.querySelector('[data-column="tipo-fotografia"]');
+
+    let imageId = row.dataset.imageId;
+    if (!imageId) {
+        imageId = generateUniqueImageId();
+        row.dataset.imageId = imageId;
+    }
+
+    return {
+        id: imageId,
+        imageUrl: img ? img.src : '',
+        imageAlt: img ? img.alt : '',
+        ordenSit: ordenSitCell ? ordenSitCell.textContent.trim() : '',
+        po: poCell ? poCell.textContent.trim() : '',
+        oc: ocCell ? ocCell.textContent.trim() : '',
+        descripcion: descripcionCell ? descripcionCell.textContent.trim() : '',
+        tipo: tipoCell ? tipoCell.textContent.trim() : ''
+    };
+}
+
+function updateCommentsModalInfo(imageData) {
+    const elements = {
+        commentImagePreview: document.getElementById('commentImagePreview'),
+        commentOrdenSit: document.getElementById('commentOrdenSit'),
+        commentPO: document.getElementById('commentPO'),
+        commentOC: document.getElementById('commentOC'),
+        commentTipo: document.getElementById('commentTipo'),
+        commentDescripcion: document.getElementById('commentDescripcion')
+    };
+
+    if (elements.commentImagePreview) {
+        elements.commentImagePreview.src = imageData.imageUrl;
+        elements.commentImagePreview.alt = imageData.imageAlt;
+    }
+
+    if (elements.commentOrdenSit) elements.commentOrdenSit.textContent = imageData.ordenSit;
+    if (elements.commentPO) elements.commentPO.textContent = imageData.po;
+    if (elements.commentOC) elements.commentOC.textContent = imageData.oc;
+    if (elements.commentTipo) elements.commentTipo.textContent = imageData.tipo;
+    if (elements.commentDescripcion) elements.commentDescripcion.textContent = imageData.descripcion;
+
+    console.log('✅ Información del modal actualizada');
+}
+
+function handleCommentSubmit(e) {
+    e.preventDefault();
+    console.log('📝 handleCommentSubmit llamado');
+
+    if (!currentImageData) {
+        showNotification('Error: No hay imagen seleccionada', 'error');
+        return;
+    }
+
+    const typeElement = document.getElementById('commentType');
+    const priorityElement = document.getElementById('commentPriority');
+    const textElement = document.getElementById('commentText');
+
+    if (!typeElement || !priorityElement || !textElement) {
+        showNotification('Error: Elementos del formulario no encontrados', 'error');
+        return;
+    }
+
+    const formData = {
+        type: typeElement.value,
+        priority: priorityElement.value,
+        text: textElement.value.trim()
+    };
+
+    if (!formData.type || !formData.priority || !formData.text) {
+        showNotification('Por favor completa todos los campos', 'warning');
+        return;
+    }
+
+    const comment = {
+        id: generateCommentId(),
+        imageId: currentImageData.id,
+        type: formData.type,
+        priority: formData.priority,
+        text: formData.text,
+        author: currentUser.displayName,
+        authorUsername: currentUser.username,
+        timestamp: new Date().toISOString()
+    };
+
+    addCommentToStorage(comment);
+    renderComment(comment, true);
+    updateCommentsCount();
+    updateCommentButtonBadge();
+    clearCommentForm();
+
+    showNotification(`Comentario agregado por ${currentUser.displayName}`, 'success');
+}
+
+function generateCommentId() {
+    return 'comment_' + Date.now() + '_' + Math.random().toString(36).substring(2, 9);
+}
+
+function addCommentToStorage(comment) {
+    if (!commentsData.has(comment.imageId)) {
+        commentsData.set(comment.imageId, []);
+    }
+    commentsData.get(comment.imageId).push(comment);
+    console.log('💾 Comentario guardado:', comment);
+}
+
+function loadCommentsForImage(imageId) {
+    const comments = commentsData.get(imageId) || [];
+    const commentsList = document.getElementById('commentsList');
+
+    if (!commentsList) return;
+
+    commentsList.innerHTML = '';
+
+    if (comments.length === 0) {
+        commentsList.innerHTML = `
+            <div class="text-center text-muted p-4">
+                <i class="fas fa-comment-slash fa-2x mb-2"></i>
+                <p>No hay comentarios para esta imagen</p>
+            </div>
+        `;
+    } else {
+        comments.forEach(comment => renderComment(comment, false));
+    }
+
+    const totalCount = document.getElementById('totalCommentsCount');
+    if (totalCount) {
+        totalCount.textContent = comments.length;
+    }
+}
+
+function renderComment(comment, isNew = false) {
+    const commentsList = document.getElementById('commentsList');
+    if (!commentsList) return;
+
+    const noCommentsMsg = commentsList.querySelector('.text-center.text-muted');
+    if (noCommentsMsg) {
+        noCommentsMsg.remove();
+    }
+
+    const commentDiv = document.createElement('div');
+    commentDiv.className = `comment-item ${isNew ? 'new-comment' : ''}`;
+    commentDiv.innerHTML = `
+        <div class="comment-meta">
+            <span class="comment-author">${comment.author}</span>
+            <span class="comment-type-badge type-${comment.type}">${getTypeDisplayName(comment.type)}</span>
+            <span class="comment-priority priority-${comment.priority}">${getPriorityDisplayName(comment.priority)}</span>
+            <span class="comment-timestamp">
+                <i class="fas fa-clock"></i>
+                ${formatTimestamp(comment.timestamp)}
+            </span>
+        </div>
+        <div class="comment-text">${escapeHtml(comment.text)}</div>
+        <div class="comment-actions">
+            <button class="btn btn-sm btn-outline-danger" onclick="deleteComment('${comment.id}')">
+                <i class="fas fa-trash"></i> Eliminar
+            </button>
+        </div>
+    `;
+
+    commentsList.insertBefore(commentDiv, commentsList.firstChild);
+
+    if (isNew) {
+        setTimeout(() => {
+            commentDiv.classList.remove('new-comment');
+        }, 500);
+    }
+}
+
+function updateCharacterCount() {
+    const textElement = document.getElementById('commentText');
+    const countElement = document.getElementById('charCount');
+
+    if (!textElement || !countElement) return;
+
+    const length = textElement.value.length;
+    countElement.textContent = length;
+
+    countElement.className = '';
+    if (length > CONFIG.MAX_COMMENT_LENGTH * 0.8) {
+        countElement.classList.add('warning');
+    }
+    if (length > CONFIG.MAX_COMMENT_LENGTH * 0.9) {
+        countElement.classList.add('danger');
+    }
+}
+
+function clearCommentForm() {
+    const elements = ['commentType', 'commentPriority', 'commentText'];
+    elements.forEach(id => {
+        const element = document.getElementById(id);
+        if (element) {
+            if (id === 'commentPriority') {
+                element.value = 'medium';
+            } else {
+                element.value = '';
+            }
+        }
+    });
+    updateCharacterCount();
+}
+
+function updateCommentsCount() {
+    if (!currentImageData) return;
+
+    const comments = commentsData.get(currentImageData.id) || [];
+    const totalCount = document.getElementById('totalCommentsCount');
+    if (totalCount) {
+        totalCount.textContent = comments.length;
+    }
+}
+
+//  REEMPLAZAR ESTA FUNCIÓN COMPLETA:
+function updateCommentButtonBadge() {
+    if (!currentImageData) return;
+
+    const comments = commentsData.get(currentImageData.id) || [];
+    const commentCount = comments.length;
+
+    console.log(`📊 Actualizando contador para imagen ${currentImageData.id}: ${commentCount} comentarios`);
+
+    // Buscar el botón de comentarios para esta imagen
+    const row = document.querySelector(`tr[data-image-id="${currentImageData.id}"]`);
+    if (!row) {
+        console.warn(`⚠️ No se encontró la fila para imagen ${currentImageData.id}`);
+        return;
+    }
+
+    const commentButton = row.querySelector('.comment-btn, .comment-btn-override, .comment-btn-fixed, button[onclick*="openCommentsModal"]');
+    if (!commentButton) {
+        console.warn(`⚠️ No se encontró el botón de comentarios en la fila`);
+        return;
+    }
+
+    // ✅ NUEVO: Usar data-comment-count en lugar del span rojo
+    commentButton.setAttribute('data-comment-count', commentCount);
+
+    // ✅ LIMPIAR: Remover el span rojo viejo si existe
+    const oldBadge = commentButton.querySelector('.comment-count');
+    if (oldBadge) {
+        oldBadge.remove();
+    }
+
+    // ✅ ASEGURAR: Posición relativa para el contador
+    commentButton.style.position = 'relative';
+
+    // ✅ ANIMACIÓN: Pulso cuando se actualiza
+    if (commentCount > 0) {
+        commentButton.classList.add('comment-added');
+        setTimeout(() => {
+            commentButton.classList.remove('comment-added');
+        }, 600);
+    }
+
+    console.log(`✅ Contador actualizado: ${commentCount}`);
+}
+
+function deleteComment(commentId) {
+    if (confirm('¿Eliminar este comentario?')) {
+        for (let [imageId, comments] of commentsData) {
+            const index = comments.findIndex(c => c.id === commentId);
+            if (index !== -1) {
+                comments.splice(index, 1);
+                break;
+            }
+        }
+
+        const commentElement = document.querySelector(`[data-comment-id="${commentId}"]`);
+        if (commentElement) {
+            commentElement.remove();
+        }
+
+        updateCommentsCount();
+        updateCommentButtonBadge();
+        showNotification('Comentario eliminado', 'success');
+    }
+}
+
+// ================================================================================================
+// SISTEMA DE COLUMNAS
+// ================================================================================================
+
+function initializeColumnToggle() {
+    console.log('📋 Inicializando control de columnas...');
+
+    const dropdown = document.getElementById('columnsDropdown');
+    if (!dropdown) {
+        console.warn('⚠️ Dropdown de columnas no encontrado');
+        return;
+    }
+
+    dropdown.onclick = function (e) {
+        if (e.target.type === 'checkbox') {
+            e.stopPropagation();
+
+            const columnName = e.target.dataset.column;
+            const isVisible = e.target.checked;
+
+            if (columnName) {
+                toggleColumn(columnName, isVisible);
+                showNotification(
+                    `Columna "${getColumnDisplayName(columnName)}" ${isVisible ? 'mostrada' : 'ocultada'}`,
+                    'info'
+                );
+            }
+        }
+    };
+
+    console.log('✅ Control de columnas inicializado');
 }
 
 function toggleColumn(columnName, isVisible) {
@@ -86,23 +954,22 @@ function toggleColumn(columnName, isVisible) {
 
     if (!table) return;
 
-    // Toggle header
     const headerCell = table.querySelector(`th[data-column="${columnName}"]`);
     if (headerCell) {
         headerCell.style.display = display;
     }
 
-    // Toggle filter cell
     const filterCell = table.querySelector(`tr.bg-light td[data-column="${columnName}"]`);
     if (filterCell) {
         filterCell.style.display = display;
     }
 
-    // Toggle data cells
     const dataCells = table.querySelectorAll(`tbody td[data-column="${columnName}"]`);
     dataCells.forEach(cell => {
         cell.style.display = display;
     });
+
+    console.log(`📋 Columna ${columnName} ${isVisible ? 'mostrada' : 'ocultada'}`);
 }
 
 function getColumnDisplayName(columnKey) {
@@ -118,79 +985,58 @@ function getColumnDisplayName(columnKey) {
     return names[columnKey] || columnKey;
 }
 
-// ===== LIGHTBOX FUNCTIONALITY =====
-function initializeLightbox() {
-    const lightbox = document.getElementById('imageLightbox');
+// ================================================================================================
+// FUNCIONES DE UTILIDAD
+// ================================================================================================
 
-    if (lightbox) {
-        // Close lightbox when clicking outside the content
-        lightbox.addEventListener('click', function (e) {
-            if (e.target === lightbox) {
-                closeLightbox();
-            }
-        });
-
-        // Close lightbox with Escape key
-        document.addEventListener('keydown', function (e) {
-            if (e.key === 'Escape' && lightbox.style.display !== 'none') {
-                closeLightbox();
-            }
-        });
-    }
-
-    console.log(' Lightbox inicializado');
+function getTypeDisplayName(type) {
+    const types = {
+        'quality': 'Calidad',
+        'technical': 'Técnico',
+        'production': 'Producción',
+        'design': 'Diseño',
+        'general': 'General',
+        'urgent': 'Urgente'
+    };
+    return types[type] || type;
 }
 
-function openImageLightbox(imageUrl, alt, description, type) {
-    console.log(' Abriendo lightbox para imagen:', imageUrl);
+function getPriorityDisplayName(priority) {
+    const priorities = {
+        'low': 'Baja',
+        'medium': 'Media',
+        'high': 'Alta',
+        'critical': 'Crítica'
+    };
+    return priorities[priority] || priority;
+}
 
-    const lightbox = document.getElementById('imageLightbox');
-    const lightboxImage = document.getElementById('lightboxImage');
-    const lightboxDescription = document.getElementById('lightboxDescription');
-    const lightboxType = document.getElementById('lightboxType');
+function formatTimestamp(timestamp) {
+    const date = new Date(timestamp);
+    const now = new Date();
+    const diffMs = now - date;
+    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
 
-    if (lightbox && lightboxImage) {
-        lightboxImage.src = imageUrl;
-        lightboxImage.alt = alt;
-
-        if (lightboxDescription) {
-            lightboxDescription.textContent = description || alt || 'Sin descripción';
-        }
-
-        if (lightboxType) {
-            lightboxType.textContent = type || 'Sin tipo especificado';
-        }
-
-        lightbox.style.display = 'flex';
-        document.body.style.overflow = 'hidden'; // Prevent background scrolling
+    if (diffDays === 0) {
+        return 'Hoy ' + date.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+    } else if (diffDays === 1) {
+        return 'Ayer ' + date.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+    } else {
+        return date.toLocaleDateString('es-ES');
     }
 }
 
-function closeLightbox() {
-    console.log(' Cerrando lightbox');
-
-    const lightbox = document.getElementById('imageLightbox');
-    if (lightbox) {
-        lightbox.style.display = 'none';
-        document.body.style.overflow = ''; // Restore scrolling
-    }
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
 }
 
-function downloadImage() {
-    const lightboxImage = document.getElementById('lightboxImage');
-    if (lightboxImage && lightboxImage.src) {
-        const link = document.createElement('a');
-        link.href = lightboxImage.src;
-        link.download = lightboxImage.alt || 'imagen';
-        link.click();
+// ================================================================================================
+// SISTEMAS AUXILIARES
+// ================================================================================================
 
-        showNotification('Descarga iniciada', 'success');
-    }
-}
-
-// ===== NOTIFICATION SYSTEM =====
 function initializeNotifications() {
-    // Create notification container if it doesn't exist
     if (!document.getElementById('notificationContainer')) {
         const container = document.createElement('div');
         container.id = 'notificationContainer';
@@ -198,11 +1044,11 @@ function initializeNotifications() {
         container.style.zIndex = '9999';
         document.body.appendChild(container);
     }
-
-    console.log(' Sistema de notificaciones inicializado');
 }
 
 function showNotification(message, type = 'info', duration = 5000) {
+    console.log(`🔔 Notificación: [${type.toUpperCase()}] ${message}`);
+
     const container = document.getElementById('notificationContainer');
     if (!container) return;
 
@@ -221,106 +1067,352 @@ function showNotification(message, type = 'info', duration = 5000) {
     };
 
     const notification = document.createElement('div');
-    notification.className = `alert ${alertTypes[type] || alertTypes.info} notification alert-dismissible fade show`;
+    notification.className = `alert ${alertTypes[type]} notification alert-dismissible fade show`;
     notification.innerHTML = `
-        <i class="${icons[type] || icons.info} me-2"></i>
+        <i class="${icons[type]} me-2"></i>
         ${message}
-        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        <button type="button" class="btn-close" onclick="this.parentElement.remove()"></button>
     `;
 
     container.appendChild(notification);
 
-    // Auto remove after duration
     setTimeout(() => {
         if (notification.parentNode) {
             notification.remove();
         }
     }, duration);
-
-    console.log(` Notificación mostrada: ${message}`);
 }
 
-// ===== SEARCH FUNCTIONALITY =====
+function initializeLightbox() {
+    const lightbox = document.getElementById('imageLightbox');
+    if (lightbox) {
+        lightbox.onclick = function (e) {
+            if (e.target === lightbox) {
+                closeLightbox();
+            }
+        };
+    }
+}
+
+function openImageLightbox(imageUrl, alt, description, type) {
+    const lightbox = document.getElementById('imageLightbox');
+    const lightboxImage = document.getElementById('lightboxImage');
+    const lightboxDescription = document.getElementById('lightboxDescription');
+    const lightboxType = document.getElementById('lightboxType');
+
+    if (lightbox && lightboxImage) {
+        lightboxImage.src = imageUrl;
+        lightboxImage.alt = alt;
+
+        if (lightboxDescription) {
+            lightboxDescription.textContent = description || alt || 'Sin descripción';
+        }
+
+        if (lightboxType) {
+            lightboxType.textContent = type || 'Sin tipo especificado';
+        }
+
+        lightbox.style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+    }
+}
+
+function closeLightbox() {
+    const lightbox = document.getElementById('imageLightbox');
+    if (lightbox) {
+        lightbox.style.display = 'none';
+        document.body.style.overflow = '';
+    }
+}
+
 function initializeSearch() {
     const searchInput = document.getElementById('searchInput');
-
     if (searchInput) {
-        // Search on Enter key
-        searchInput.addEventListener('keypress', function (e) {
+        searchInput.onkeypress = function (e) {
             if (e.key === 'Enter') {
                 searchRecords();
             }
-        });
-
-        // Real-time search (optional)
-        // searchInput.addEventListener('input', debounce(searchRecords, 500));
+        };
     }
-
-    console.log(' Sistema de búsqueda inicializado');
 }
 
 function searchRecords() {
-    const searchTerm = document.getElementById('searchInput').value.trim();
+    const searchInput = document.getElementById('searchInput');
+    if (!searchInput) return;
 
+    const searchTerm = searchInput.value.trim();
     if (!searchTerm) {
         showNotification('Ingresa un término de búsqueda', 'warning');
         return;
     }
 
-    console.log(' Buscando:', searchTerm);
-    showNotification(`Buscando: "${searchTerm}"`, 'info');
+    const tableRows = document.querySelectorAll('#imagesTableBody tr');
+    let visibleCount = 0;
 
-    // Aquí iría la lógica de búsqueda
-    // filterTableBySearch(searchTerm);
+    tableRows.forEach(row => {
+        const searchableText = row.textContent.toLowerCase();
+        const isVisible = searchableText.includes(searchTerm.toLowerCase());
+        row.style.display = isVisible ? '' : 'none';
+        if (isVisible) visibleCount++;
+    });
+
+    showNotification(`${visibleCount} resultado(s) encontrado(s)`, 'info');
 }
 
 function clearSearch() {
     const searchInput = document.getElementById('searchInput');
     if (searchInput) {
         searchInput.value = '';
-        console.log(' Búsqueda limpiada');
+        const tableRows = document.querySelectorAll('#imagesTableBody tr');
+        tableRows.forEach(row => {
+            row.style.display = '';
+        });
         showNotification('Búsqueda limpiada', 'info');
-
-        // Aquí iría la lógica para mostrar todos los registros
-        // clearTableFilters();
     }
 }
 
-// ===== EXPORT FUNCTIONALITY =====
-function exportAll() {
-    console.log(' Exportando todos los registros...');
-    showNotification('Exportando todos los registros...', 'info');
+/*!
+ * ===========  Sistema de Filtrado de Fechas Automático ==============
+ */
 
-    // Aquí iría la lógica de exportación
+// Variables globales para el filtro de fechas
+let dateFilterActive = false;
+let currentDateRange = {
+    start: null,
+    end: null
+};
+
+// Inicializar el sistema de filtrado automático
+function initializeAutoDateFilter() {
+    console.log('📅 Inicializando filtro de fechas automático...');
+
+    // SOLO inicializar variables vacías
+    currentDateRange = {
+        start: null,
+        end: null
+    };
+
+    const dateRangeDisplay = document.getElementById('dateRangeDisplay');
+    const dateRangeInputs = document.getElementById('dateRangeInputs');
+    const fechaInicio = document.getElementById('fechaInicio');
+    const fechaFin = document.getElementById('fechaFin');
+
+    if (!dateRangeDisplay || !dateRangeInputs || !fechaInicio || !fechaFin) {
+        console.error('❌ Elementos del filtro de fechas no encontrados');
+        return;
+    }
+
+    // Configurar fechas por defecto (últimos 30 días)
+    const today = new Date();
+    const thirtyDaysAgo = new Date(today.getTime() - (30 * 24 * 60 * 60 * 1000));
+
+    fechaInicio.value = formatDateForInput(thirtyDaysAgo);
+    fechaFin.value = formatDateForInput(today);
+
+    // Establecer rango inicial
+    currentDateRange.start = fechaInicio.value;
+    currentDateRange.end = fechaFin.value;
+    updateDateRangeDisplay();
+
+    // Event listeners
+    dateRangeDisplay.addEventListener('click', toggleDateRangeInputs);
+    fechaInicio.addEventListener('change', handleDateChange);
+    fechaFin.addEventListener('change', handleDateChange);
+
+    // Cerrar al hacer click fuera
+    document.addEventListener('click', function (e) {
+        if (!dateRangeDisplay.contains(e.target) && !dateRangeInputs.contains(e.target)) {
+            closeDateRangeInputs();
+        }
+    });
+
+    console.log('✅ Filtro de fechas automático inicializado');
+}
+
+function toggleDateRangeInputs() {
+    const dateRangeDisplay = document.getElementById('dateRangeDisplay');
+    const dateRangeInputs = document.getElementById('dateRangeInputs');
+
+    if (dateRangeInputs.style.display === 'none' || !dateRangeInputs.style.display) {
+        dateRangeInputs.style.display = 'block';
+        dateRangeInputs.classList.add('show');
+        dateRangeDisplay.classList.add('active');
+        console.log('📅 Selector de fechas abierto');
+    } else {
+        closeDateRangeInputs();
+    }
+}
+
+function closeDateRangeInputs() {
+    const dateRangeDisplay = document.getElementById('dateRangeDisplay');
+    const dateRangeInputs = document.getElementById('dateRangeInputs');
+
+    dateRangeInputs.style.display = 'none';
+    dateRangeInputs.classList.remove('show');
+    dateRangeDisplay.classList.remove('active');
+}
+
+function handleDateChange() {
+    const fechaInicio = document.getElementById('fechaInicio');
+    const fechaFin = document.getElementById('fechaFin');
+
+    console.log('📅 Cambio en fechas detectado:', {
+        inicio: fechaInicio.value,
+        fin: fechaFin.value
+    });
+
+    // Validar que ambas fechas estén seleccionadas
+    if (fechaInicio.value && fechaFin.value) {
+        const startDate = new Date(fechaInicio.value);
+        const endDate = new Date(fechaFin.value);
+
+        // Validar que la fecha de inicio no sea mayor que la de fin
+        if (startDate > endDate) {
+            showNotification('La fecha de inicio no puede ser mayor que la fecha de fin', 'warning');
+            return;
+        }
+
+        // Actualizar rango actual
+        currentDateRange.start = fechaInicio.value;
+        currentDateRange.end = fechaFin.value;
+
+        // Actualizar display
+        updateDateRangeDisplay();
+
+        // Aplicar filtro automáticamente
+        applyDateFilterAuto();
+
+        // Cerrar selector después de un momento
+        setTimeout(closeDateRangeInputs, 1000);
+    }
+}
+
+function updateDateRangeDisplay() {
+    const dateRangeText = document.getElementById('dateRangeText');
+    const dateRangeDisplay = document.getElementById('dateRangeDisplay');
+
+    if (currentDateRange.start && currentDateRange.end) {
+        const startFormatted = formatDateForDisplay(currentDateRange.start);
+        const endFormatted = formatDateForDisplay(currentDateRange.end);
+
+        dateRangeText.textContent = `${startFormatted} - ${endFormatted}`;
+        dateRangeDisplay.classList.add('has-dates');
+        dateFilterActive = true;
+
+        console.log(`📅 Display actualizado: ${startFormatted} - ${endFormatted}`);
+    } else {
+        dateRangeText.textContent = 'Seleccionar rango';
+        dateRangeDisplay.classList.remove('has-dates');
+        dateFilterActive = false;
+    }
+}
+
+function applyDateFilterAuto() {
+    if (!currentDateRange.start || !currentDateRange.end) {
+        console.log('⚠️ Rango de fechas incompleto, no aplicando filtro');
+        return;
+    }
+
+    console.log('🔍 Aplicando filtro automático de fechas:', currentDateRange);
+
+    const startDate = new Date(currentDateRange.start);
+    const endDate = new Date(currentDateRange.end);
+
+    // Ajustar hora para incluir todo el día
+    startDate.setHours(0, 0, 0, 0);
+    endDate.setHours(23, 59, 59, 999);
+
+    const tableRows = document.querySelectorAll('#imagesTableBody tr');
+    let visibleCount = 0;
+    let filteredCount = 0;
+
+    tableRows.forEach(row => {
+        // Aquí debería adaptar según cómo tiene almacenada la fecha en las filas
+        // Por ejemplo, si tiene un data-attribute con la fecha:
+        const rowDateStr = row.dataset.uploadDate || row.dataset.createdDate;
+
+        if (rowDateStr) {
+            const rowDate = new Date(rowDateStr);
+
+            if (rowDate >= startDate && rowDate <= endDate) {
+                row.style.display = '';
+                visibleCount++;
+            } else {
+                row.style.display = 'none';
+                filteredCount++;
+            }
+        } else {
+            // Si no hay fecha, mostrar la fila (para compatibilidad)
+            row.style.display = '';
+            visibleCount++;
+        }
+    });
+
+    // Notificación del resultado
+    const totalRows = tableRows.length;
+    console.log(`✅ Filtro aplicado: ${visibleCount} visibles de ${totalRows} total`);
+}
+
+// Funciones de utilidad
+function formatDateForInput(date) {
+    return date.toISOString().split('T')[0];
+}
+
+function formatDateForDisplay(dateStr) {
+    const date = new Date(dateStr);
+    return date.toLocaleDateString('es-ES', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric'
+    });
+}
+
+// Función para limpiar filtro
+function clearDateFilter() {
+    currentDateRange.start = null;
+    currentDateRange.end = null;
+
+    document.getElementById('fechaInicio').value = '';
+    document.getElementById('fechaFin').value = '';
+
+    updateDateRangeDisplay();
+
+    // Mostrar todas las filas
+    document.querySelectorAll('#imagesTableBody tr').forEach(row => {
+        row.style.display = '';
+    });
+
+    showNotification('Filtro de fechas eliminado', 'info');
+}
+
+// Integrar con el sistema existente
+document.addEventListener('DOMContentLoaded', function () {
+    // Reemplazar la función existente de filtrado
     setTimeout(() => {
-        showNotification('Exportación completada', 'success');
-    }, 2000);
-}
+        initializeAutoDateFilter();
+    }, 1000);
+});
 
-function exportSelected() {
-    console.log(' Exportando registros seleccionados...');
-    showNotification('Exportando registros seleccionados...', 'info');
+// Funciones globales
+window.clearDateFilter = clearDateFilter;
+window.applyDateFilterAuto = applyDateFilterAuto;
 
-    // Aquí iría la lógica de exportación
-    setTimeout(() => {
-        showNotification('Exportación completada', 'success');
-    }, 2000);
-}
+console.log('📅 Sistema de filtrado automático de fechas cargado');
 
-function showFilters() {
-    console.log(' Mostrando filtros avanzados...');
-    showNotification('Filtros avanzados mostrados', 'info');
+// ================================================================================================
+// ACCIONES
+// ================================================================================================
 
-    // Aquí iría la lógica para mostrar filtros avanzados
-}
-
-// ===== TABLE ACTIONS =====
 function deleteImage(button) {
-    if (confirm('¿Estás seguro de que deseas eliminar esta imagen?')) {
+    if (confirm('¿Eliminar esta imagen?')) {
         const row = button.closest('tr');
         if (row) {
+            const imageId = row.dataset.imageId;
+            if (imageId && commentsData.has(imageId)) {
+                commentsData.delete(imageId);
+            }
             row.remove();
-            showNotification('Imagen eliminada correctamente', 'success');
+            showNotification('Imagen eliminada', 'success');
         }
     }
 }
@@ -328,35 +1420,219 @@ function deleteImage(button) {
 function editImage(button) {
     const row = button.closest('tr');
     if (row) {
-        const ordenSit = row.querySelector('[data-column="orden-sit"]').textContent;
-        showNotification(`Editando imagen con Orden SIT: ${ordenSit}`, 'info');
-
-        // Aquí iría la lógica de edición
+        const ordenSit = row.querySelector('[data-column="orden-sit"]')?.textContent || 'Sin orden';
+        showNotification(`Editando imagen: ${ordenSit}`, 'info');
     }
 }
 
-// ===== UTILITY FUNCTIONS =====
-function debounce(func, wait) {
-    let timeout;
-    return function executedFunction(...args) {
-        const later = () => {
-            clearTimeout(timeout);
-            func(...args);
-        };
-        clearTimeout(timeout);
-        timeout = setTimeout(later, wait);
-    };
+function exportAll() {
+    showNotification('Exportando todos los registros...', 'info');
 }
 
-// Make functions globally available
+function exportSelected() {
+    showNotification('Exportando registros seleccionados...', 'info');
+}
+
+function showFilters() {
+    showNotification('Mostrando filtros avanzados', 'info');
+}
+
+// ================================================================================================
+// FUNCIONES GLOBALES
+// ================================================================================================
+
 window.openImageLightbox = openImageLightbox;
 window.closeLightbox = closeLightbox;
-window.downloadImage = downloadImage;
-window.applyDateFilter = applyDateFilter;
 window.searchRecords = searchRecords;
 window.clearSearch = clearSearch;
+window.applyDateFilter = applyDateFilter;
 window.exportAll = exportAll;
 window.exportSelected = exportSelected;
 window.showFilters = showFilters;
 window.deleteImage = deleteImage;
-window.editImage = editImage;*/
+window.editImage = editImage;
+window.openCommentsModal = openCommentsModal;
+window.deleteComment = deleteComment;
+window.debugSystem = debugSystem;
+window.initializeDateRangeSelector = initializeDateRangeSelector;
+
+
+// ================================================================================================
+// DESPLEGABLE DE FECHAS -> APLICAR SEGUN DOS RANGOS DE FECHAS  A ELEGIR
+// ================================================================================================
+
+// ✅ FUNCIÓN CORREGIDA - SIN FECHAS POR DEFECTO
+function initializeDateRangeUnified() {
+    console.log('📅 Inicializando selector unificado de fechas...');
+
+    setTimeout(() => {
+        const dateRangeDisplayUnified = document.getElementById('dateRangeDisplayUnified');
+        const dateCalendarsPanel = document.getElementById('dateCalendarsPanel');
+        const fechaInicioUnified = document.getElementById('fechaInicioUnified');
+        const fechaFinUnified = document.getElementById('fechaFinUnified');
+        const calendarStatus = document.getElementById('calendarStatus');
+        const dateRangeTextUnified = document.getElementById('dateRangeTextUnified');
+
+        if (!dateRangeDisplayUnified || !dateCalendarsPanel) {
+            console.warn('⚠️ Elementos unificados no encontrados');
+            return;
+        }
+
+        // Variables de estado
+        let panelOpen = false;
+        let fechaInicioSelected = false;
+        let fechaFinSelected = false;
+        let selectedStartDate = null;
+        let selectedEndDate = null;
+
+        // ✅ ESTADO INICIAL LIMPIO - SIN FECHAS
+        if (dateRangeTextUnified) {
+            dateRangeTextUnified.textContent = 'Seleccione fechas';
+        }
+
+        // ✅ NO configurar fechas por defecto
+        // Comentar/eliminar estas líneas:
+        // fechaInicioUnified.value = formatDateForInput(thirtyDaysAgo);
+        // fechaFinUnified.value = formatDateForInput(today);
+
+        // ✅ PASO 1: Click en contenedor principal
+        dateRangeDisplayUnified.onclick = function (e) {
+            e.preventDefault();
+            e.stopPropagation();
+
+            if (!panelOpen) {
+                dateCalendarsPanel.style.display = 'block';
+                dateRangeDisplayUnified.classList.add('active');
+                panelOpen = true;
+
+                setTimeout(() => {
+                    fechaInicioUnified.focus();
+                }, 100);
+
+                updateCalendarStatus('Selecciona la fecha de inicio');
+                console.log('📅 PASO 1: Panel abierto - selecciona fechas');
+            }
+        };
+
+        // ✅ PASO 2: Selección de fecha inicio
+        fechaInicioUnified.addEventListener('change', function () {
+            selectedStartDate = this.value;
+            fechaInicioSelected = true;
+
+            this.classList.add('selected');
+            updateCalendarStatus('Ahora selecciona la fecha final');
+
+            setTimeout(() => {
+                fechaFinUnified.focus();
+            }, 200);
+
+            console.log('📅 PASO 2: Fecha inicio seleccionada -', selectedStartDate);
+        });
+
+        // ✅ PASO 3: Selección de fecha final
+        fechaFinUnified.addEventListener('change', function () {
+            selectedEndDate = this.value;
+            fechaFinSelected = true;
+
+            this.classList.add('selected');
+
+            if (selectedStartDate && selectedEndDate) {
+                const startDate = new Date(selectedStartDate);
+                const endDate = new Date(selectedEndDate);
+
+                if (startDate > endDate) {
+                    showNotification('La fecha de inicio no puede ser mayor que la fecha final', 'warning');
+                    return;
+                }
+
+                updateCalendarStatus('✓ Aplicando filtro...');
+
+                //  ACTUALIZAR display con fechas seleccionadas
+                const startFormatted = selectedStartDate.split('-').reverse().join('/');
+                const endFormatted = selectedEndDate.split('-').reverse().join('/');
+                dateRangeTextUnified.textContent = `${startFormatted} - ${endFormatted}`;
+
+                // Actualizar variables globales
+                currentDateRange.start = selectedStartDate;
+                currentDateRange.end = selectedEndDate;
+
+                setTimeout(() => {
+                    dateCalendarsPanel.style.display = 'none';
+                    dateRangeDisplayUnified.classList.remove('active');
+                    panelOpen = false;
+
+                    applyUnifiedDateFilter(selectedStartDate, selectedEndDate);
+                    showNotification(`Filtro aplicado: ${startFormatted} - ${endFormatted}`, 'success');
+
+                }, 1000);
+
+                console.log('📅 PASO 3: Filtro aplicado');
+            }
+        });
+
+        // ✅ FUNCIÓN para actualizar estado visual
+        function updateCalendarStatus(message) {
+            if (calendarStatus) {
+                calendarStatus.innerHTML = `<small>${message}</small>`;
+
+                if (message.includes('inicio')) {
+                    calendarStatus.className = 'calendar-status step-1';
+                } else if (message.includes('final')) {
+                    calendarStatus.className = 'calendar-status step-2';
+                } else if (message.includes('Aplicando')) {
+                    calendarStatus.className = 'calendar-status applying';
+                }
+            }
+        }
+
+        // ✅ CERRAR al hacer click fuera
+        document.addEventListener('click', function (e) {
+            if (!dateRangeDisplayUnified.contains(e.target) && !dateCalendarsPanel.contains(e.target)) {
+                if (panelOpen) {
+                    dateCalendarsPanel.style.display = 'none';
+                    dateRangeDisplayUnified.classList.remove('active');
+                    panelOpen = false;
+                }
+            }
+        });
+
+        // ✅ CERRAR con ESC
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape' && panelOpen) {
+                dateCalendarsPanel.style.display = 'none';
+                dateRangeDisplayUnified.classList.remove('active');
+                panelOpen = false;
+            }
+        });
+
+        console.log('✅ Selector unificado inicializado - estado inicial limpio');
+
+    }, 1000);
+}
+
+// Hacer función global
+window.initializeDateRangeUnified = initializeDateRangeUnified;
+
+
+// ✅ FUNCIÓN para resetear selección de fechas
+function resetDateSelection() {
+    const fechaInicio = document.getElementById('fechaInicio');
+    const fechaFin = document.getElementById('fechaFin');
+    const dateRangeText = document.getElementById('dateRangeText');
+    const dateRangeDisplay = document.getElementById('dateRangeDisplay');
+
+    if (fechaInicio) fechaInicio.value = '';
+    if (fechaFin) fechaFin.value = '';
+    if (dateRangeText) dateRangeText.textContent = 'Seleccionar rango';
+    if (dateRangeDisplay) dateRangeDisplay.classList.remove('has-dates');
+
+    // Mostrar todas las filas
+    document.querySelectorAll('#imagesTableBody tr').forEach(row => {
+        row.style.display = '';
+    });
+
+    showNotification('Filtro de fechas eliminado', 'info');
+}
+
+// Hacer función global
+window.resetDateSelection = resetDateSelection;

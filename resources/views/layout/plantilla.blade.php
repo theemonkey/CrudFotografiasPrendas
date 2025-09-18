@@ -51,7 +51,10 @@
         <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
 
         <!-- JS principales de pagina -->
-        <script src="{{ asset('js/comentarios.js') }}"></script>
+        <script src="{{ asset('js/fotos-index.js') }}"></script>
+
+        <!-- Archivo JS para responsive en dispositivos moviles -->
+        <script src="{{ asset('js/mobile-cards.js') }}"></script>
 
 
         @stack('scripts')

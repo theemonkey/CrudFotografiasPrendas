@@ -13,7 +13,7 @@ let currentUser = null;
 let currentImageData = null;
 let commentsData = new Map();
 let bootstrapReady = false;
-let uploadInProgress = false; // ✅ NUEVO: Prevenir subidas múltiples
+let uploadInProgress = false; //  NUEVO: Prevenir subidas múltiples
 let uploadCount = 0; // Nuevo para validar carga de imagenes duplicadas (corregir, aun se suben varias imagenes)
 let commentCounterInitialized = false;
 
@@ -28,11 +28,11 @@ const CONFIG = {
 // ================================================================================================
 
 function debugSystem() {
-    console.log('🔍 === DEBUG SISTEMA ===');
-    console.log('📊 Upload en progreso:', uploadInProgress);
-    console.log('📊 Upload count:', uploadCount);
-    console.log('📊 Bootstrap ready:', bootstrapReady);
-    console.log('📊 Elementos upload:', {
+    console.log(' === DEBUG SISTEMA ===');
+    console.log(' Upload en progreso:', uploadInProgress);
+    console.log(' Upload count:', uploadCount);
+    console.log(' Bootstrap ready:', bootstrapReady);
+    console.log(' Elementos upload:', {
         cameraUpload: !!document.getElementById('cameraUpload'),
         fileUpload: !!document.getElementById('fileUpload'),
         cameraInput: !!document.getElementById('cameraInput'),
@@ -40,7 +40,7 @@ function debugSystem() {
     });
 
     const commentButtons = document.querySelectorAll('.btn-info');
-    console.log('📊 Botones comentarios encontrados:', commentButtons.length);
+    console.log(' Botones comentarios encontrados:', commentButtons.length);
     commentButtons.forEach((btn, index) => {
         console.log(`  - Botón ${index}:`, {
             onclick: btn.getAttribute('onclick'),
@@ -49,7 +49,7 @@ function debugSystem() {
         });
     });
 
-    console.log('🔍 === FIN DEBUG ===');
+    console.log(' === FIN DEBUG ===');
 }
 
 // ================================================================================================
@@ -57,7 +57,7 @@ function debugSystem() {
 // ================================================================================================
 
 function clearAllUploadEvents() {
-    console.log('🧹 Limpiando TODOS los eventos de subida...');
+    console.log(' Limpiando TODOS los eventos de subida...');
 
     const elements = ['cameraUpload', 'fileUpload', 'cameraInput', 'fileInput'];
 
@@ -67,11 +67,11 @@ function clearAllUploadEvents() {
             // Clonar elemento para eliminar TODOS los event listeners
             const newElement = element.cloneNode(true);
             element.parentNode.replaceChild(newElement, element);
-            console.log(`🧹 Elemento ${id} clonado y reemplazado`);
+            console.log(` Elemento ${id} clonado y reemplazado`);
         }
     });
 
-    console.log('✅ Todos los eventos de subida limpiados');
+    console.log(' Todos los eventos de subida limpiados');
 }
 
 // ================================================================================================
@@ -85,17 +85,17 @@ function waitForBootstrap() {
 
         function checkBootstrap() {
             attempts++;
-            console.log(`🔍 Verificando Bootstrap - Intento ${attempts}/${maxAttempts}`);
+            console.log(` Verificando Bootstrap - Intento ${attempts}/${maxAttempts}`);
 
             if (typeof bootstrap !== 'undefined' && bootstrap.Modal) {
-                console.log('✅ Bootstrap encontrado y funcional');
+                console.log(' Bootstrap encontrado y funcional');
                 bootstrapReady = true;
                 resolve(true);
                 return;
             }
 
             if (attempts >= maxAttempts) {
-                console.error('❌ Bootstrap no se cargó después de múltiples intentos');
+                console.error(' Bootstrap no se cargó después de múltiples intentos');
                 reject(new Error('Bootstrap no disponible'));
                 return;
             }
@@ -112,20 +112,20 @@ function waitForBootstrap() {
 // ================================================================================================
 
 document.addEventListener("DOMContentLoaded", function () {
-    console.log('🚀 DOM cargado, esperando Bootstrap...');
+    console.log(' DOM cargado, esperando Bootstrap...');
 
     if (window.fotografiasSystemInitialized) {
-        console.warn('⚠️ Sistema ya inicializado');
+        console.warn(' Sistema ya inicializado');
         return;
     }
 
     waitForBootstrap()
         .then(() => {
-            console.log('✅ Bootstrap confirmado, iniciando sistema...');
+            console.log(' Bootstrap confirmado, iniciando sistema...');
             initializeSystem();
         })
         .catch((error) => {
-            console.error('❌ Error esperando Bootstrap:', error);
+            console.error(' Error esperando Bootstrap:', error);
             bootstrapReady = false;
             initializeSystem();
         });
@@ -139,7 +139,7 @@ function initializeSystem() {
     window.fotografiasSystemInitialized = true;
 
     try {
-        console.log('🔧 Iniciando todos los sistemas...');
+        console.log(' Iniciando todos los sistemas...');
 
         initializeUserSystem();
         initializeAutoDateFilter();
@@ -152,11 +152,12 @@ function initializeSystem() {
         initializeCommentCounterSystem();
 
         initializeDateRangeUnified();
+        initializeTipoFotografiaFilter(); /*Ver archivo filtro-tipo-fotografia*/
 
-        console.log('✅ Sistema completo inicializado correctamente');
+        console.log(' Sistema completo inicializado correctamente');
 
     } catch (error) {
-        console.error('❌ Error durante la inicialización:', error);
+        console.error(' Error durante la inicialización:', error);
         showNotification('Error durante la inicialización: ' + error.message, 'error');
     }
 }
@@ -166,7 +167,7 @@ function initializeSystem() {
 // ================================================================================================
 
 function initializeUserSystem() {
-    console.log('👤 Inicializando sistema de usuarios...');
+    console.log(' Inicializando sistema de usuarios...');
 
     const metaUser = document.querySelector('meta[name="current-user"]');
     if (metaUser && metaUser.content) {
@@ -175,14 +176,14 @@ function initializeUserSystem() {
             username: generateUsernameFromDisplayName(metaUser.content),
             source: 'meta-tag'
         };
-        console.log('👤 Usuario detectado desde meta tag:', currentUser);
+        console.log(' Usuario detectado desde meta tag:', currentUser);
     } else {
         currentUser = {
             displayName: 'Will-AGW',
             username: 'will-agw',
             source: 'fallback-hardcoded'
         };
-        console.log('👤 Usuario fallback configurado:', currentUser);
+        console.log(' Usuario fallback configurado:', currentUser);
     }
 
     updateUserInterface(currentUser);
@@ -199,7 +200,7 @@ function generateUsernameFromDisplayName(displayName) {
 }
 
 function updateUserInterface(user) {
-    console.log(`👤 Usuario activo: ${user.displayName} (${user.username})`);
+    console.log(` Usuario activo: ${user.displayName} (${user.username})`);
 
     const userDisplayElements = document.querySelectorAll('.current-user-display');
     userDisplayElements.forEach(element => {
@@ -212,14 +213,14 @@ function updateUserInterface(user) {
 // ================================================================================================
 
 function initializeUploadButtons() {
-    console.log('📤 Inicializando sistema de subida...');
+    console.log(' Inicializando sistema de subida...');
 
     const cameraUpload = document.getElementById('cameraUpload');
     const fileUpload = document.getElementById('fileUpload');
     const cameraInput = document.getElementById('cameraInput');
     const fileInput = document.getElementById('fileInput');
 
-    console.log('📤 Elementos encontrados:', {
+    console.log(' Elementos encontrados:', {
         cameraUpload: !!cameraUpload,
         fileUpload: !!fileUpload,
         cameraInput: !!cameraInput,
@@ -227,11 +228,11 @@ function initializeUploadButtons() {
     });
 
     if (!cameraUpload || !fileUpload || !cameraInput || !fileInput) {
-        console.error('❌ Elementos de subida no encontrados');
+        console.error(' Elementos de subida no encontrados');
         return;
     }
 
-    // ✅ CORREGIDO: Limpiar TODOS los eventos previos
+    //  CORREGIDO: Limpiar TODOS los eventos previos
     cameraUpload.onclick = null;
     fileUpload.onclick = null;
     cameraInput.onchange = null;
@@ -243,26 +244,26 @@ function initializeUploadButtons() {
     cameraInput.removeEventListener('change', handleCameraChange);
     fileInput.removeEventListener('change', handleFileChange);
 
-    // ✅ CORREGIDO: Agregar eventos únicos con prevención de duplicados
+    //  CORREGIDO: Agregar eventos únicos con prevención de duplicados
     cameraUpload.addEventListener('click', handleCameraClick, { once: false });
     fileUpload.addEventListener('click', handleFileClick, { once: false });
     cameraInput.addEventListener('change', handleCameraChange, { once: false });
     fileInput.addEventListener('change', handleFileChange, { once: false });
 
-    console.log('✅ Sistema de subida inicializado sin duplicados');
+    console.log(' Sistema de subida inicializado sin duplicados');
 }
 
-// ✅ CORREGIDO: Funciones separadas para cada evento
+//  CORREGIDO: Funciones separadas para cada evento
 function handleCameraClick(e) {
     e.preventDefault();
     e.stopPropagation();
 
     if (uploadInProgress) {
-        console.log('⚠️ Subida en progreso, ignorando click');
+        console.log(' Subida en progreso, ignorando click');
         return;
     }
 
-    console.log('📸 Click en botón cámara');
+    console.log(' Click en botón cámara');
     const cameraInput = document.getElementById('cameraInput');
     if (cameraInput) {
         cameraInput.click();
@@ -274,11 +275,11 @@ function handleFileClick(e) {
     e.stopPropagation();
 
     if (uploadInProgress) {
-        console.log('⚠️ Subida en progreso, ignorando click');
+        console.log(' Subida en progreso, ignorando click');
         return;
     }
 
-    console.log('📁 Click en botón archivo');
+    console.log(' Click en botón archivo');
     const fileInput = document.getElementById('fileInput');
     if (fileInput) {
         fileInput.click();
@@ -286,7 +287,7 @@ function handleFileClick(e) {
 }
 
 function handleCameraChange(e) {
-    console.log('📸 Cambio en input cámara:', e.target.files.length);
+    console.log(' Cambio en input cámara:', e.target.files.length);
     if (e.target.files.length > 0 && !uploadInProgress) {
         handleImageUpload(e.target.files, 'camera');
         e.target.value = ''; // Limpiar para permitir seleccionar la misma imagen
@@ -294,7 +295,7 @@ function handleCameraChange(e) {
 }
 
 function handleFileChange(e) {
-    console.log('📁 Cambio en input archivo:', e.target.files.length);
+    console.log(' Cambio en input archivo:', e.target.files.length);
     if (e.target.files.length > 0 && !uploadInProgress) {
         handleImageUpload(e.target.files, 'file');
         e.target.value = ''; // Limpiar para permitir seleccionar la misma imagen
@@ -302,14 +303,14 @@ function handleFileChange(e) {
 }
 
 function handleImageUpload(files, source) {
-    // ✅ CORREGIDO: Prevenir múltiples subidas
+    //  CORREGIDO: Prevenir múltiples subidas
     if (uploadInProgress) {
-        console.log('⚠️ Subida ya en progreso, cancelando');
+        console.log(' Subida ya en progreso, cancelando');
         return;
     }
 
     uploadInProgress = true;
-    console.log(`📤 handleImageUpload llamado con ${files.length} archivo(s) desde ${source}`);
+    console.log(` handleImageUpload llamado con ${files.length} archivo(s) desde ${source}`);
 
     if (!files || files.length === 0) {
         uploadInProgress = false;
@@ -318,20 +319,20 @@ function handleImageUpload(files, source) {
     }
 
     const file = files[0]; // Solo el primer archivo
-    console.log(`📤 Procesando archivo: ${file.name} (${file.size} bytes, tipo: ${file.type})`);
+    console.log(` Procesando archivo: ${file.name} (${file.size} bytes, tipo: ${file.type})`);
 
     // Validar archivo
     if (!file.type.startsWith('image/')) {
         uploadInProgress = false;
         showNotification('El archivo debe ser una imagen', 'error');
-        console.error('❌ Archivo no es imagen:', file.type);
+        console.error(' Archivo no es imagen:', file.type);
         return;
     }
 
     if (file.size > CONFIG.MAX_FILE_SIZE) {
         uploadInProgress = false;
         showNotification('El archivo es demasiado grande (máximo 10MB)', 'error');
-        console.error('❌ Archivo muy grande:', file.size);
+        console.error(' Archivo muy grande:', file.size);
         return;
     }
 
@@ -342,7 +343,7 @@ function handleImageUpload(files, source) {
 
     if (uploadBtn) {
         uploadBtn.classList.add('uploading');
-        console.log('📤 Estado de subida activado');
+        console.log(' Estado de subida activado');
     }
 
     // Crear datos de imagen
@@ -361,9 +362,9 @@ function handleImageUpload(files, source) {
             tipoFotografia: 'SUBIDA MANUAL'
         };
 
-        console.log('📤 Datos de imagen creados:', imageData);
+        console.log(' Datos de imagen creados:', imageData);
 
-        // ✅ CORREGIDO: Simular delay y luego agregar SOLO UNA vez
+        //  CORREGIDO: Simular delay y luego agregar SOLO UNA vez
         setTimeout(() => {
             addImageToTable(imageData);
 
@@ -375,15 +376,15 @@ function handleImageUpload(files, source) {
                 }, 2000);
             }
 
-            // ✅ IMPORTANTE: Liberar el flag de subida
+            //  IMPORTANTE: Liberar el flag de subida
             uploadInProgress = false;
 
             showNotification(`Imagen "${file.name}" subida correctamente`, 'success');
-            console.log('✅ Imagen agregada a tabla exitosamente');
+            console.log(' Imagen agregada a tabla exitosamente');
         }, 1500); // Delay para evitar duplicados
 
     } catch (error) {
-        console.error('❌ Error procesando imagen:', error);
+        console.error(' Error procesando imagen:', error);
         showNotification('Error al procesar la imagen: ' + error.message, 'error');
 
         if (uploadBtn) {
@@ -482,7 +483,7 @@ function generateOCNumber() {
 // ================================================================================================
 
 function initializeCommentsSystem() {
-    console.log('💬 Inicializando sistema de comentarios...');
+    console.log(' Inicializando sistema de comentarios...');
 
     const commentForm = document.getElementById('commentForm');
     if (commentForm) {
@@ -491,7 +492,7 @@ function initializeCommentsSystem() {
             e.preventDefault();
             handleCommentSubmit(e);
         };
-        console.log('✅ Formulario de comentarios configurado');
+        console.log(' Formulario de comentarios configurado');
     }
 
     const commentText = document.getElementById('commentText');
@@ -499,16 +500,16 @@ function initializeCommentsSystem() {
         commentText.oninput = updateCharacterCount;
     }
 
-    console.log('✅ Sistema de comentarios inicializado');
+    console.log(' Sistema de comentarios inicializado');
 }
 
-// ✅ AGREGAR esta función después de initializeCommentsSystem():
+//  AGREGAR esta función después de initializeCommentsSystem():
 
 function initializeCommentCounterSystem() {
-    console.log('📊 Inicializando sistema de contador de comentarios...');
+    console.log(' Inicializando sistema de contador de comentarios...');
 
     if (commentCounterInitialized) {
-        console.log('⚠️ Sistema de contador ya inicializado');
+        console.log(' Sistema de contador ya inicializado');
         return;
     }
 
@@ -516,11 +517,11 @@ function initializeCommentCounterSystem() {
     fixExistingCommentButtons();
 
     commentCounterInitialized = true;
-    console.log('✅ Sistema de contador inicializado');
+    console.log(' Sistema de contador inicializado');
 }
 
 function fixExistingCommentButtons() {
-    console.log('🔧 Corrigiendo botones existentes...');
+    console.log(' Corrigiendo botones existentes...');
 
     const commentButtons = document.querySelectorAll('.comment-btn, .comment-btn-override, .comment-btn-fixed, button[onclick*="openCommentsModal"]');
 
@@ -541,7 +542,7 @@ function fixExistingCommentButtons() {
         // Limpiar contenido y dejar solo el ícono
         button.innerHTML = '<i class="fas fa-comments"></i>';
 
-        console.log(`✅ Botón ${index} corregido con contador: ${currentCount}`);
+        console.log(` Botón ${index} corregido con contador: ${currentCount}`);
     });
 }
 
@@ -549,17 +550,17 @@ function fixExistingCommentButtons() {
 //=====================================================//
 
 function openCommentsModal(button) {
-    console.log('💬 openCommentsModal llamado');
-    console.log('💬 Bootstrap disponible:', bootstrapReady, typeof bootstrap);
+    console.log(' openCommentsModal llamado');
+    console.log(' Bootstrap disponible:', bootstrapReady, typeof bootstrap);
 
-    // ✅ CORREGIDO: Verificación más robusta
+    //  CORREGIDO: Verificación más robusta
     if (!bootstrapReady || typeof bootstrap === 'undefined' || !bootstrap.Modal) {
         console.error('❌ Bootstrap Modal no disponible');
 
         // Intentar esperar un poco más
         setTimeout(() => {
             if (typeof bootstrap !== 'undefined' && bootstrap.Modal) {
-                console.log('✅ Bootstrap apareció, reintentando...');
+                console.log(' Bootstrap apareció, reintentando...');
                 bootstrapReady = true;
                 openCommentsModal(button);
             } else {
@@ -582,7 +583,7 @@ function openCommentsModal(button) {
     }
 
     currentImageData = imageData;
-    console.log('💬 Datos extraídos:', imageData);
+    console.log(' Datos extraídos:', imageData);
 
     updateCommentsModalInfo(imageData);
     loadCommentsForImage(imageData.id);
@@ -594,18 +595,18 @@ function openCommentsModal(button) {
     }
 
     try {
-        console.log('💬 Creando instancia de Bootstrap Modal...');
+        console.log(' Creando instancia de Bootstrap Modal...');
         const modal = new bootstrap.Modal(modalElement, {
             backdrop: true,
             keyboard: true
         });
 
-        console.log('💬 Mostrando modal...');
+        console.log(' Mostrando modal...');
         modal.show();
         console.log('✅ Modal abierto correctamente');
 
     } catch (error) {
-        console.error('❌ Error abriendo modal:', error);
+        console.error(' Error abriendo modal:', error);
 
         // Fallback manual
         modalElement.classList.add('show');
@@ -679,12 +680,12 @@ function updateCommentsModalInfo(imageData) {
     if (elements.commentTipo) elements.commentTipo.textContent = imageData.tipo;
     if (elements.commentDescripcion) elements.commentDescripcion.textContent = imageData.descripcion;
 
-    console.log('✅ Información del modal actualizada');
+    console.log(' Información del modal actualizada');
 }
 
 function handleCommentSubmit(e) {
     e.preventDefault();
-    console.log('📝 handleCommentSubmit llamado');
+    console.log(' handleCommentSubmit llamado');
 
     if (!currentImageData) {
         showNotification('Error: No hay imagen seleccionada', 'error');
@@ -740,7 +741,7 @@ function addCommentToStorage(comment) {
         commentsData.set(comment.imageId, []);
     }
     commentsData.get(comment.imageId).push(comment);
-    console.log('💾 Comentario guardado:', comment);
+    console.log(' Comentario guardado:', comment);
 }
 
 function loadCommentsForImage(imageId) {
@@ -856,34 +857,34 @@ function updateCommentButtonBadge() {
     const comments = commentsData.get(currentImageData.id) || [];
     const commentCount = comments.length;
 
-    console.log(`📊 Actualizando contador para imagen ${currentImageData.id}: ${commentCount} comentarios`);
+    console.log(` Actualizando contador para imagen ${currentImageData.id}: ${commentCount} comentarios`);
 
     // Buscar el botón de comentarios para esta imagen
     const row = document.querySelector(`tr[data-image-id="${currentImageData.id}"]`);
     if (!row) {
-        console.warn(`⚠️ No se encontró la fila para imagen ${currentImageData.id}`);
+        console.warn(` No se encontró la fila para imagen ${currentImageData.id}`);
         return;
     }
 
     const commentButton = row.querySelector('.comment-btn, .comment-btn-override, .comment-btn-fixed, button[onclick*="openCommentsModal"]');
     if (!commentButton) {
-        console.warn(`⚠️ No se encontró el botón de comentarios en la fila`);
+        console.warn(` No se encontró el botón de comentarios en la fila`);
         return;
     }
 
-    // ✅ NUEVO: Usar data-comment-count en lugar del span rojo
+    //  NUEVO: Usar data-comment-count en lugar del span rojo
     commentButton.setAttribute('data-comment-count', commentCount);
 
-    // ✅ LIMPIAR: Remover el span rojo viejo si existe
+    //  LIMPIAR: Remover el span rojo viejo si existe
     const oldBadge = commentButton.querySelector('.comment-count');
     if (oldBadge) {
         oldBadge.remove();
     }
 
-    // ✅ ASEGURAR: Posición relativa para el contador
+    //  ASEGURAR: Posición relativa para el contador
     commentButton.style.position = 'relative';
 
-    // ✅ ANIMACIÓN: Pulso cuando se actualiza
+    //  ANIMACIÓN: Pulso cuando se actualiza
     if (commentCount > 0) {
         commentButton.classList.add('comment-added');
         setTimeout(() => {
@@ -891,7 +892,7 @@ function updateCommentButtonBadge() {
         }, 600);
     }
 
-    console.log(`✅ Contador actualizado: ${commentCount}`);
+    console.log(` Contador actualizado: ${commentCount}`);
 }
 
 function deleteComment(commentId) {
@@ -916,15 +917,15 @@ function deleteComment(commentId) {
 }
 
 // ================================================================================================
-// SISTEMA DE COLUMNAS
+// SISTEMA DE COLUMNAS - FILAS TIPO FOTOGRAFIA
 // ================================================================================================
 
 function initializeColumnToggle() {
-    console.log('📋 Inicializando control de columnas...');
+    console.log(' Inicializando control de columnas...');
 
     const dropdown = document.getElementById('columnsDropdown');
     if (!dropdown) {
-        console.warn('⚠️ Dropdown de columnas no encontrado');
+        console.warn(' Dropdown de columnas no encontrado');
         return;
     }
 
@@ -945,7 +946,7 @@ function initializeColumnToggle() {
         }
     };
 
-    console.log('✅ Control de columnas inicializado');
+    console.log(' Control de columnas inicializado');
 }
 
 function toggleColumn(columnName, isVisible) {
@@ -969,7 +970,7 @@ function toggleColumn(columnName, isVisible) {
         cell.style.display = display;
     });
 
-    console.log(`📋 Columna ${columnName} ${isVisible ? 'mostrada' : 'ocultada'}`);
+    console.log(` Columna ${columnName} ${isVisible ? 'mostrada' : 'ocultada'}`);
 }
 
 function getColumnDisplayName(columnKey) {
@@ -983,6 +984,309 @@ function getColumnDisplayName(columnKey) {
         'acciones': 'Acciones'
     };
     return names[columnKey] || columnKey;
+}
+
+// ================================================================
+// VARIABLES GLOBALES DEL FILTRO TIPO FOTOGRAFIA
+// ================================================================
+
+let tipoFotografiaFilter = {
+    active: false,
+    selectedTypes: [],
+    totalCounts: {
+        'MUESTRA': 0,
+        'PRENDA FINAL': 0,
+        'VALIDACION AC': 0
+    }
+};
+
+// ================================================================
+// FUNCIÓN PRINCIPAL DE FILTRADO
+// ================================================================
+
+function filterByTipoFotografia() {
+    console.log(' Aplicando filtro por tipo de fotografía...');
+
+    //  OBTENER checkboxes seleccionados
+    const muestraCheck = document.getElementById('filtroMuestra');
+    const prendaFinalCheck = document.getElementById('filtroPrendaFinal');
+    const validacionACCheck = document.getElementById('filtroValidacionAC');
+
+    if (!muestraCheck || !prendaFinalCheck || !validacionACCheck) {
+        console.error(' No se encontraron los checkboxes');
+        return;
+    }
+
+    //  ACTUALIZAR estado del filtro
+    tipoFotografiaFilter.selectedTypes = [];
+
+    if (muestraCheck.checked) {
+        tipoFotografiaFilter.selectedTypes.push('MUESTRA');
+    }
+
+    if (prendaFinalCheck.checked) {
+        tipoFotografiaFilter.selectedTypes.push('PRENDA FINAL');
+    }
+
+    if (validacionACCheck.checked) {
+        tipoFotografiaFilter.selectedTypes.push('VALIDACION AC');
+    }
+
+    // DETERMINAR si el filtro está activo
+    tipoFotografiaFilter.active = tipoFotografiaFilter.selectedTypes.length > 0;
+
+    console.log(' Tipos seleccionados:', tipoFotografiaFilter.selectedTypes);
+
+    //  APLICAR filtro a las filas
+    applyTipoFotografiaFilter();
+
+    //  ACTUALIZAR interfaz
+    updateTipoFotografiaUI();
+}
+
+// ================================================================
+// APLICAR FILTRO A LAS FILAS
+// ================================================================
+
+function applyTipoFotografiaFilter() {
+    const tableBody = document.getElementById('imagesTableBody');
+    if (!tableBody) {
+        console.error(' No se encontró el tbody de la tabla');
+        return;
+    }
+
+    const rows = tableBody.querySelectorAll('tr');
+    let visibleCount = 0;
+    let hiddenCount = 0;
+
+    rows.forEach(row => {
+        const tipoCell = row.querySelector('td[data-column="tipo-fotografia"]');
+
+        if (!tipoCell) {
+            console.warn(' Fila sin columna de tipo fotografía');
+            return;
+        }
+
+        const tipoText = tipoCell.textContent.trim().toUpperCase();
+        let shouldShow = true;
+
+        // SI el filtro está activo, verificar si coincide
+        if (tipoFotografiaFilter.active) {
+            shouldShow = tipoFotografiaFilter.selectedTypes.some(selectedType =>
+                tipoText.includes(selectedType)
+            );
+        }
+
+        //  MOSTRAR u ocultar fila
+        if (shouldShow) {
+            row.style.display = '';
+            visibleCount++;
+        } else {
+            row.style.display = 'none';
+            hiddenCount++;
+        }
+    });
+
+    //  ACTUALIZAR cards móviles si existen
+    if (window.mobileCardsStable) {
+        setTimeout(() => {
+            window.mobileCardsStable.generateCardsOnce();
+        }, 100);
+    }
+
+    console.log(` Filtro aplicado: ${visibleCount} visibles, ${hiddenCount} ocultas`);
+
+    //  MOSTRAR notificación
+    if (tipoFotografiaFilter.active) {
+        const tipos = tipoFotografiaFilter.selectedTypes.join(', ');
+        showNotification(`Filtro aplicado: ${tipos} (${visibleCount} registros)`, 'success');
+    }
+}
+
+// ================================================================
+// ACTUALIZAR INTERFAZ DEL FILTRO
+// ================================================================
+
+function updateTipoFotografiaUI() {
+    const label = document.getElementById('tipoFotografiaLabel');
+    const button = document.getElementById('tipoFotografiaDropdown');
+
+    if (!label || !button) return;
+
+    //  ACTUALIZAR texto del botón
+    if (tipoFotografiaFilter.active) {
+        const count = tipoFotografiaFilter.selectedTypes.length;
+        label.textContent = `Filtrado (${count})`;
+        button.classList.add('btn-primary');
+        button.classList.remove('btn-buscar');
+    } else {
+        label.textContent = 'Buscar';
+        button.classList.remove('btn-primary');
+        button.classList.add('btn-buscar');
+    }
+
+    //  ACTUALIZAR contadores
+    updateTipoFotografiaCounts();
+}
+
+// ================================================================
+// ACTUALIZAR CONTADORES
+// ================================================================
+
+function updateTipoFotografiaCounts() {
+    const tableBody = document.getElementById('imagesTableBody');
+    if (!tableBody) return;
+
+    const counts = {
+        'MUESTRA': 0,
+        'PRENDA FINAL': 0,
+        'VALIDACION AC': 0
+    };
+
+    //  CONTAR tipos en filas visibles
+    const rows = tableBody.querySelectorAll('tr');
+    rows.forEach(row => {
+        if (row.style.display !== 'none') {
+            const tipoCell = row.querySelector('td[data-column="tipo-fotografia"]');
+            if (tipoCell) {
+                const tipoText = tipoCell.textContent.trim().toUpperCase();
+
+                if (tipoText.includes('MUESTRA')) {
+                    counts['MUESTRA']++;
+                } else if (tipoText.includes('PRENDA FINAL')) {
+                    counts['PRENDA FINAL']++;
+                } else if (tipoText.includes('VALIDACION AC')) {
+                    counts['VALIDACION AC']++;
+                }
+            }
+        }
+    });
+
+    //  ACTUALIZAR elementos de contador
+    const countMuestra = document.getElementById('countMuestra');
+    const countPrendaFinal = document.getElementById('countPrendaFinal');
+    const countValidacionAC = document.getElementById('countValidacionAC');
+
+    if (countMuestra) countMuestra.textContent = counts['MUESTRA'];
+    if (countPrendaFinal) countPrendaFinal.textContent = counts['PRENDA FINAL'];
+    if (countValidacionAC) countValidacionAC.textContent = counts['VALIDACION AC'];
+
+    //  GUARDAR contadores globales
+    tipoFotografiaFilter.totalCounts = counts;
+}
+
+// ================================================================
+// FUNCIONES DE CONTROL
+// ================================================================
+
+// SELECCIONAR TODOS
+function selectAllTipoFotografia() {
+    const muestraCheck = document.getElementById('filtroMuestra');
+    const prendaFinalCheck = document.getElementById('filtroPrendaFinal');
+    const validacionACCheck = document.getElementById('filtroValidacionAC');
+
+    if (muestraCheck) muestraCheck.checked = true;
+    if (prendaFinalCheck) prendaFinalCheck.checked = true;
+    if (validacionACCheck) validacionACCheck.checked = true;
+
+    filterByTipoFotografia();
+
+    console.log(' Todos los tipos seleccionados');
+}
+
+//  LIMPIAR FILTRO
+function clearTipoFotografiaFilter() {
+    const muestraCheck = document.getElementById('filtroMuestra');
+    const prendaFinalCheck = document.getElementById('filtroPrendaFinal');
+    const validacionACCheck = document.getElementById('filtroValidacionAC');
+
+    if (muestraCheck) muestraCheck.checked = false;
+    if (prendaFinalCheck) prendaFinalCheck.checked = false;
+    if (validacionACCheck) validacionACCheck.checked = false;
+
+    //  RESETEAR estado
+    tipoFotografiaFilter.active = false;
+    tipoFotografiaFilter.selectedTypes = [];
+
+    //  MOSTRAR todas las filas
+    const tableBody = document.getElementById('imagesTableBody');
+    if (tableBody) {
+        const rows = tableBody.querySelectorAll('tr');
+        rows.forEach(row => {
+            row.style.display = '';
+        });
+    }
+
+    //  ACTUALIZAR interfaz
+    updateTipoFotografiaUI();
+
+    //  ACTUALIZAR cards móviles
+    if (window.mobileCardsStable) {
+        setTimeout(() => {
+            window.mobileCardsStable.generateCardsOnce();
+        }, 100);
+    }
+
+    showNotification('Filtro de tipo fotografía eliminado', 'info');
+    console.log(' Filtro limpiado');
+}
+
+// ================================================================
+// INTEGRACIÓN CON OTROS FILTROS
+// ================================================================
+
+//  FUNCIÓN para integrar con filtros existentes
+function integrateTipoFotografiaWithOtherFilters() {
+    // Esta función se puede llamar desde otros filtros
+    // para asegurar que se respeten todos los filtros activos
+
+    if (tipoFotografiaFilter.active) {
+        console.log(' Reintegrando filtro de tipo fotografía con otros filtros');
+        applyTipoFotografiaFilter();
+    }
+}
+
+// ================================================================
+// INICIALIZACIÓN
+// ================================================================
+
+function initializeTipoFotografiaFilter() {
+    console.log(' Inicializando filtro de tipo fotografía...');
+
+    //  ACTUALIZAR contadores iniciales
+    updateTipoFotografiaCounts();
+
+    //  PREVENIR cierre del dropdown al hacer click en checkboxes
+    const dropdownMenu = document.getElementById('tipoFotografiaMenu');
+    if (dropdownMenu) {
+        dropdownMenu.addEventListener('click', function (e) {
+            //  NO cerrar si se hace click en checkbox o label
+            if (e.target.type === 'checkbox' || e.target.closest('label')) {
+                e.stopPropagation();
+            }
+        });
+    }
+
+    //  ACTUALIZAR contadores cuando cambien las filas
+    const tableBody = document.getElementById('imagesTableBody');
+    if (tableBody) {
+        const observer = new MutationObserver(() => {
+            setTimeout(() => {
+                updateTipoFotografiaCounts();
+                //  REAPLICAR filtro si está activo
+                if (tipoFotografiaFilter.active) {
+                    applyTipoFotografiaFilter();
+                }
+            }, 100);
+        });
+
+        observer.observe(tableBody, {
+            childList: true,
+            subtree: true
+        });
+    }
+
+    console.log(' Filtro de tipo fotografía inicializado');
 }
 
 // ================================================================================================
@@ -1047,7 +1351,7 @@ function initializeNotifications() {
 }
 
 function showNotification(message, type = 'info', duration = 5000) {
-    console.log(`🔔 Notificación: [${type.toUpperCase()}] ${message}`);
+    console.log(` Notificación: [${type.toUpperCase()}] ${message}`);
 
     const container = document.getElementById('notificationContainer');
     if (!container) return;
@@ -1184,7 +1488,7 @@ let currentDateRange = {
 
 // Inicializar el sistema de filtrado automático
 function initializeAutoDateFilter() {
-    console.log('📅 Inicializando filtro de fechas automático...');
+    console.log(' Inicializando filtro de fechas automático...');
 
     // SOLO inicializar variables vacías
     currentDateRange = {
@@ -1226,7 +1530,7 @@ function initializeAutoDateFilter() {
         }
     });
 
-    console.log('✅ Filtro de fechas automático inicializado');
+    console.log(' Filtro de fechas automático inicializado');
 }
 
 function toggleDateRangeInputs() {
@@ -1237,7 +1541,7 @@ function toggleDateRangeInputs() {
         dateRangeInputs.style.display = 'block';
         dateRangeInputs.classList.add('show');
         dateRangeDisplay.classList.add('active');
-        console.log('📅 Selector de fechas abierto');
+        console.log(' Selector de fechas abierto');
     } else {
         closeDateRangeInputs();
     }
@@ -1256,7 +1560,7 @@ function handleDateChange() {
     const fechaInicio = document.getElementById('fechaInicio');
     const fechaFin = document.getElementById('fechaFin');
 
-    console.log('📅 Cambio en fechas detectado:', {
+    console.log(' Cambio en fechas detectado:', {
         inicio: fechaInicio.value,
         fin: fechaFin.value
     });
@@ -1299,7 +1603,7 @@ function updateDateRangeDisplay() {
         dateRangeDisplay.classList.add('has-dates');
         dateFilterActive = true;
 
-        console.log(`📅 Display actualizado: ${startFormatted} - ${endFormatted}`);
+        console.log(` Display actualizado: ${startFormatted} - ${endFormatted}`);
     } else {
         dateRangeText.textContent = 'Seleccionar rango';
         dateRangeDisplay.classList.remove('has-dates');
@@ -1309,11 +1613,11 @@ function updateDateRangeDisplay() {
 
 function applyDateFilterAuto() {
     if (!currentDateRange.start || !currentDateRange.end) {
-        console.log('⚠️ Rango de fechas incompleto, no aplicando filtro');
+        console.log(' Rango de fechas incompleto, no aplicando filtro');
         return;
     }
 
-    console.log('🔍 Aplicando filtro automático de fechas:', currentDateRange);
+    console.log(' Aplicando filtro automático de fechas:', currentDateRange);
 
     const startDate = new Date(currentDateRange.start);
     const endDate = new Date(currentDateRange.end);
@@ -1350,7 +1654,7 @@ function applyDateFilterAuto() {
 
     // Notificación del resultado
     const totalRows = tableRows.length;
-    console.log(`✅ Filtro aplicado: ${visibleCount} visibles de ${totalRows} total`);
+    console.log(` Filtro aplicado: ${visibleCount} visibles de ${totalRows} total`);
 }
 
 // Funciones de utilidad
@@ -1397,7 +1701,7 @@ document.addEventListener('DOMContentLoaded', function () {
 window.clearDateFilter = clearDateFilter;
 window.applyDateFilterAuto = applyDateFilterAuto;
 
-console.log('📅 Sistema de filtrado automático de fechas cargado');
+console.log(' Sistema de filtrado automático de fechas cargado');
 
 // ================================================================================================
 // ACCIONES
@@ -1457,13 +1761,27 @@ window.debugSystem = debugSystem;
 window.initializeDateRangeSelector = initializeDateRangeSelector;
 
 
+
+//  INICIALIZAR cuando el DOM esté listo
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initializeTipoFotografiaFilter);
+} else {
+    initializeTipoFotografiaFilter();
+}
+
+window.filterByTipoFotografia = filterByTipoFotografia;
+window.selectAllTipoFotografia = selectAllTipoFotografia;
+window.clearTipoFotografiaFilter = clearTipoFotografiaFilter;
+window.integrateTipoFotografiaWithOtherFilters = integrateTipoFotografiaWithOtherFilters;
+
+
 // ================================================================================================
 // DESPLEGABLE DE FECHAS -> APLICAR SEGUN DOS RANGOS DE FECHAS  A ELEGIR
 // ================================================================================================
 
-// ✅ FUNCIÓN CORREGIDA - SIN FECHAS POR DEFECTO
+//  FUNCIÓN CORREGIDA - SIN FECHAS POR DEFECTO
 function initializeDateRangeUnified() {
-    console.log('📅 Inicializando selector unificado de fechas...');
+    console.log(' Inicializando selector unificado de fechas...');
 
     setTimeout(() => {
         const dateRangeDisplayUnified = document.getElementById('dateRangeDisplayUnified');
@@ -1474,7 +1792,7 @@ function initializeDateRangeUnified() {
         const dateRangeTextUnified = document.getElementById('dateRangeTextUnified');
 
         if (!dateRangeDisplayUnified || !dateCalendarsPanel) {
-            console.warn('⚠️ Elementos unificados no encontrados');
+            console.warn(' Elementos unificados no encontrados');
             return;
         }
 
@@ -1485,17 +1803,17 @@ function initializeDateRangeUnified() {
         let selectedStartDate = null;
         let selectedEndDate = null;
 
-        // ✅ ESTADO INICIAL LIMPIO - SIN FECHAS
+        //  ESTADO INICIAL LIMPIO - SIN FECHAS
         if (dateRangeTextUnified) {
             dateRangeTextUnified.textContent = 'Seleccione fechas';
         }
 
-        // ✅ NO configurar fechas por defecto
+        //  NO configurar fechas por defecto
         // Comentar/eliminar estas líneas:
         // fechaInicioUnified.value = formatDateForInput(thirtyDaysAgo);
         // fechaFinUnified.value = formatDateForInput(today);
 
-        // ✅ PASO 1: Click en contenedor principal
+        //  PASO 1: Click en contenedor principal
         dateRangeDisplayUnified.onclick = function (e) {
             e.preventDefault();
             e.stopPropagation();
@@ -1510,11 +1828,11 @@ function initializeDateRangeUnified() {
                 }, 100);
 
                 updateCalendarStatus('Selecciona la fecha de inicio');
-                console.log('📅 PASO 1: Panel abierto - selecciona fechas');
+                console.log(' PASO 1: Panel abierto - selecciona fechas');
             }
         };
 
-        // ✅ PASO 2: Selección de fecha inicio
+        //  PASO 2: Selección de fecha inicio
         fechaInicioUnified.addEventListener('change', function () {
             selectedStartDate = this.value;
             fechaInicioSelected = true;
@@ -1526,10 +1844,10 @@ function initializeDateRangeUnified() {
                 fechaFinUnified.focus();
             }, 200);
 
-            console.log('📅 PASO 2: Fecha inicio seleccionada -', selectedStartDate);
+            console.log(' PASO 2: Fecha inicio seleccionada -', selectedStartDate);
         });
 
-        // ✅ PASO 3: Selección de fecha final
+        //  PASO 3: Selección de fecha final
         fechaFinUnified.addEventListener('change', function () {
             selectedEndDate = this.value;
             fechaFinSelected = true;
@@ -1566,11 +1884,11 @@ function initializeDateRangeUnified() {
 
                 }, 1000);
 
-                console.log('📅 PASO 3: Filtro aplicado');
+                console.log(' PASO 3: Filtro aplicado');
             }
         });
 
-        // ✅ FUNCIÓN para actualizar estado visual
+        //  FUNCIÓN para actualizar estado visual
         function updateCalendarStatus(message) {
             if (calendarStatus) {
                 calendarStatus.innerHTML = `<small>${message}</small>`;
@@ -1585,7 +1903,7 @@ function initializeDateRangeUnified() {
             }
         }
 
-        // ✅ CERRAR al hacer click fuera
+        //  CERRAR al hacer click fuera
         document.addEventListener('click', function (e) {
             if (!dateRangeDisplayUnified.contains(e.target) && !dateCalendarsPanel.contains(e.target)) {
                 if (panelOpen) {
@@ -1596,7 +1914,7 @@ function initializeDateRangeUnified() {
             }
         });
 
-        // ✅ CERRAR con ESC
+        //  CERRAR con ESC
         document.addEventListener('keydown', function (e) {
             if (e.key === 'Escape' && panelOpen) {
                 dateCalendarsPanel.style.display = 'none';
@@ -1605,7 +1923,7 @@ function initializeDateRangeUnified() {
             }
         });
 
-        console.log('✅ Selector unificado inicializado - estado inicial limpio');
+        console.log(' Selector unificado inicializado - estado inicial limpio');
 
     }, 1000);
 }
@@ -1614,7 +1932,7 @@ function initializeDateRangeUnified() {
 window.initializeDateRangeUnified = initializeDateRangeUnified;
 
 
-// ✅ FUNCIÓN para resetear selección de fechas
+//  FUNCIÓN para resetear selección de fechas
 function resetDateSelection() {
     const fechaInicio = document.getElementById('fechaInicio');
     const fechaFin = document.getElementById('fechaFin');

@@ -39,6 +39,7 @@
                     </div>
                 </div>
 
+                <!-- DESCOMENTAR SI SE REQUIEREN ESTOS BOTONES
                 <button class="btn btn-pink" onclick="exportAll()">
                     <i class="fas fa-download me-1"></i>
                     Exportar todo
@@ -68,7 +69,8 @@
                 <button class="btn btn-success" onclick="exportSelected()">
                     <i class="fas fa-file-export me-1"></i>
                     Exportar
-                </button>
+                </button> -->
+
             </div>
         </div>
     </div>
@@ -77,42 +79,42 @@
 <!-- Filtro datos por fecha -->
 <div class="row">
     <!-- Columna filtro por fecha -->
-    <div class="col-md-3">
-    <div class="form-group">
-        <label class="form-label">
-            <i class="fas fa-calendar-alt me-1"></i>
-            Fecha creación de registro
-        </label>
+     <div class="col-md-3">
+        <div class="form-group">
+            <label class="form-label">
+                <i class="fas fa-calendar-alt me-1"></i>
+                Fecha creación de registro
+            </label>
 
-        <!-- Contenedor principal como en la imagen -->
-        <div class="date-range-unified" id="dateRangeUnified">
-            <!-- Display del rango seleccionado -->
-            <div class="date-range-display-unified" id="dateRangeDisplayUnified">
-                <i class="fas fa-clock me-2"></i>
-                <span id="dateRangeTextUnified">Seleccione fechas</span>
-                <i class="fas fa-chevron-down ms-auto"></i>
-            </div>
-
-            <!-- Panel de calendarios (oculto inicialmente) -->
-            <div class="date-calendars-panel" id="dateCalendarsPanel" style="display: none;">
-                <div class="calendars-container">
-                    <div class="calendar-section">
-                        <label class="calendar-label">Fecha inicio</label>
-                        <input type="date" class="form-control calendar-input" id="fechaInicioUnified">
-                    </div>
-                    <div class="calendar-separator">-</div>
-                    <div class="calendar-section">
-                        <label class="calendar-label">Fecha final</label>
-                        <input type="date" class="form-control calendar-input" id="fechaFinUnified">
-                    </div>
+            <!-- Contenedor principal como en la imagen -->
+            <div class="date-range-unified" id="dateRangeUnified">
+                <!-- Display del rango seleccionado -->
+                <div class="date-range-display-unified" id="dateRangeDisplayUnified">
+                    <i class="fas fa-clock me-2"></i>
+                    <span id="dateRangeTextUnified">Seleccione fechas</span>
+                    <i class="fas fa-chevron-down ms-auto"></i>
                 </div>
-                <div class="calendar-status" id="calendarStatus">
-                    <small class="text-muted">Selecciona ambas fechas para aplicar filtro</small>
+
+                <!-- Panel de calendarios (oculto inicialmente) -->
+                <div class="date-calendars-panel" id="dateCalendarsPanel" style="display: none;">
+                    <div class="calendars-container">
+                        <div class="calendar-section">
+                            <label class="calendar-label">Fecha inicio</label>
+                            <input type="date" class="form-control calendar-input" id="fechaInicioUnified">
+                        </div>
+                        <div class="calendar-separator">-</div>
+                        <div class="calendar-section">
+                            <label class="calendar-label">Fecha final</label>
+                            <input type="date" class="form-control calendar-input" id="fechaFinUnified">
+                        </div>
+                    </div>
+                    <div class="calendar-status" id="calendarStatus">
+                        <small class="text-muted">Selecciona ambas fechas para aplicar filtro</small>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
-</div>
 
     <!-- Columna búsqueda -->
     <div class="col-md-6">
@@ -146,7 +148,7 @@
                                     IMAGEN
                                 </th>
                                 <th data-column="orden-sit">
-                                    <i class="fas fa-hashtag me-1"></i>
+                                    <i class="fas me-1"></i>
                                     ORDEN SIT
                                 </th>
                                 <th data-column="po">
@@ -187,14 +189,66 @@
                                     <input type="text" class="form-control form-control-sm" placeholder="Buscar">
                                 </td>
                                 <td data-column="tipo-fotografia">
-                                    <div class="btn-group">
-                                        <button class="btn btn-buscar dropdown-toggle" type="button" data-bs-toggle="dropdown" style="Background-color: white; border: 1px solid #ccc;">
+                                    <div class="btn-group w-100">
+                                        <button class="btn btn-buscar dropdown-toggle"
+                                                type="button"
+                                                id="tipoFotografiaDropdown"
+                                                data-bs-toggle="dropdown"
+                                                aria-expanded="false"
+                                                style="background-color: white; border: 1px solid #ced4da;">
                                             <i class="fas me-1"></i>
-                                            Buscar
+                                            <span id="tipoFotografiaLabel">Buscar</span>
                                         </button>
-                                        <ul class="dropdown-menu" id="columnsDropdown">
-                                            <li><label class="dropdown-item"><input type="checkbox" checked class="me-2" data-column="Tipo fotografia">Muestra</label></li>
-                                            <li><label class="dropdown-item"><input type="checkbox" checked class="me-2" data-column="Tipo fotografia">Prenda final</label></li>
+                                        <ul class="dropdown-menu w-100" aria-labelledby="tipoFotografiaDropdown" id="tipoFotografiaMenu">
+                                            <!-- Opciones con checkboxes -->
+                                            <li>
+                                                <label class="dropdown-item d-flex align-items-center" for="filtroMuestra">
+                                                    <input type="checkbox"
+                                                        class="form-check-input me-2"
+                                                        id="filtroMuestra"
+                                                        value="MUESTRA"
+                                                        onchange="filterByTipoFotografia()">
+                                                    <span class="flex-grow-1">Muestra</span>
+                                                </label>
+                                            </li>
+
+                                            <li>
+                                                <label class="dropdown-item d-flex align-items-center" for="filtroPrendaFinal">
+                                                    <input type="checkbox"
+                                                        class="form-check-input me-2"
+                                                        id="filtroPrendaFinal"
+                                                        value="PRENDA FINAL"
+                                                        onchange="filterByTipoFotografia()">
+                                                    <span class="flex-grow-1">Prenda final</span>
+                                                </label>
+                                            </li>
+
+                                            <li>
+                                                <label class="dropdown-item d-flex align-items-center" for="filtroValidacionAC">
+                                                    <input type="checkbox"
+                                                        class="form-check-input me-2"
+                                                        id="filtroValidacionAC"
+                                                        value="VALIDACION AC"
+                                                        onchange="filterByTipoFotografia()">
+                                                    <span class="flex-grow-1">Validacion AC</span>
+                                                </label>
+                                            </li>
+
+                                            <!-- Controles del filtro tipo fotografia en caso de requerir descomentar
+                                            <li class="dropdown-item-text">
+                                                <div class="d-flex gap-2">
+                                                    <button class="btn btn-sm btn-outline-primary flex-grow-1"
+                                                            onclick="selectAllTipoFotografia()">
+                                                        <i class="fas fa-check-double me-1"></i>
+                                                        Todos
+                                                    </button>
+                                                    <button class="btn btn-sm btn-outline-danger flex-grow-1"
+                                                            onclick="clearTipoFotografiaFilter()">
+                                                        <i class="fas fa-times me-1"></i>
+                                                        Limpiar
+                                                    </button>
+                                                </div>
+                                            </li> -->
                                         </ul>
                                     </div>
                                 </td>
@@ -219,10 +273,10 @@
                                 <td data-column="tipo-fotografia">PRENDA FINAL</td>
                                 <td data-column="acciones">
                                     <button class="btn btn-danger btn-sm me-1 btn-delete" onclick="deleteImage(this)" title="Eliminar imagen">
-                                        <i class="fas fa-trash"></i> Eliminar
+                                        <i class="fas fa-trash"></i>
                                     </button>
                                     <button class="btn btn-warning btn-sm me-1 btn-edit" onclick="editImage(this)" title="Editar información">
-                                        <i class="fas fa-edit"></i> Editar
+                                        <i class="fas fa-edit"></i>
                                     </button>
                                     <button class="btn btn-info btn-sm comment-btn" onclick="openCommentsModal(this)" title="Ver/Agregar comentarios">
                                         <i class="fas fa-comments"></i>
@@ -247,10 +301,10 @@
                                 <td data-column="tipo-fotografia">MUESTRA</td>
                                 <td data-column="acciones">
                                     <button class="btn btn-danger btn-sm me-1 btn-delete" onclick="deleteImage(this)" title="Eliminar imagen">
-                                        <i class="fas fa-trash"></i> Eliminar
+                                        <i class="fas fa-trash"></i>
                                     </button>
                                     <button class="btn btn-warning btn-sm me-1 btn-edit" onclick="editImage(this)" title="Editar información">
-                                        <i class="fas fa-edit"></i> Editar
+                                        <i class="fas fa-edit"></i>
                                     </button>
                                     <button class="btn btn-info btn-sm comment-btn" onclick="openCommentsModal(this)" title="Ver/Agregar comentarios">
                                         <i class="fas fa-comments"></i>
@@ -272,13 +326,13 @@
                                 <td data-column="po">6000081373</td>
                                 <td data-column="oc">4000065347</td>
                                 <td data-column="descripcion">POLO BUSINESS</td>
-                                <td data-column="tipo-fotografia">PRENDA FINAL</td>
+                                <td data-column="tipo-fotografia">VALIDACION AC</td>
                                 <td data-column="acciones">
                                     <button class="btn btn-danger btn-sm me-1 btn-delete" onclick="deleteImage(this)" title="Eliminar imagen">
-                                        <i class="fas fa-trash"></i> Eliminar
+                                        <i class="fas fa-trash"></i>
                                     </button>
                                     <button class="btn btn-warning btn-sm me-1 btn-edit" onclick="editImage(this)" title="Editar información">
-                                        <i class="fas fa-edit"></i> Editar
+                                        <i class="fas fa-edit"></i>
                                     </button>
                                     <button class="btn btn-info btn-sm comment-btn" onclick="openCommentsModal(this)" title="Ver/Agregar comentarios">
                                         <i class="fas fa-comments"></i>
@@ -513,6 +567,9 @@
 
 <!-- Archivo JS para responsive en dispositivos moviles -->
 <script src="{{ asset('js/mobile-cards.js') }}"></script>
+
+
+
 
 <script>
     // ===== SCRIPT FUNCIONALIDAD SUBIDA DE IMAGENES =====

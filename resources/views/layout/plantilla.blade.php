@@ -50,6 +50,16 @@
         <!-- SortableJS (para ordenamiento) -->
         <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
 
+        <!-- JQuery -->
+        <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+
+        <!-- Moment.js -->
+        <script src="https://cdn.jsdelivr.net/momentjs/latest/moment.min.js"></script>
+
+        <!-- Date Range Picker -->
+        <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.css" />
+        <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.min.js"></script>
+
         <!-- JS principales de pagina -->
         <script src="{{ asset('js/fotos-index.js') }}"></script>
 

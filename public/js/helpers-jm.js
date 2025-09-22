@@ -1,4 +1,6 @@
-export const formatNumber = (number, digits = 2) => {
+//Archivo a usar en caso de requerir modularidad y uso de la funcionalidad de rango fechas en otro lugar
+
+/*export const formatNumber = (number, digits = 2) => {
 	number = number && number != '' ? number : 0;
 	return new Intl.NumberFormat("de-DE", {
 			maximumFractionDigits: digits,
@@ -21,7 +23,7 @@ export const showAlertLoading = (title, subMessage) => {
  * cualquier error que pueda ocurrir durante el proceso.
  */
 
-export const fetchAPIURL = async (apiURL, params = {}, method = 'GET') => {
+/*export const fetchAPIURL = async (apiURL, params = {}, method = 'GET') => {
 	const token = document.querySelector('meta[name = "csrf-token"]').getAttribute('content');
 	let requestInfo = {};
 	if ( method === 'POST' ) {
@@ -118,4 +120,4 @@ export const setRangeDates = (options) => {
 		opens: "center",
 		cancelClass: "btn-danger",
 	}, eventDateRange);
-}
+}*/

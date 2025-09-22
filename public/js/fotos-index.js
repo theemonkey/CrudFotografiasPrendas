@@ -142,7 +142,6 @@ function initializeSystem() {
         console.log(' Iniciando todos los sistemas...');
 
         initializeUserSystem();
-        initializeAutoDateFilter();
         initializeColumnToggle();
         initializeLightbox();
         initializeNotifications();
@@ -150,8 +149,6 @@ function initializeSystem() {
         initializeUploadButtons();
         initializeCommentsSystem();
         initializeCommentCounterSystem();
-
-        initializeDateRangeUnified();
         initializeTipoFotografiaFilter(); /*Ver archivo filtro-tipo-fotografia*/
 
         console.log(' Sistema completo inicializado correctamente');
@@ -179,8 +176,8 @@ function initializeUserSystem() {
         console.log(' Usuario detectado desde meta tag:', currentUser);
     } else {
         currentUser = {
-            displayName: 'Will-AGW',
-            username: 'will-agw',
+            displayName: '',
+            username: '',
             source: 'fallback-hardcoded'
         };
         console.log(' Usuario fallback configurado:', currentUser);
@@ -555,7 +552,7 @@ function openCommentsModal(button) {
 
     //  CORREGIDO: Verificación más robusta
     if (!bootstrapReady || typeof bootstrap === 'undefined' || !bootstrap.Modal) {
-        console.error('❌ Bootstrap Modal no disponible');
+        console.error(' Bootstrap Modal no disponible');
 
         // Intentar esperar un poco más
         setTimeout(() => {
@@ -603,7 +600,7 @@ function openCommentsModal(button) {
 
         console.log(' Mostrando modal...');
         modal.show();
-        console.log('✅ Modal abierto correctamente');
+        console.log(' Modal abierto correctamente');
 
     } catch (error) {
         console.error(' Error abriendo modal:', error);
@@ -1290,7 +1287,7 @@ function initializeTipoFotografiaFilter() {
 }
 
 // ================================================================================================
-// FUNCIONES DE UTILIDAD
+// FUNCIONES DE UTILIDAD - comentarios, prioridad
 // ================================================================================================
 
 function getTypeDisplayName(type) {
@@ -1430,14 +1427,17 @@ function closeLightbox() {
 }
 
 function initializeSearch() {
-    const searchInput = document.getElementById('searchInput');
-    if (searchInput) {
-        searchInput.onkeypress = function (e) {
-            if (e.key === 'Enter') {
-                searchRecords();
-            }
-        };
-    }
+    // Buscar mientras escribe (opcional) o al presionar Enter
+    document.getElementById('searchInput').addEventListener('keyup', function (e) {
+        if (e.key === 'Enter') {
+            searchRecords();
+        }
+    });
+
+    // Si pierde el foco(click/tap fuera), limpiar automáticamente
+    document.getElementById('searchInput').addEventListener('blur', function () {
+        clearSearch();
+    });
 }
 
 function searchRecords() {
@@ -1474,234 +1474,6 @@ function clearSearch() {
         showNotification('Búsqueda limpiada', 'info');
     }
 }
-
-/*!
- * ===========  Sistema de Filtrado de Fechas Automático ==============
- */
-
-// Variables globales para el filtro de fechas
-let dateFilterActive = false;
-let currentDateRange = {
-    start: null,
-    end: null
-};
-
-// Inicializar el sistema de filtrado automático
-function initializeAutoDateFilter() {
-    console.log(' Inicializando filtro de fechas automático...');
-
-    // SOLO inicializar variables vacías
-    currentDateRange = {
-        start: null,
-        end: null
-    };
-
-    const dateRangeDisplay = document.getElementById('dateRangeDisplay');
-    const dateRangeInputs = document.getElementById('dateRangeInputs');
-    const fechaInicio = document.getElementById('fechaInicio');
-    const fechaFin = document.getElementById('fechaFin');
-
-    if (!dateRangeDisplay || !dateRangeInputs || !fechaInicio || !fechaFin) {
-        console.error('❌ Elementos del filtro de fechas no encontrados');
-        return;
-    }
-
-    // Configurar fechas por defecto (últimos 30 días)
-    const today = new Date();
-    const thirtyDaysAgo = new Date(today.getTime() - (30 * 24 * 60 * 60 * 1000));
-
-    fechaInicio.value = formatDateForInput(thirtyDaysAgo);
-    fechaFin.value = formatDateForInput(today);
-
-    // Establecer rango inicial
-    currentDateRange.start = fechaInicio.value;
-    currentDateRange.end = fechaFin.value;
-    updateDateRangeDisplay();
-
-    // Event listeners
-    dateRangeDisplay.addEventListener('click', toggleDateRangeInputs);
-    fechaInicio.addEventListener('change', handleDateChange);
-    fechaFin.addEventListener('change', handleDateChange);
-
-    // Cerrar al hacer click fuera
-    document.addEventListener('click', function (e) {
-        if (!dateRangeDisplay.contains(e.target) && !dateRangeInputs.contains(e.target)) {
-            closeDateRangeInputs();
-        }
-    });
-
-    console.log(' Filtro de fechas automático inicializado');
-}
-
-function toggleDateRangeInputs() {
-    const dateRangeDisplay = document.getElementById('dateRangeDisplay');
-    const dateRangeInputs = document.getElementById('dateRangeInputs');
-
-    if (dateRangeInputs.style.display === 'none' || !dateRangeInputs.style.display) {
-        dateRangeInputs.style.display = 'block';
-        dateRangeInputs.classList.add('show');
-        dateRangeDisplay.classList.add('active');
-        console.log(' Selector de fechas abierto');
-    } else {
-        closeDateRangeInputs();
-    }
-}
-
-function closeDateRangeInputs() {
-    const dateRangeDisplay = document.getElementById('dateRangeDisplay');
-    const dateRangeInputs = document.getElementById('dateRangeInputs');
-
-    dateRangeInputs.style.display = 'none';
-    dateRangeInputs.classList.remove('show');
-    dateRangeDisplay.classList.remove('active');
-}
-
-function handleDateChange() {
-    const fechaInicio = document.getElementById('fechaInicio');
-    const fechaFin = document.getElementById('fechaFin');
-
-    console.log(' Cambio en fechas detectado:', {
-        inicio: fechaInicio.value,
-        fin: fechaFin.value
-    });
-
-    // Validar que ambas fechas estén seleccionadas
-    if (fechaInicio.value && fechaFin.value) {
-        const startDate = new Date(fechaInicio.value);
-        const endDate = new Date(fechaFin.value);
-
-        // Validar que la fecha de inicio no sea mayor que la de fin
-        if (startDate > endDate) {
-            showNotification('La fecha de inicio no puede ser mayor que la fecha de fin', 'warning');
-            return;
-        }
-
-        // Actualizar rango actual
-        currentDateRange.start = fechaInicio.value;
-        currentDateRange.end = fechaFin.value;
-
-        // Actualizar display
-        updateDateRangeDisplay();
-
-        // Aplicar filtro automáticamente
-        applyDateFilterAuto();
-
-        // Cerrar selector después de un momento
-        setTimeout(closeDateRangeInputs, 1000);
-    }
-}
-
-function updateDateRangeDisplay() {
-    const dateRangeText = document.getElementById('dateRangeText');
-    const dateRangeDisplay = document.getElementById('dateRangeDisplay');
-
-    if (currentDateRange.start && currentDateRange.end) {
-        const startFormatted = formatDateForDisplay(currentDateRange.start);
-        const endFormatted = formatDateForDisplay(currentDateRange.end);
-
-        dateRangeText.textContent = `${startFormatted} - ${endFormatted}`;
-        dateRangeDisplay.classList.add('has-dates');
-        dateFilterActive = true;
-
-        console.log(` Display actualizado: ${startFormatted} - ${endFormatted}`);
-    } else {
-        dateRangeText.textContent = 'Seleccionar rango';
-        dateRangeDisplay.classList.remove('has-dates');
-        dateFilterActive = false;
-    }
-}
-
-function applyDateFilterAuto() {
-    if (!currentDateRange.start || !currentDateRange.end) {
-        console.log(' Rango de fechas incompleto, no aplicando filtro');
-        return;
-    }
-
-    console.log(' Aplicando filtro automático de fechas:', currentDateRange);
-
-    const startDate = new Date(currentDateRange.start);
-    const endDate = new Date(currentDateRange.end);
-
-    // Ajustar hora para incluir todo el día
-    startDate.setHours(0, 0, 0, 0);
-    endDate.setHours(23, 59, 59, 999);
-
-    const tableRows = document.querySelectorAll('#imagesTableBody tr');
-    let visibleCount = 0;
-    let filteredCount = 0;
-
-    tableRows.forEach(row => {
-        // Aquí debería adaptar según cómo tiene almacenada la fecha en las filas
-        // Por ejemplo, si tiene un data-attribute con la fecha:
-        const rowDateStr = row.dataset.uploadDate || row.dataset.createdDate;
-
-        if (rowDateStr) {
-            const rowDate = new Date(rowDateStr);
-
-            if (rowDate >= startDate && rowDate <= endDate) {
-                row.style.display = '';
-                visibleCount++;
-            } else {
-                row.style.display = 'none';
-                filteredCount++;
-            }
-        } else {
-            // Si no hay fecha, mostrar la fila (para compatibilidad)
-            row.style.display = '';
-            visibleCount++;
-        }
-    });
-
-    // Notificación del resultado
-    const totalRows = tableRows.length;
-    console.log(` Filtro aplicado: ${visibleCount} visibles de ${totalRows} total`);
-}
-
-// Funciones de utilidad
-function formatDateForInput(date) {
-    return date.toISOString().split('T')[0];
-}
-
-function formatDateForDisplay(dateStr) {
-    const date = new Date(dateStr);
-    return date.toLocaleDateString('es-ES', {
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric'
-    });
-}
-
-// Función para limpiar filtro
-function clearDateFilter() {
-    currentDateRange.start = null;
-    currentDateRange.end = null;
-
-    document.getElementById('fechaInicio').value = '';
-    document.getElementById('fechaFin').value = '';
-
-    updateDateRangeDisplay();
-
-    // Mostrar todas las filas
-    document.querySelectorAll('#imagesTableBody tr').forEach(row => {
-        row.style.display = '';
-    });
-
-    showNotification('Filtro de fechas eliminado', 'info');
-}
-
-// Integrar con el sistema existente
-document.addEventListener('DOMContentLoaded', function () {
-    // Reemplazar la función existente de filtrado
-    setTimeout(() => {
-        initializeAutoDateFilter();
-    }, 1000);
-});
-
-// Funciones globales
-window.clearDateFilter = clearDateFilter;
-window.applyDateFilterAuto = applyDateFilterAuto;
-
-console.log(' Sistema de filtrado automático de fechas cargado');
 
 // ================================================================================================
 // ACCIONES
@@ -1773,184 +1545,3 @@ window.filterByTipoFotografia = filterByTipoFotografia;
 window.selectAllTipoFotografia = selectAllTipoFotografia;
 window.clearTipoFotografiaFilter = clearTipoFotografiaFilter;
 window.integrateTipoFotografiaWithOtherFilters = integrateTipoFotografiaWithOtherFilters;
-
-
-// ================================================================================================
-// DESPLEGABLE DE FECHAS -> APLICAR SEGUN DOS RANGOS DE FECHAS  A ELEGIR
-// ================================================================================================
-
-//  FUNCIÓN CORREGIDA - SIN FECHAS POR DEFECTO
-function initializeDateRangeUnified() {
-    console.log(' Inicializando selector unificado de fechas...');
-
-    setTimeout(() => {
-        const dateRangeDisplayUnified = document.getElementById('dateRangeDisplayUnified');
-        const dateCalendarsPanel = document.getElementById('dateCalendarsPanel');
-        const fechaInicioUnified = document.getElementById('fechaInicioUnified');
-        const fechaFinUnified = document.getElementById('fechaFinUnified');
-        const calendarStatus = document.getElementById('calendarStatus');
-        const dateRangeTextUnified = document.getElementById('dateRangeTextUnified');
-
-        if (!dateRangeDisplayUnified || !dateCalendarsPanel) {
-            console.warn(' Elementos unificados no encontrados');
-            return;
-        }
-
-        // Variables de estado
-        let panelOpen = false;
-        let fechaInicioSelected = false;
-        let fechaFinSelected = false;
-        let selectedStartDate = null;
-        let selectedEndDate = null;
-
-        //  ESTADO INICIAL LIMPIO - SIN FECHAS
-        if (dateRangeTextUnified) {
-            dateRangeTextUnified.textContent = 'Seleccione fechas';
-        }
-
-        //  NO configurar fechas por defecto
-        // Comentar/eliminar estas líneas:
-        // fechaInicioUnified.value = formatDateForInput(thirtyDaysAgo);
-        // fechaFinUnified.value = formatDateForInput(today);
-
-        //  PASO 1: Click en contenedor principal
-        dateRangeDisplayUnified.onclick = function (e) {
-            e.preventDefault();
-            e.stopPropagation();
-
-            if (!panelOpen) {
-                dateCalendarsPanel.style.display = 'block';
-                dateRangeDisplayUnified.classList.add('active');
-                panelOpen = true;
-
-                setTimeout(() => {
-                    fechaInicioUnified.focus();
-                }, 100);
-
-                updateCalendarStatus('Selecciona la fecha de inicio');
-                console.log(' PASO 1: Panel abierto - selecciona fechas');
-            }
-        };
-
-        //  PASO 2: Selección de fecha inicio
-        fechaInicioUnified.addEventListener('change', function () {
-            selectedStartDate = this.value;
-            fechaInicioSelected = true;
-
-            this.classList.add('selected');
-            updateCalendarStatus('Ahora selecciona la fecha final');
-
-            setTimeout(() => {
-                fechaFinUnified.focus();
-            }, 200);
-
-            console.log(' PASO 2: Fecha inicio seleccionada -', selectedStartDate);
-        });
-
-        //  PASO 3: Selección de fecha final
-        fechaFinUnified.addEventListener('change', function () {
-            selectedEndDate = this.value;
-            fechaFinSelected = true;
-
-            this.classList.add('selected');
-
-            if (selectedStartDate && selectedEndDate) {
-                const startDate = new Date(selectedStartDate);
-                const endDate = new Date(selectedEndDate);
-
-                if (startDate > endDate) {
-                    showNotification('La fecha de inicio no puede ser mayor que la fecha final', 'warning');
-                    return;
-                }
-
-                updateCalendarStatus('✓ Aplicando filtro...');
-
-                //  ACTUALIZAR display con fechas seleccionadas
-                const startFormatted = selectedStartDate.split('-').reverse().join('/');
-                const endFormatted = selectedEndDate.split('-').reverse().join('/');
-                dateRangeTextUnified.textContent = `${startFormatted} - ${endFormatted}`;
-
-                // Actualizar variables globales
-                currentDateRange.start = selectedStartDate;
-                currentDateRange.end = selectedEndDate;
-
-                setTimeout(() => {
-                    dateCalendarsPanel.style.display = 'none';
-                    dateRangeDisplayUnified.classList.remove('active');
-                    panelOpen = false;
-
-                    applyUnifiedDateFilter(selectedStartDate, selectedEndDate);
-                    showNotification(`Filtro aplicado: ${startFormatted} - ${endFormatted}`, 'success');
-
-                }, 1000);
-
-                console.log(' PASO 3: Filtro aplicado');
-            }
-        });
-
-        //  FUNCIÓN para actualizar estado visual
-        function updateCalendarStatus(message) {
-            if (calendarStatus) {
-                calendarStatus.innerHTML = `<small>${message}</small>`;
-
-                if (message.includes('inicio')) {
-                    calendarStatus.className = 'calendar-status step-1';
-                } else if (message.includes('final')) {
-                    calendarStatus.className = 'calendar-status step-2';
-                } else if (message.includes('Aplicando')) {
-                    calendarStatus.className = 'calendar-status applying';
-                }
-            }
-        }
-
-        //  CERRAR al hacer click fuera
-        document.addEventListener('click', function (e) {
-            if (!dateRangeDisplayUnified.contains(e.target) && !dateCalendarsPanel.contains(e.target)) {
-                if (panelOpen) {
-                    dateCalendarsPanel.style.display = 'none';
-                    dateRangeDisplayUnified.classList.remove('active');
-                    panelOpen = false;
-                }
-            }
-        });
-
-        //  CERRAR con ESC
-        document.addEventListener('keydown', function (e) {
-            if (e.key === 'Escape' && panelOpen) {
-                dateCalendarsPanel.style.display = 'none';
-                dateRangeDisplayUnified.classList.remove('active');
-                panelOpen = false;
-            }
-        });
-
-        console.log(' Selector unificado inicializado - estado inicial limpio');
-
-    }, 1000);
-}
-
-// Hacer función global
-window.initializeDateRangeUnified = initializeDateRangeUnified;
-
-
-//  FUNCIÓN para resetear selección de fechas
-function resetDateSelection() {
-    const fechaInicio = document.getElementById('fechaInicio');
-    const fechaFin = document.getElementById('fechaFin');
-    const dateRangeText = document.getElementById('dateRangeText');
-    const dateRangeDisplay = document.getElementById('dateRangeDisplay');
-
-    if (fechaInicio) fechaInicio.value = '';
-    if (fechaFin) fechaFin.value = '';
-    if (dateRangeText) dateRangeText.textContent = 'Seleccionar rango';
-    if (dateRangeDisplay) dateRangeDisplay.classList.remove('has-dates');
-
-    // Mostrar todas las filas
-    document.querySelectorAll('#imagesTableBody tr').forEach(row => {
-        row.style.display = '';
-    });
-
-    showNotification('Filtro de fechas eliminado', 'info');
-}
-
-// Hacer función global
-window.resetDateSelection = resetDateSelection;

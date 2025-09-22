@@ -78,61 +78,28 @@
 
 <!-- Filtro datos por fecha -->
 <div class="row">
-    <!-- Columna filtro por fecha -->
-     <div class="col-md-3">
-        <div class="form-group">
-            <label class="form-label">
-                <i class="fas fa-calendar-alt me-1"></i>
-                Fecha creación de registro
-            </label>
-
-            <!-- Contenedor principal como en la imagen -->
-            <div class="date-range-unified" id="dateRangeUnified">
-                <!-- Display del rango seleccionado -->
-                <div class="date-range-display-unified" id="dateRangeDisplayUnified">
-                    <i class="fas fa-clock me-2"></i>
-                    <span id="dateRangeTextUnified">Seleccione fechas</span>
-                    <i class="fas fa-chevron-down ms-auto"></i>
-                </div>
-
-                <!-- Panel de calendarios (oculto inicialmente) -->
-                <div class="date-calendars-panel" id="dateCalendarsPanel" style="display: none;">
-                    <div class="calendars-container">
-                        <div class="calendar-section">
-                            <label class="calendar-label">Fecha inicio</label>
-                            <input type="date" class="form-control calendar-input" id="fechaInicioUnified">
-                        </div>
-                        <div class="calendar-separator">-</div>
-                        <div class="calendar-section">
-                            <label class="calendar-label">Fecha final</label>
-                            <input type="date" class="form-control calendar-input" id="fechaFinUnified">
-                        </div>
-                    </div>
-                    <div class="calendar-status" id="calendarStatus">
-                        <small class="text-muted">Selecciona ambas fechas para aplicar filtro</small>
-                    </div>
+    <div class="container mt-1">
+        <div class="row g-3 align-items-end">
+        <!-- Rango de Fechas en (izquierda) -->
+            <div class="col-12 col-md-6">
+                <div class="form-group">
+                    <label for="rangoFechasComm" class="form-label">Rango de fechas</label>
+                        <input id="rangoFechasComm" type="text" class="form-control text-center">
                 </div>
             </div>
-        </div>
-    </div>
 
-    <!-- Columna búsqueda -->
-    <div class="col-md-6">
-        <div class="form-group">
-            <label class="form-label">Buscar Ord. SIT / P.O / O.C</label>
-            <div class="input-group">
-                <input type="text" class="form-control" placeholder="Buscar..." id="searchInput">
-                <button class="btn btn-primary" onclick="searchRecords()">
-                    <i class="fas fa-search"></i>
-                </button>
-                <button class="btn btn-outline-danger" onclick="clearSearch()">
-                    <i class="fas fa-times"></i>
-                </button>
+            <!-- Buscador en (derecha) -->
+            <div class="col-12 col-md-6">
+                <div class="form-group">
+                    <label class="form-label">Búsqueda Ord. SIT / P.O / O.C</label>
+                        <div class="input-group">
+                            <input type="text" class="form-control text-center" placeholder="Buscar..." id="searchInput">
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 </div>
-
 
 <!-- Datos Tabla -->
 <div class="row">
@@ -569,8 +536,6 @@
 <script src="{{ asset('js/mobile-cards.js') }}"></script>
 
 
-
-
 <script>
     // ===== SCRIPT FUNCIONALIDAD SUBIDA DE IMAGENES =====
     function initializeUploadButtons() {
@@ -719,11 +684,11 @@
                 <span class="badge bg-info">${imageData.tipoFotografia}</span>
             </td>
             <td data-column="acciones">
-                <button class="btn btn-danger btn-sm me-1 btn-delete" onclick="deleteImage(this)">
-                    <i class="fas fa-trash"></i> Eliminar
+                <button class="btn btn-danger btn-sm me-1 btn-delete" onclick="deleteImage(this)" title="Eliminar">
+                    <i class="fas fa-trash"></i>
                 </button>
-                <button class="btn btn-warning btn-sm me-1 btn-edit" onclick="editImage(this)">
-                    <i class="fas fa-edit"></i> Editar
+                <button class="btn btn-warning btn-sm me-1 btn-edit" onclick="editImage(this)" title="Editar información">
+                    <i class="fas fa-edit"></i>
                 </button>
                 <button class="btn btn-info btn-sm comment-btn"
                     onclick="openCommentsModal(this)"
@@ -836,4 +801,132 @@
     });
 </script>
 
+<!-- Adicionales para el uso del selector rango de fechas -->
+<!-- jQuery -->
+  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+
+  <!-- Moment.js -->
+  <script src="https://cdn.jsdelivr.net/momentjs/latest/moment.min.js"></script>
+
+  <!-- Date Range Picker -->
+  <script src="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.min.js"></script>
+
+<!-- SCRIPTS para manejo de selector del rango de fechas -->
+<script>
+
+   // let fecha1 = null;
+   // let fecha2 = null;
+
+    // Inicializacion del rango de fechas
+    $(document).ready(function () {
+        setRangeDates({
+            element: '#rangoFechasComm',
+            startDate: moment().startOf('year'),
+            endDate: new Date(),
+            ranges: {
+                "Último mes": [moment().subtract(1, 'month').startOf('month'), moment().subtract(1, 'month').endOf('month')],
+                "Últimos 3 meses": [moment().subtract(3, 'month').startOf('month'), moment().subtract(1, 'month').endOf('month')],
+                "Últimos 6 meses": [moment().subtract(6, 'month').startOf('month'), moment().subtract(1, 'month').endOf('month')],
+                "Últimos 12 meses": [moment().subtract(12, 'month').startOf('month'), moment().subtract(1, 'month').endOf('month')],
+                "Este año": [moment().startOf('year'), moment().subtract(1, 'month').endOf('month')],
+                "Año pasado": [moment().subtract(1, 'year').startOf('year'), moment().subtract(1, 'year').endOf('year')],
+                "Todo": [moment('2000-01-01'), moment()],
+            },
+            eventDateRange: function (start, end) {
+                let fecha1 = start.format("YYYY-MM-DD");
+                let fecha2 = end.format("YYYY-MM-DD");
+
+                // Filtro para DataTable
+                const dateFilter = function (settings, data, dataIndex) {
+                    const cellDate = data[0]; // <- ajusta el índice según la columna de fechas
+                    if (!cellDate) return false;
+
+                    if (
+                        (!fecha1 || cellDate >= fecha1) &&
+                        (!fecha2 || cellDate <= fecha2)
+                    ) {
+                        return true;
+                    }
+
+                    return false;
+                };
+
+                // Evita duplicados en los filtros
+                const index = $.fn.dataTable.ext.search.indexOf(dateFilter);
+                if (index !== -1) {
+                    $.fn.dataTable.ext.search.splice(index, 1);
+                }
+                $.fn.dataTable.ext.search.push(dateFilter);
+
+                // Redibujar tabla
+                $(".divTblresultados").DataTable().draw();
+            }
+        });
+    });
+</script>
+
+<!--Si se requiere usar en otro lugar (export const setRangeDates...) -->
+<script>
+    const setRangeDates = (options) => {
+      const {
+        element,
+        startDate = moment(),
+        endDate = moment(),
+        ranges = {
+          Hoy: [moment(), moment()],
+          Ayer: [moment().subtract(1, "days"), moment().subtract(1, "days")],
+          "Últimos 7 Días": [moment().subtract(6, "days"), moment()],
+          "Últimos 30 Días": [moment().subtract(29, "days"), moment()],
+          "Este Mes": [moment().startOf("month"), moment().endOf("month")],
+          "Ultimo Mes": [
+            moment().subtract(1, "month").startOf("month"),
+            moment().subtract(1, "month").endOf("month"),
+          ],
+          Todo: [moment().subtract(20, "years"), moment()],
+        },
+        eventDateRange = function (start, end) {
+          let fecha1 = start.format("YYYY-MM-DD");
+          let fecha2 = end.format("YYYY-MM-DD");
+          console.log("Rango seleccionado:", fecha1, fecha2);
+        }
+      } = options;
+
+      $(element).daterangepicker({
+        showWeekNumbers: true,
+        showDropdowns: true,
+        autoApply: true,
+        ranges,
+        locale: {
+          format: "DD-MM-YYYY",
+          separator: " - ",
+          applyLabel: "Aplicar",
+          cancelLabel: "Cancelar",
+          fromLabel: "Desde",
+          toLabel: "Hasta",
+          customRangeLabel: "Personalizado",
+          weekLabel: "W",
+          daysOfWeek: ["Do", "Lu", "Mar", "Mie", "Jue", "Vie", "Sab"],
+          monthNames: [
+            "Enero","Febrero","Marzo","Abril","Mayo","Junio",
+            "Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre",
+          ],
+          firstDay: 1,
+        },
+        alwaysShowCalendars: true,
+        startDate,
+        endDate,
+        opens: "center",
+        cancelClass: "btn-danger",
+      }, eventDateRange);
+    };
+
+    // Inicialización cuando cargue la página
+    $(document).ready(function () {
+      setRangeDates({
+        element: '#rangoFechasComm',
+        startDate: moment().startOf('year'),
+        endDate: moment(),
+      });
+    });
+</script>
 @endsection

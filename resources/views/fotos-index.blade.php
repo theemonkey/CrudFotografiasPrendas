@@ -186,7 +186,7 @@
                                                         id="filtroPrendaFinal"
                                                         value="PRENDA FINAL"
                                                         onchange="filterByTipoFotografia()">
-                                                    <span class="flex-grow-1">Prenda final</span>
+                                                    <span class="flex-grow-1">Prenda Final</span>
                                                 </label>
                                             </li>
 
@@ -197,7 +197,7 @@
                                                         id="filtroValidacionAC"
                                                         value="VALIDACION AC"
                                                         onchange="filterByTipoFotografia()">
-                                                    <span class="flex-grow-1">Validacion AC</span>
+                                                    <span class="flex-grow-1">Validación AC</span>
                                                 </label>
                                             </li>
 
@@ -526,6 +526,44 @@
     </div>
 </div>
 
+<!-- Modal para ingresar datos(Descripcion - Tipo fotografia) de la imagen -->
+<div class="modal fade" id="imageDataModal" tabindex="-1" aria-labelledby="imageDataModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+
+      <div class="modal-header">
+        <h5 class="modal-title" id="imageDataModalLabel">Detalles de la imagen</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+      </div>
+
+      <div class="modal-body">
+        <form id="imageDataForm">
+          <div class="mb-3">
+            <label for="descripcionInput" class="form-label">Descripción</label>
+            <input type="text" class="form-control" id="descripcionInput" placeholder="Ej: CAMISA BLANCA" required>
+          </div>
+          <div class="mb-3">
+            <label for="tipoFotografiaSelect" class="form-label">Tipo de Fotografía</label>
+            <select class="form-select" id="tipoFotografiaSelect" required>
+              <option value="" disabled selected>Seleccione un tipo</option>
+              <option value="MUESTRA">MUESTRA</option>
+              <option value="VALIDACION AC">VALIDACIÓN AC</option>
+              <option value="PRENDA FINAL">PRENDA FINAL</option>
+            </select>
+          </div>
+        </form>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+        <button type="button" class="btn btn-primary" id="saveImageData">Guardar</button>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+
 <!-- Meta tag para el usuario actual (para detección automática) -->
 <meta name="current-user" content="{{ auth()->user()->name ?? 'Usuario Sistema' }}">
 
@@ -637,31 +675,64 @@
     }
 
     function uploadSingleImage(file) {
-        return new Promise((resolve, reject) => {
-            const formData = new FormData();
-            formData.append('image', file);
-            formData.append('timestamp', new Date().toISOString());
+    return new Promise((resolve, reject) => {
+        const formData = new FormData();
+        formData.append('image', file);
+        formData.append('timestamp', new Date().toISOString());
 
-            // Simular subida (reemplazar con tu endpoint real)
-            setTimeout(() => {
-                // Crear URL temporal para vista previa
-                const imageUrl = URL.createObjectURL(file);
+        setTimeout(() => {
+            const imageUrl = URL.createObjectURL(file);
 
+            // Datos base de la imagen
+            const tempData = {
+                id: Date.now() + Math.random(),
+                url: imageUrl,
+                name: file.name,
+                size: file.size,
+                uploadDate: new Date().toISOString(),
+                ordenSit: generateOrderNumber(),
+                po: generatePONumber(),
+                oc: generateOCNumber()
+            };
+
+            // Abrir modal y esperar datos del usuario
+            const modalEl = document.getElementById('imageDataModal');
+            const modal = new bootstrap.Modal(modalEl);
+            modal.show();
+
+            // Limpiar formulario
+            document.getElementById('descripcionInput').value = '';
+            document.getElementById('tipoFotografiaSelect').selectedIndex = 0;
+
+            // Evento al guardar
+            const saveBtn = document.getElementById('saveImageData');
+
+            const handleSave = () => {
+                const descripcion = document.getElementById('descripcionInput').value.trim();
+                const tipoFotografia = document.getElementById('tipoFotografiaSelect').value;
+
+                if (!descripcion || !tipoFotografia) {
+                    alert("Por favor ingrese todos los campos.");
+                    return;
+                }
+
+                modal.hide();
+
+                // Resolver con los datos completos
                 resolve({
-                    id: Date.now() + Math.random(),
-                    url: imageUrl,
-                    name: file.name,
-                    size: file.size,
-                    uploadDate: new Date().toISOString(),
-                    ordenSit: generateOrderNumber(),
-                    po: generatePONumber(),
-                    oc: generateOCNumber(),
-                    descripcion: 'Imagen subida',
-                    tipoFotografia: 'SUBIDA MANUAL'
+                    ...tempData,
+                    descripcion,
+                    tipoFotografia
                 });
-            }, 1000 + Math.random() * 2000); // Simular tiempo de subida variable
-        });
-    }
+
+                // Eliminar listener para evitar duplicados
+                saveBtn.removeEventListener('click', handleSave);
+            };
+
+            saveBtn.addEventListener('click', handleSave);
+        }, 1000 + Math.random() * 2000);
+    });
+}
 
     function addImageToTable(imageData) {
         const tableBody = document.getElementById('imagesTableBody');
@@ -680,9 +751,7 @@
             <td data-column="po">${imageData.po}</td>
             <td data-column="oc">${imageData.oc}</td>
             <td data-column="descripcion">${imageData.descripcion}</td>
-            <td data-column="tipo-fotografia">
-                <span class="badge bg-info">${imageData.tipoFotografia}</span>
-            </td>
+            <td data-column="tipo-fotografia">${imageData.tipoFotografia}</td>
             <td data-column="acciones">
                 <button class="btn btn-danger btn-sm me-1 btn-delete" onclick="deleteImage(this)" title="Eliminar">
                     <i class="fas fa-trash"></i>

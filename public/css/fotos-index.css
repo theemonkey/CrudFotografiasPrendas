@@ -336,9 +336,9 @@
     text-align: center !important;
 }
 
-/* ================================================================================
-   ESTILOS EXTRAS ->>>>>  BOTON EXPORTAR TODO - Botones(delete,edit,comment)
-   ================================================================================*/
+/* =================================================================================================
+   ESTILOS EXTRAS ->>>>>  BOTON EXPORTAR TODO - Botones(delete,edit,comment) - Botones fotos-sit-add
+   ================================================================================================*/
 .btn-pink {
     background-color: #e91e63 !important;
     border-color: #e91e63 !important;
@@ -361,6 +361,28 @@
 .comment-btn.comment-added::after {
     animation: commentPulse 0.6s ease !important;
 }
+
+/*====>>>>>>> ESTILOS BOTONES(fotos-sit-add)>>>>>>>>>>====*/
+.btn-personalizado {
+    background-color: rgb(255 193 7);
+    border-color: #E0D8D3;
+    color: #333; /* O un color de texto que contraste bien */
+}
+
+/* Opcional: para el efecto hover/activo */
+.btn-personalizado:hover,
+.btn-personalizado:active,
+.btn-personalizado:focus {
+    background-color: rgb(236, 181, 13) ;/* Un color ligeramente más oscuro para el efecto */
+    /*border-color: #c9c2bd;*/
+    color: #333;
+}
+
+.badge-color-personalizado {
+    background-color: rgb(255 193 7);
+    color: #333;
+}
+
 
 /* ================================================================
    SISTEMA DE COMENTARIOS ---> VISUAL

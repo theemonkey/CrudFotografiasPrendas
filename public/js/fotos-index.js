@@ -13,7 +13,6 @@ let currentUser = null;
 let currentImageData = null;
 let commentsData = new Map();
 let bootstrapReady = false;
-let uploadInProgress = false; //  NUEVO: Prevenir subidas múltiples
 let uploadCount = 0; // Nuevo para validar carga de imagenes duplicadas (corregir, aun se suben varias imagenes)
 let commentCounterInitialized = false;
 
@@ -29,7 +28,6 @@ const CONFIG = {
 
 function debugSystem() {
     console.log(' === DEBUG SISTEMA ===');
-    console.log(' Upload en progreso:', uploadInProgress);
     console.log(' Upload count:', uploadCount);
     console.log(' Bootstrap ready:', bootstrapReady);
     console.log(' Elementos upload:', {
@@ -146,7 +144,6 @@ function initializeSystem() {
         initializeLightbox();
         initializeNotifications();
         initializeSearch();
-        initializeUploadButtons();
         initializeCommentsSystem();
         initializeCommentCounterSystem();
         initializeTipoFotografiaFilter(); /*Ver archivo filtro-tipo-fotografia*/
@@ -206,277 +203,7 @@ function updateUserInterface(user) {
 }
 
 // ================================================================================================
-// SISTEMA DE SUBIDA DE ARCHIVOS - CORREGIDO PARA EVITAR DUPLICADOS
-// ================================================================================================
-
-function initializeUploadButtons() {
-    console.log(' Inicializando sistema de subida...');
-
-    const cameraUpload = document.getElementById('cameraUpload');
-    const fileUpload = document.getElementById('fileUpload');
-    const cameraInput = document.getElementById('cameraInput');
-    const fileInput = document.getElementById('fileInput');
-
-    console.log(' Elementos encontrados:', {
-        cameraUpload: !!cameraUpload,
-        fileUpload: !!fileUpload,
-        cameraInput: !!cameraInput,
-        fileInput: !!fileInput
-    });
-
-    if (!cameraUpload || !fileUpload || !cameraInput || !fileInput) {
-        console.error(' Elementos de subida no encontrados');
-        return;
-    }
-
-    //  CORREGIDO: Limpiar TODOS los eventos previos
-    cameraUpload.onclick = null;
-    fileUpload.onclick = null;
-    cameraInput.onchange = null;
-    fileInput.onchange = null;
-
-    // Remover todos los listeners duplicados
-    cameraUpload.removeEventListener('click', handleCameraClick);
-    fileUpload.removeEventListener('click', handleFileClick);
-    cameraInput.removeEventListener('change', handleCameraChange);
-    fileInput.removeEventListener('change', handleFileChange);
-
-    //  CORREGIDO: Agregar eventos únicos con prevención de duplicados
-    cameraUpload.addEventListener('click', handleCameraClick, { once: false });
-    fileUpload.addEventListener('click', handleFileClick, { once: false });
-    cameraInput.addEventListener('change', handleCameraChange, { once: false });
-    fileInput.addEventListener('change', handleFileChange, { once: false });
-
-    console.log(' Sistema de subida inicializado sin duplicados');
-}
-
-//  CORREGIDO: Funciones separadas para cada evento
-function handleCameraClick(e) {
-    e.preventDefault();
-    e.stopPropagation();
-
-    if (uploadInProgress) {
-        console.log(' Subida en progreso, ignorando click');
-        return;
-    }
-
-    console.log(' Click en botón cámara');
-    const cameraInput = document.getElementById('cameraInput');
-    if (cameraInput) {
-        cameraInput.click();
-    }
-}
-
-function handleFileClick(e) {
-    e.preventDefault();
-    e.stopPropagation();
-
-    if (uploadInProgress) {
-        console.log(' Subida en progreso, ignorando click');
-        return;
-    }
-
-    console.log(' Click en botón archivo');
-    const fileInput = document.getElementById('fileInput');
-    if (fileInput) {
-        fileInput.click();
-    }
-}
-
-function handleCameraChange(e) {
-    console.log(' Cambio en input cámara:', e.target.files.length);
-    if (e.target.files.length > 0 && !uploadInProgress) {
-        handleImageUpload(e.target.files, 'camera');
-        e.target.value = ''; // Limpiar para permitir seleccionar la misma imagen
-    }
-}
-
-function handleFileChange(e) {
-    console.log(' Cambio en input archivo:', e.target.files.length);
-    if (e.target.files.length > 0 && !uploadInProgress) {
-        handleImageUpload(e.target.files, 'file');
-        e.target.value = ''; // Limpiar para permitir seleccionar la misma imagen
-    }
-}
-
-function handleImageUpload(files, source) {
-    //  CORREGIDO: Prevenir múltiples subidas
-    if (uploadInProgress) {
-        console.log(' Subida ya en progreso, cancelando');
-        return;
-    }
-
-    uploadInProgress = true;
-    console.log(` handleImageUpload llamado con ${files.length} archivo(s) desde ${source}`);
-
-    if (!files || files.length === 0) {
-        uploadInProgress = false;
-        showNotification('No se seleccionaron archivos', 'warning');
-        return;
-    }
-
-    const file = files[0]; // Solo el primer archivo
-    console.log(` Procesando archivo: ${file.name} (${file.size} bytes, tipo: ${file.type})`);
-
-    // Validar archivo
-    if (!file.type.startsWith('image/')) {
-        uploadInProgress = false;
-        showNotification('El archivo debe ser una imagen', 'error');
-        console.error(' Archivo no es imagen:', file.type);
-        return;
-    }
-
-    if (file.size > CONFIG.MAX_FILE_SIZE) {
-        uploadInProgress = false;
-        showNotification('El archivo es demasiado grande (máximo 10MB)', 'error');
-        console.error(' Archivo muy grande:', file.size);
-        return;
-    }
-
-    // Mostrar estado de subida
-    const uploadBtn = source === 'camera'
-        ? document.getElementById('cameraUpload')
-        : document.getElementById('fileUpload');
-
-    if (uploadBtn) {
-        uploadBtn.classList.add('uploading');
-        console.log(' Estado de subida activado');
-    }
-
-    // Crear datos de imagen
-    try {
-        const imageUrl = URL.createObjectURL(file);
-        const imageData = {
-            id: generateUniqueImageId(),
-            url: imageUrl,
-            name: file.name,
-            size: file.size,
-            uploadDate: new Date().toISOString(),
-            ordenSit: generateOrderNumber(),
-            po: generatePONumber(),
-            oc: generateOCNumber(),
-            descripcion: 'Imagen subida',
-            tipoFotografia: 'SUBIDA MANUAL'
-        };
-
-        console.log(' Datos de imagen creados:', imageData);
-
-        //  CORREGIDO: Simular delay y luego agregar SOLO UNA vez
-        setTimeout(() => {
-            addImageToTable(imageData);
-
-            if (uploadBtn) {
-                uploadBtn.classList.remove('uploading');
-                uploadBtn.classList.add('active');
-                setTimeout(() => {
-                    uploadBtn.classList.remove('active');
-                }, 2000);
-            }
-
-            //  IMPORTANTE: Liberar el flag de subida
-            uploadInProgress = false;
-
-            showNotification(`Imagen "${file.name}" subida correctamente`, 'success');
-            console.log(' Imagen agregada a tabla exitosamente');
-        }, 1500); // Delay para evitar duplicados
-
-    } catch (error) {
-        console.error(' Error procesando imagen:', error);
-        showNotification('Error al procesar la imagen: ' + error.message, 'error');
-
-        if (uploadBtn) {
-            uploadBtn.classList.remove('uploading');
-        }
-
-        uploadInProgress = false;
-    }
-}
-
-function addImageToTable(imageData) {
-    const tableBody = document.getElementById('imagesTableBody');
-    if (!tableBody) {
-        console.error(' Tabla no encontrada');
-        return;
-    }
-
-    const row = document.createElement('tr');
-    row.dataset.imageId = imageData.id;
-    row.dataset.uploadDate = imageData.uploadDate;
-
-    row.innerHTML = `
-        <td data-column="imagen">
-            <img src="${imageData.url}"
-                 alt="${imageData.name}"
-                 class="img-thumbnail preview-image"
-                 style="width: 60px; height: 60px; cursor: pointer;"
-                 onclick="openImageLightbox('${imageData.url}', '${imageData.name}', '${imageData.descripcion}', '${imageData.tipoFotografia}')">
-            <div class="upload-user-badge" title="Subido por ${currentUser.displayName}">
-                <i class="fas fa-user"></i> ${currentUser.username}
-            </div>
-        </td>
-        <td data-column="orden-sit">${imageData.ordenSit}</td>
-        <td data-column="po">${imageData.po}</td>
-        <td data-column="oc">${imageData.oc}</td>
-        <td data-column="descripcion">${imageData.descripcion}</td>
-        <td data-column="tipo-fotografia">
-            <span class="badge bg-info">${imageData.tipoFotografia}</span>
-        </td>
-        <td data-column="acciones">
-            <button class="btn btn-danger btn-sm me-1 btn-delete" onclick="deleteImage(this)" title="Eliminar imagen">
-                <i class="fas fa-trash"></i> Eliminar
-            </button>
-            <button class="btn btn-warning btn-sm me-1 btn-edit" onclick="editImage(this)" title="Editar información">
-                <i class="fas fa-edit"></i> Editar
-            </button>
-            <button class="btn btn-info btn-sm comment-btn"
-                    onclick="openCommentsModal(this)"
-                    title="Ver/Agregar comentarios"
-                    data-comment-count="0"
-                    style="background-color: #17a2b8 !important; border-color: #17a2b8 !important; color: white !important; position: relative;">
-                <i class="fas fa-comments"></i>
-            </button>
-        </td>
-    `;
-
-    // VERIFICAR que no existe ya esta imagen
-    const existingRow = tableBody.querySelector(`tr[data-image-id="${imageData.id}"]`);
-    if (existingRow) {
-        console.log(' Imagen ya existe en tabla, no agregando duplicado');
-        return;
-    }
-
-    tableBody.insertBefore(row, tableBody.firstChild);
-
-    // Animación
-    row.style.opacity = '0';
-    row.style.transform = 'translateY(-10px)';
-    setTimeout(() => {
-        row.style.transition = 'all 0.5s ease';
-        row.style.opacity = '1';
-        row.style.transform = 'translateY(0)';
-    }, 100);
-
-    console.log(` Imagen agregada a tabla: ${imageData.id}`);
-}
-
-function generateUniqueImageId() {
-    return `img_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
-}
-
-function generateOrderNumber() {
-    return '100' + Math.floor(Math.random() * 90000 + 10000);
-}
-
-function generatePONumber() {
-    return '6000' + Math.floor(Math.random() * 900000 + 100000);
-}
-
-function generateOCNumber() {
-    return '4200' + Math.floor(Math.random() * 9000000 + 1000000);
-}
-
-// ================================================================================================
-// SISTEMA DE COMENTARIOS CON VERIFICACIÓN BOOTSTRAP
+// SISTEMA DE COMENTARIOS CON VERIFICACIÓN
 // ================================================================================================
 
 function initializeCommentsSystem() {
@@ -499,8 +226,6 @@ function initializeCommentsSystem() {
 
     console.log(' Sistema de comentarios inicializado');
 }
-
-//  AGREGAR esta función después de initializeCommentsSystem():
 
 function initializeCommentCounterSystem() {
     console.log(' Inicializando sistema de contador de comentarios...');
@@ -543,14 +268,13 @@ function fixExistingCommentButtons() {
     });
 }
 
-
 //=====================================================//
 
 function openCommentsModal(button) {
     console.log(' openCommentsModal llamado');
     console.log(' Bootstrap disponible:', bootstrapReady, typeof bootstrap);
 
-    //  CORREGIDO: Verificación más robusta
+    // Verificación más robusta
     if (!bootstrapReady || typeof bootstrap === 'undefined' || !bootstrap.Modal) {
         console.error(' Bootstrap Modal no disponible');
 
@@ -847,7 +571,6 @@ function updateCommentsCount() {
     }
 }
 
-//  REEMPLAZAR ESTA FUNCIÓN COMPLETA:
 function updateCommentButtonBadge() {
     if (!currentImageData) return;
 
@@ -869,16 +592,16 @@ function updateCommentButtonBadge() {
         return;
     }
 
-    //  NUEVO: Usar data-comment-count en lugar del span rojo
+    // Usar data-comment-count
     commentButton.setAttribute('data-comment-count', commentCount);
 
-    //  LIMPIAR: Remover el span rojo viejo si existe
+    // Remover el span rojo viejo si existe
     const oldBadge = commentButton.querySelector('.comment-count');
     if (oldBadge) {
         oldBadge.remove();
     }
 
-    //  ASEGURAR: Posición relativa para el contador
+    // Posición relativa para el contador
     commentButton.style.position = 'relative';
 
     //  ANIMACIÓN: Pulso cuando se actualiza

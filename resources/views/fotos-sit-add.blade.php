@@ -14,7 +14,6 @@
                id="ordenSitInput"
                class="form-control"
                placeholder="Ej: 12345678"
-               maxlength="8"
                oninput="this.value = this.value.replace(/[^0-9]/g, '')">
     </div>
 
@@ -29,31 +28,36 @@
                         alt="Prenda"
                         class="img-thumbnail"
                         style="max-width:120px; cursor:pointer;"
-                        onclick="openLightbox(this.src, 'Prenda de vestir', estadoSeleccionado)">
+                        onclick="openLightbox(this.src, 'Prenda de vestir', tipoSeleccionado)">
                 </div>
                 <div class="col-md-9">
-                    <p class="mb-1"><strong>Orden SIT:</strong> <span id="ordenSitValue">-</span></p>
-                    <p class="mb-1"><strong>Estado:</strong> <span id="estadoValue">-</span></p>
+                    <p class="mb-1"><strong>Orden SIT:</strong> <span id="ordenSitValue"></span></p>
+                    <p class="mb-1"><strong>Tipo:</strong> <span id="tipoOrden"></span></p>
+                    <p class="mb-1"><strong>Descripción:</strong> <span id="descripcion"></span></p>
 
                 <!-- Subir imágenes -->
                     <div class="mb-3">
-                        <label class="form-label">Subir Imágenes</label>
-                        <div class="d-flex gap-2">
-                            <button class="btn btn-outline-primary">
-                                <i class="fas fa-camera"></i> Cámara
-                            </button>
-                            <button class="btn btn-outline-primary">
-                                <i class="fas fa-folder"></i> Archivo
-                            </button>
+                        <label class="text-muted mb-3">Subir Imágenes</label>
+                        <div class="upload-buttons d-flex gap-2">
+                            <div class="upload-btn" id="cameraUpload" title="Tomar foto con cámara">
+                                <i class="fas fa-camera"></i>
+                                <span>Cámara</span>
+                                <input type="file" accept="image/*" capture="camera" style="display: none;" id="cameraInput">
+                            </div>
+                            <div class="upload-btn" id="fileUpload" title="Seleccionar archivos">
+                                <i class="fas fa-folder"></i>
+                                <span>Archivo</span>
+                                <input type="file" accept="image/*" multiple style="display: none;" id="fileInput">
+                            </div>
                         </div>
                     </div>
                     <!-- Estado -->
                     <div class="mb-3">
-                        <label class="form-label">Estado del último cargue</label>
+                        <label class="text-muted">Tipo del último cargue</label>
                         <div class="d-flex gap-2">
-                            <button class="btn btn-personalizado" onclick="setEstado('Muestra')">Muestra</button>
-                            <button class="btn btn-personalizado" onclick="setEstado('Prenda Final')">Prenda Final</button>
-                            <button class="btn btn-personalizado" onclick="setEstado('Validación AC')">Validación AC</button>
+                            <button class="btn btn-personalizado" onclick="setTipoFoto('Muestra')">Muestra</button>
+                            <button class="btn btn-personalizado" onclick="setTipoFoto('Prenda Final')">Prenda Final</button>
+                            <button class="btn btn-personalizado" onclick="setTipoFoto('Validación AC')">Validación AC</button>
                         </div>
                     </div>
                 </div>
@@ -61,56 +65,167 @@
         </div>
     </div>
 
-    <!-- Botones de acción -->
-    <div class="text-end">
-        <a href="{{ route('fotos-index') }}" class="btn btn-secondary">Cancelar</a>
-        <button type="button" class="btn btn-primary" onclick="guardarFoto()">Guardar</button>
-        <a href="{{ route('fotos-index') }}"></a>
+<!-- Lightbox para visualizar imágenes -->
+<div id="imageLightbox" class="lightbox-overlay" style="display: none;">
+    <div class="lightbox-content">
+        <div class="lightbox-header">
+            <h5 id="lightboxTitle">Vista Previa de Imagen</h5>
+            <button onclick="closeLightbox()" class="btn-close-lightbox">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="lightbox-body">
+            <img id="lightboxImage" src="" alt="" class="lightbox-image">
+            <div class="lightbox-info">
+                <div class="row">
+                    <div class="col-md-6">
+                        <strong>Descripción:</strong>
+                        <p id="lightboxDescription">-</p>
+                    </div>
+                    <div class="col-md-6">
+                        <strong>Tipo:</strong>
+                        <p id="lightboxType">-</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="lightbox-footer">
+            <button onclick="closeLightbox()" class="btn btn-secondary">
+                <i class="fas fa-times me-1"></i>
+                Cerrar
+            </button>
+            <button onclick="downloadImage()" class="btn btn-primary">
+                <i class="fas fa-download me-1"></i>
+                Descargar
+            </button>
+        </div>
     </div>
 </div>
 
-<!-- ==========ARREGLAR ============0-->
+    <!-- Botones de acción -->
+    <div class="text-end">
+        <a class="btn btn-secondary">Cancelar</a>
+        <button type="button" class="btn btn-primary" onclick="guardarFoto()">Guardar</button>
+    </div>
+</div>
+
+<!-- Modal para ingresar datos(Descripcion - Tipo fotografia) de la imagen -->
+<div class="modal fade" id="imageDataModal" tabindex="-1" aria-labelledby="imageDataModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+
+      <div class="modal-header">
+        <h5 class="modal-title" id="imageDataModalLabel">Detalles de la imagen</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+      </div>
+
+      <div class="modal-body">
+        <form id="imageDataForm">
+          <div class="mb-3">
+            <label for="descripcionInput" class="form-label">Descripción</label>
+            <input type="text" class="form-control" id="descripcionInput" placeholder="Ej: CAMISA BLANCA" required>
+          </div>
+          <div class="mb-3">
+            <label for="tipoFotografiaSelect" class="form-label">Tipo de Fotografía</label>
+            <select class="form-select" id="tipoFotografiaSelect" required>
+              <option value="" disabled selected>Seleccione un tipo</option>
+              <option value="MUESTRA">MUESTRA</option>
+              <option value="VALIDACION AC">VALIDACIÓN AC</option>
+              <option value="PRENDA FINAL">PRENDA FINAL</option>
+            </select>
+          </div>
+        </form>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+        <button type="button" class="btn btn-primary" id="saveImageData">Guardar</button>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- Scripts utiles-->
+<script src="{{ asset('js/fotos-index.js') }}"></script>
+
+
+<!-- ==========Busqueda orden sit - Botones card agregar fotos prenda  ============0-->
 <script>
-    let estadoSeleccionado = "-";
+    let estadoSeleccionado = null;
 
     const ordenSitInput = document.getElementById('ordenSitInput');
     const ordenSitCard = document.getElementById('ordenSitCard');
     const ordenSitValue = document.getElementById('ordenSitValue');
-    const estadoValue = document.getElementById('estadoValue');
+    const tipoOrden = document.getElementById('tipoOrden');
+    const prendaPreview = document.getElementById('prendaPreview');
+    const imageLightbox = document.getElementById('imageLightbox');
 
     // Enter para buscar
     ordenSitInput.addEventListener('keypress', function(e) {
         if (e.key === 'Enter') {
-            validateAndSearchOrden();
+            e.preventDefault();
+            buscarOrdenSit();
         }
     });
 
     // Click fuera limpia búsqueda
     document.addEventListener('click', function(e) {
-        if (!ordenSitInput.contains(e.target)) {
-            ordenSitInput.value = '';
-            ordenSitCard.style.display = 'none';
+        if (!ordenSitInput.contains(e.target) &&
+        !ordenSitCard.contains(e.target) &&
+        !imageLightbox.contains(e.target)) {
+        ordenSitInput.value = '';
+        ordenSitCard.style.display = 'none';
         }
     });
 
-    // Validar y buscar
-    function validateAndSearchOrden() {
+    // Validar y buscar (Simulacion resultados)
+    function buscarOrdenSit() {
         const value = ordenSitInput.value.trim();
-        if (value.length !== 8) {
-            alert('La Orden SIT debe tener exactamente 8 dígitos');
+
+        if (value === "") {
+            alert("Ingrese un número de orden");
             return;
         }
-        // Simular orden encontrada
+
+        // Simular orden encontrada(ELiminar luego)
         ordenSitValue.textContent = value;
+        prendaPreview.src = "https://via.placeholder.com/200";
+
+        // limpia texto Estado la primera vez de cargue de pag
+        if (!tipoOrden.textContent) {
+            tipoOrden.textContent = ''; //limpiar estado
+            tipoOrden.className = ''; //limpiar estilos
+            tipoSeleccionado = null;
+        }
+
         ordenSitCard.style.display = 'block';
-        alert(`Orden SIT ${value} encontrada `);
+        alert(`Orden SIT ${value} encontrada`);
     }
 
     // Cambiar estado
-    function setEstado(estado) {
-        estadoSeleccionado = estado;
-        estadoValue.textContent = estado;
+    // Cambiar estado
+    function setTipoFoto(tipo) {
+        tipoSeleccionado = tipo;
+        tipoOrden.textContent = tipo;
+
+        if (tipo === "Muestra") { tipoOrden.className = "badge badge-color-personalizado"; }
+        if (tipo === "Prenda Final") { tipoOrden.className = "badge badge-color-personalizado"; }
+        if (tipo === "Validación AC") { tipoOrden.className = "badge badge-color-personalizado"; }
     }
+
+   // Guardar
+   function guardarFoto() {
+    if (!tipoSeleccionado) {
+        alert("Debe seleccionar un tipo de fotografia antes de guardar");
+        return;
+    }
+    alert(`Foto guardada con tipo: ${tipoSeleccionado}`);
+    // Espacio para agregar luego logica de guardado
+
+    window.location.href = "{{ route('fotos-index') }}";
+
+   }
 
     // Lightbox
     function openLightbox(imageUrl, description, type) {
@@ -128,53 +243,6 @@
         link.href = imgSrc;
         link.download = "prenda.jpg";
         link.click();
-    }
-</script>
-
-<!--========= ARREGLAR ==========-->
-<script>
-    function buscarOrdenSIT() {
-        const input = document.getElementById('buscarOrdenSIT');
-        const valor = input.value.trim();
-
-        if (!valor) {
-            alert("Ingrese un código SIT para buscar.");
-            return;
-        }
-
-        // Simulación de búsqueda
-        if (valor === "10060751") {
-            document.getElementById('resultadoOrdenSIT').classList.remove('d-none');
-            document.getElementById('ordenSITEncontrada').textContent = valor;
-            document.getElementById('previewImagenOrden').src = "https://via.placeholder.com/200";
-            document.getElementById('estadoOrden').textContent = "";
-            document.getElementById('estadoOrden').className = "";
-        } else {
-            alert("Orden SIT no encontrada.");
-            document.getElementById('resultadoOrdenSIT').classList.add('d-none');
-        }
-    }
-
-    let tipoSeleccionado = null;
-    function setTipoFoto(tipo) {
-        tipoSeleccionado = tipo;
-        const estadoOrden = document.getElementById('estadoOrden');
-        estadoOrden.textContent = tipo;
-
-        if (tipo === "MUESTRA") estadoOrden.className = "badge badge-color-personalizado";
-        if (tipo === "PRENDA FINAL") estadoOrden.className = "badge badge-color-personalizado";
-        if (tipo === "VALIDACION AC") estadoOrden.className = "badge badge-color-personalizado";
-    }
-
-    function guardarFoto() {
-        if (!tipoSeleccionado) {
-            alert("Debe seleccionar un tipo de fotografía antes de guardar.");
-            return;
-        }
-        alert(`Foto guardada con tipo: ${tipoSeleccionado}`);
-
-        window.location.href = '/fotos';
-        //luego se puede integrar la lógica para guardar en DB o redirigir
     }
 </script>
 

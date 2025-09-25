@@ -1116,9 +1116,16 @@ function initializeLightbox() {
             }
         };
     }
+
+    // Asegurar que las funciones estén disponibles globalmente
+    window.openImageLightbox = openImageLightbox;
+    window.closeLightbox = closeLightbox;
+    window.downloadImage = downloadImageFromLightbox;
 }
 
 function openImageLightbox(imageUrl, alt, description, type) {
+    console.log(' Abriendo lightbox:', { imageUrl, alt, description, type });
+
     const lightbox = document.getElementById('imageLightbox');
     const lightboxImage = document.getElementById('lightboxImage');
     const lightboxDescription = document.getElementById('lightboxDescription');
@@ -1126,7 +1133,7 @@ function openImageLightbox(imageUrl, alt, description, type) {
 
     if (lightbox && lightboxImage) {
         lightboxImage.src = imageUrl;
-        lightboxImage.alt = alt;
+        lightboxImage.alt = alt || 'Imagen';
 
         if (lightboxDescription) {
             lightboxDescription.textContent = description || alt || 'Sin descripción';
@@ -1138,6 +1145,11 @@ function openImageLightbox(imageUrl, alt, description, type) {
 
         lightbox.style.display = 'flex';
         document.body.style.overflow = 'hidden';
+
+        console.log('Lightbox abierto correctamente');
+    } else {
+        console.error('Error: No se encontraron los elementos del lightbox');
+        showNotification('Error al abrir la imagen', 'error');
     }
 }
 
@@ -1149,18 +1161,41 @@ function closeLightbox() {
     }
 }
 
-function initializeSearch() {
-    // Buscar mientras escribe (opcional) o al presionar Enter
-    document.getElementById('searchInput').addEventListener('keyup', function (e) {
-        if (e.key === 'Enter') {
-            searchRecords();
-        }
-    });
+function downloadImageFromLightbox() {
+    const lightboxImage = document.getElementById('lightboxImage');
+    if (lightboxImage && lightboxImage.src) {
+        const link = document.createElement('a');
+        link.href = lightboxImage.src;
+        link.download = lightboxImage.alt || 'imagen.jpg';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        showNotification('Descarga iniciada', 'success');
+    } else {
+        showNotification('No hay imagen para descargar', 'warning');
+    }
+}
 
-    // Si pierde el foco(click/tap fuera), limpiar automáticamente
-    document.getElementById('searchInput').addEventListener('blur', function () {
-        clearSearch();
-    });
+function initializeSearch() {
+    const searchInput = document.getElementById('searchInput');
+    const searchButton = document.getElementById('searchButton');
+
+    // Enter para buscar
+    if (searchInput) {
+        searchInput.addEventListener('keyup', function (e) {
+            if (e.key === 'Enter') {
+                searchRecords();
+            }
+        });
+    }
+    // Clic para buscar
+    if (searchButton) {
+        // Clic en el botón
+        searchButton.addEventListener('click', function (e) {
+            e.preventDefault();
+            searchRecords();
+        });
+    }
 }
 
 function searchRecords() {
@@ -1186,7 +1221,7 @@ function searchRecords() {
     showNotification(`${visibleCount} resultado(s) encontrado(s)`, 'info');
 }
 
-function clearSearch() {
+/*function clearSearch() {
     const searchInput = document.getElementById('searchInput');
     if (searchInput) {
         searchInput.value = '';
@@ -1196,7 +1231,7 @@ function clearSearch() {
         });
         showNotification('Búsqueda limpiada', 'info');
     }
-}
+}*/
 
 // ================================================================================================
 // ACCIONES
@@ -1242,9 +1277,10 @@ function showFilters() {
 
 window.openImageLightbox = openImageLightbox;
 window.closeLightbox = closeLightbox;
+window.downloadImage = downloadImageFromLightbox;
 window.searchRecords = searchRecords;
-window.clearSearch = clearSearch;
-window.applyDateFilter = applyDateFilter;
+//window.clearSearch = clearSearch;
+//window.applyDateFilter = applyDateFilter;
 window.exportAll = exportAll;
 window.exportSelected = exportSelected;
 window.showFilters = showFilters;
@@ -1253,7 +1289,7 @@ window.editImage = editImage;
 window.openCommentsModal = openCommentsModal;
 window.deleteComment = deleteComment;
 window.debugSystem = debugSystem;
-window.initializeDateRangeSelector = initializeDateRangeSelector;
+//window.initializeDateRangeSelector = initializeDateRangeSelector;
 
 
 

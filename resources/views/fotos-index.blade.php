@@ -94,6 +94,7 @@
                     <label class="form-label">Búsqueda Ord. SIT / P.O / O.C</label>
                         <div class="input-group">
                             <input type="text" class="form-control text-center" placeholder="Buscar..." id="searchInput">
+                            <button id="searchButton" class="btn btn-primary"><i class="fas fa-search"></i></button>
                     </div>
                 </div>
             </div>
@@ -575,6 +576,83 @@
 
 
 <script>
+    // ===== FUNCIONES DE LIGHTBOX CORREGIDAS =====
+    function openImageLightbox(imageUrl, alt, description, type) {
+        console.log('Intentando abrir lightbox:', { imageUrl, alt, description, type });
+
+        // Validar que la URL existe y es válida
+        if (!imageUrl || imageUrl === '' || imageUrl === 'undefined') {
+            console.error('URL de imagen inválida:', imageUrl);
+            alert('Error: La imagen no está disponible');
+            return;
+        }
+
+        const lightbox = document.getElementById('imageLightbox');
+        const lightboxImage = document.getElementById('lightboxImage');
+        const lightboxDescription = document.getElementById('lightboxDescription');
+        const lightboxType = document.getElementById('lightboxType');
+
+        if (lightbox && lightboxImage) {
+            // Verificar si la imagen se puede cargar
+            const testImg = new Image();
+            testImg.onload = function() {
+                console.log('Imagen válida, mostrando lightbox');
+
+                lightboxImage.src = imageUrl;
+                lightboxImage.alt = alt || 'Imagen';
+
+                if (lightboxDescription) {
+                    lightboxDescription.textContent = description || alt || 'Sin descripción';
+                }
+
+                if (lightboxType) {
+                    lightboxType.textContent = type || 'Sin tipo especificado';
+                }
+
+                lightbox.style.display = 'flex';
+                document.body.style.overflow = 'hidden';
+            };
+
+            testImg.onerror = function() {
+                console.error('Error cargando imagen:', imageUrl);
+                alert('Error: No se pudo cargar la imagen');
+            };
+
+            testImg.src = imageUrl;
+        } else {
+            console.error('Error: No se encontraron los elementos del lightbox');
+            alert('Error al abrir la imagen');
+        }
+    }
+
+    function closeLightbox() {
+        const lightbox = document.getElementById('imageLightbox');
+        if (lightbox) {
+            lightbox.style.display = 'none';
+            document.body.style.overflow = '';
+        }
+    }
+
+    function downloadImage() {
+        const lightboxImage = document.getElementById('lightboxImage');
+        if (lightboxImage && lightboxImage.src && lightboxImage.src !== '') {
+            const link = document.createElement('a');
+            link.href = lightboxImage.src;
+            link.download = lightboxImage.alt || 'imagen.jpg';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+
+            if (typeof showNotification === 'function') {
+                showNotification('Descarga iniciada', 'success');
+            }
+        } else {
+            if (typeof showNotification === 'function') {
+                showNotification('No hay imagen para descargar', 'warning');
+            }
+        }
+    }
+
     // ===== SCRIPT FUNCIONALIDAD SUBIDA DE IMAGENES =====
     function initializeUploadButtons() {
         const cameraUpload = document.getElementById('cameraUpload');
@@ -734,53 +812,181 @@
     });
 }
 
+    // ====>>>> Al cargar la página, verificar si hay imágenes nuevas(agregadas) En fotos-sit-add
+    document.addEventListener("DOMContentLoaded", function() {
+        console.log('DOM cargado, verificando imágenes transferidas...');
+
+        // Verificar si hay imágenes transferidas desde fotos-sit-add
+        const transferredData = localStorage.getItem('newUploadedImages');
+        if (transferredData) {
+            try {
+                const data = JSON.parse(transferredData);
+                console.log('Datos transferidos encontrados:', data);
+
+                if (data.images && data.images.length > 0) {
+                    console.log('Procesando', data.images.length, 'imágenes transferidas');
+
+                    // Verificar y recrear URLs de blob si es necesario
+                    const validatedImages = data.images.map((imageData, index) => {
+                        console.log(`Validando imagen ${index + 1}:`, imageData);
+
+                        // Si la URL es un blob que ya no existe, usar imagen por defecto
+                        if (imageData.url && imageData.url.startsWith('blob:')) {
+                            console.warn('URL de blob detectada, usando imagen por defecto');
+                            // Usar una imagen por defecto basada en el tipo
+                            imageData.url = getDefaultImageByType(imageData.tipoFotografia);
+                            imageData.isDefaultImage = true;
+                        }
+
+                        return imageData;
+                    });
+
+                    // Agregar las imágenes a la tabla con un pequeño delay
+                    setTimeout(() => {
+                        validatedImages.forEach((imageData, index) => {
+                            console.log(`Procesando imagen ${index + 1}:`, imageData);
+                            addImageToTable(imageData);
+                        });
+
+                        // Mostrar notificación de éxito
+                        setTimeout(() => {
+                            if (typeof showNotification === 'function') {
+                                showNotification(`${validatedImages.length} imagen(es) agregada(s) correctamente`, 'success');
+                            }
+                        }, 500);
+                    }, 200);
+
+                    // Limpiar localStorage
+                    localStorage.removeItem('newUploadedImages');
+                    console.log('LocalStorage limpiado');
+                }
+            } catch (error) {
+                console.error('Error procesando imágenes transferidas:', error);
+                localStorage.removeItem('newUploadedImages');
+            }
+        } else {
+            console.log('No hay imágenes transferidas');
+        }
+
+        // Inicialización del lightbox
+        const lightbox = document.getElementById('imageLightbox');
+        if (lightbox) {
+            lightbox.onclick = function (e) {
+                if (e.target === lightbox) {
+                    closeLightbox();
+                }
+            };
+            console.log('Lightbox inicializado');
+        }
+
+        // Inicialización normal
+        initializeUploadButtons();
+    });
+
+    function getDefaultImageByType(tipo) {
+        const defaultImages = {
+            'MUESTRA': 'https://picsum.photos/200/300',
+            'PRENDA FINAL': 'https://picsum.photos/200/300',
+            'VALIDACION AC': 'https://picsum.photos/200/300',
+            'Muestra': 'https://picsum.photos/200/300',
+            'Prenda Final': 'https://picsum.photos/200/300',
+            'Validación AC': 'https://picsum.photos/200/300'
+        };
+
+        return defaultImages[tipo] || 'https://picsum.photos/200/300';
+    }
+
     function addImageToTable(imageData) {
+        console.log('Agregando imagen a la tabla:', imageData);
+
         const tableBody = document.getElementById('imagesTableBody');
-        if (!tableBody) return;
+        if (!tableBody) {
+            console.error('No se encontró el tbody de la tabla');
+            return;
+        }
+
+        // Generar ID único si no existe
+        const imageId = imageData.id || 'img_' + Date.now() + '_' + Math.random().toString(36).substring(2, 9);
+        console.log('ID de imagen:', imageId);
 
         const row = document.createElement('tr');
+        row.setAttribute('data-image-id', imageId);
+
+        // Normalizar tipos para compatibilidad con filtros
+        let normalizedType = imageData.tipoFotografia;
+        if (normalizedType === 'Muestra') normalizedType = 'MUESTRA';
+        if (normalizedType === 'Prenda Final') normalizedType = 'PRENDA FINAL';
+        if (normalizedType === 'Validación AC') normalizedType = 'VALIDACION AC';
+
+        console.log('Tipo normalizado:', normalizedType);
+
+        // Crear imagen con manejo de errores mejorado
+        const imgSrc = imageData.url;
+        const imgAlt = imageData.name || imageData.descripcion || 'Imagen';
+        const imgDesc = imageData.descripcion || imgAlt;
+
+        console.log('Datos de imagen:', { imgSrc, imgAlt, imgDesc, normalizedType });
+
+        // Validar URL antes de crear la fila
+        if (!imgSrc || imgSrc === '' || imgSrc === 'undefined') {
+            console.error(' URL de imagen inválida, usando imagen por defecto');
+            imageData.url = getDefaultImageByType(normalizedType);
+        }
+
         row.innerHTML = `
             <td data-column="imagen">
                 <img src="${imageData.url}"
-                    alt="${imageData.name}"
+                    alt="${imgAlt}"
                     class="img-thumbnail preview-image"
-                    style="width: 60px; height: 60px; cursor: pointer;"
-                    onclick="openImageLightbox('${imageData.url}', '${imageData.name}', '${imageData.descripcion}', '${imageData.tipoFotografia}')">
+                    style="width: 60px; height: 60px; cursor: pointer; object-fit: cover; background-color: #f8f9fa;"
+                    onclick="openImageLightbox('${imageData.url}', '${imgAlt}', '${imgDesc}', '${normalizedType}')"
+                    onerror="console.error('Error cargando imagen:', this.src); this.src='${getDefaultImageByType(normalizedType)}'; this.style.backgroundColor='#ffebee';"
+                    onload="console.log('Imagen cargada correctamente:', this.src);">
             </td>
-            <td data-column="orden-sit">${imageData.ordenSit}</td>
-            <td data-column="po">${imageData.po}</td>
-            <td data-column="oc">${imageData.oc}</td>
-            <td data-column="descripcion">${imageData.descripcion}</td>
-            <td data-column="tipo-fotografia">${imageData.tipoFotografia}</td>
+            <td data-column="orden-sit">${imageData.ordenSit || 'N/A'}</td>
+            <td data-column="po">${imageData.po || 'N/A'}</td>
+            <td data-column="oc">${imageData.oc || 'N/A'}</td>
+            <td data-column="descripcion">${imageData.descripcion || 'Sin descripción'}</td>
+            <td data-column="tipo-fotografia">${normalizedType}</td>
             <td data-column="acciones">
-                <button class="btn btn-danger btn-sm me-1 btn-delete" onclick="deleteImage(this)" title="Eliminar">
+                <button class="btn btn-danger btn-sm me-1 btn-delete" onclick="deleteImage(this)" title="Eliminar imagen">
                     <i class="fas fa-trash"></i>
                 </button>
                 <button class="btn btn-warning btn-sm me-1 btn-edit" onclick="editImage(this)" title="Editar información">
                     <i class="fas fa-edit"></i>
                 </button>
-                <button class="btn btn-info btn-sm comment-btn"
-                    onclick="openCommentsModal(this)"
-                    title="Ver/Agregar comentarios"
-                    data-comment-count="0"
-                    style="background-color: #17a2b8 !important; border-color: #17a2b8 !important; color: white !important; position: relative;">
-                <i class="fas fa-comments"></i>
-            </button>
+                <button class="btn btn-info btn-sm comment-btn" onclick="openCommentsModal(this)" title="Ver/Agregar comentarios" data-comment-count="0">
+                    <i class="fas fa-comments"></i>
+                </button>
             </td>
         `;
 
         // Agregar al inicio de la tabla
         tableBody.insertBefore(row, tableBody.firstChild);
+        console.log('Fila agregada a la tabla');
 
-        // Añadir animación
+        // Añadir animación de entrada
         row.style.opacity = '0';
         row.style.transform = 'translateY(-10px)';
+        row.style.backgroundColor = '#d4edda'; // Verde claro para destacar
 
         setTimeout(() => {
             row.style.transition = 'all 0.5s ease';
             row.style.opacity = '1';
             row.style.transform = 'translateY(0)';
         }, 100);
+
+        // Quitar el fondo verde después de 3 segundos
+        setTimeout(() => {
+            row.style.backgroundColor = '';
+        }, 3000);
+
+        console.log('✨ Animación aplicada');
+
+        // Mostrar mensaje si es imagen por defecto
+        if (imageData.isDefaultImage) {
+            console.log('Se usó imagen por defecto para:', imageData.descripcion);
+        }
     }
 
     function setUploadState(button, state) {
@@ -863,11 +1069,12 @@
         }
     }
 
-    // Agregar a la inicialización principal
-    document.addEventListener("DOMContentLoaded", function() {
-        // ... otras inicializaciones
-        initializeUploadButtons();
-    });
+    // Hacer las funciones globalmente disponibles
+    window.openImageLightbox = openImageLightbox;
+    window.closeLightbox = closeLightbox;
+    window.downloadImage = downloadImage;
+
+    console.log('Funciones de lightbox registradas globalmente');
 </script>
 
 <!-- Adicionales para el uso del selector rango de fechas -->

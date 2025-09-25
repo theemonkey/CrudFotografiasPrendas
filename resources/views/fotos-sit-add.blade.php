@@ -10,11 +10,14 @@
     <!-- Buscar Orden SIT -->
     <div class="mb-3">
         <label for="ordenSitInput" class="form-label">Buscar orden SIT</label>
-        <input type="text"
-               id="ordenSitInput"
-               class="form-control"
-               placeholder="Ej: 12345678"
-               oninput="this.value = this.value.replace(/[^0-9]/g, '')">
+        <div class="input-group">
+            <input type="text"
+                id="ordenSitInput"
+                class="form-control"
+                placeholder="Ej: 12345678"
+                oninput="this.value = this.value.replace(/[^0-9]/g, '')">
+            <button id="searchBoton" class="btn btn-primary"><i class="fas fa-search"></i></button>
+        </div>
     </div>
 
     <!-- Resultado de búsqueda -->
@@ -24,11 +27,11 @@
                 <div class="col-md-3 text-center">
                     <!-- Miniatura -->
                     <img id="prendaPreview"
-                        src="https://via.placeholder.com/120x150?text=Prenda"
+                        src="https://picsum.photos/200/300"
                         alt="Prenda"
                         class="img-thumbnail"
                         style="max-width:120px; cursor:pointer;"
-                        onclick="openLightbox(this.src, 'Prenda de vestir', tipoSeleccionado)">
+                        onclick="openLightbox(this.src, tipoSeleccionado)">
                 </div>
                 <div class="col-md-9">
                     <p class="mb-1"><strong>Orden SIT:</strong> <span id="ordenSitValue"></span></p>
@@ -79,12 +82,12 @@
             <div class="lightbox-info">
                 <div class="row">
                     <div class="col-md-6">
-                        <strong>Descripción:</strong>
-                        <p id="lightboxDescription">-</p>
+                        <strong>Descripción:</strong> <span id="previewDescripcion"></span>
+                        <p id="lightboxDescription"></p>
                     </div>
                     <div class="col-md-6">
-                        <strong>Tipo:</strong>
-                        <p id="lightboxType">-</p>
+                        <strong>Tipo:</strong> <span id="previewTipo"></span>
+                        <p id="lightboxType"></p>
                     </div>
                 </div>
             </div>
@@ -129,9 +132,9 @@
             <label for="tipoFotografiaSelect" class="form-label">Tipo de Fotografía</label>
             <select class="form-select" id="tipoFotografiaSelect" required>
               <option value="" disabled selected>Seleccione un tipo</option>
-              <option value="MUESTRA">MUESTRA</option>
-              <option value="VALIDACION AC">VALIDACIÓN AC</option>
-              <option value="PRENDA FINAL">PRENDA FINAL</option>
+              <option value="Muestra">Muestra</option>
+              <option value="Validación AC">Validación AC</option>
+              <option value="Prenda Final">Prenda Final</option>
             </select>
           </div>
         </form>
@@ -147,12 +150,13 @@
 </div>
 
 <!-- Scripts utiles-->
-<script src="{{ asset('js/fotos-index.js') }}"></script>
-
 
 <!-- ==========Busqueda orden sit - Botones card agregar fotos prenda  ============0-->
 <script>
     let estadoSeleccionado = null;
+    let tipoSeleccionado = null;
+    let uploadedImages = []; // Array para almacenar imágenes subidas
+    let currentImageData = null; // Para almacenar datos de la imagen actual
 
     const ordenSitInput = document.getElementById('ordenSitInput');
     const ordenSitCard = document.getElementById('ordenSitCard');
@@ -160,27 +164,11 @@
     const tipoOrden = document.getElementById('tipoOrden');
     const prendaPreview = document.getElementById('prendaPreview');
     const imageLightbox = document.getElementById('imageLightbox');
-
-    // Enter para buscar
-    ordenSitInput.addEventListener('keypress', function(e) {
-        if (e.key === 'Enter') {
-            e.preventDefault();
-            buscarOrdenSit();
-        }
-    });
-
-    // Click fuera limpia búsqueda
-    document.addEventListener('click', function(e) {
-        if (!ordenSitInput.contains(e.target) &&
-        !ordenSitCard.contains(e.target) &&
-        !imageLightbox.contains(e.target)) {
-        ordenSitInput.value = '';
-        ordenSitCard.style.display = 'none';
-        }
-    });
+    const descripcion = document.getElementById('descripcion');
 
     // Validar y buscar (Simulacion resultados)
     function buscarOrdenSit() {
+        const ordenSitInput = document.getElementById('ordenSitInput');
         const value = ordenSitInput.value.trim();
 
         if (value === "") {
@@ -188,22 +176,22 @@
             return;
         }
 
-        // Simular orden encontrada(ELiminar luego)
+        // Simular orden encontrada(Eliminar luego)
         ordenSitValue.textContent = value;
-        prendaPreview.src = "https://via.placeholder.com/200";
+        prendaPreview.src = "https://picsum.photos/200/300";
 
-        // limpia texto Estado la primera vez de cargue de pag
-        if (!tipoOrden.textContent) {
-            tipoOrden.textContent = ''; //limpiar estado
-            tipoOrden.className = ''; //limpiar estilos
-            tipoSeleccionado = null;
-        }
+        // Limpiar datos previos
+        descripcion.textContent = "";
+        tipoOrden.textContent = "";
+        tipoOrden.className = "";
+        tipoSeleccionado = null;
+        currentImageData = null;
+        uploadedImages = [];
 
         ordenSitCard.style.display = 'block';
         alert(`Orden SIT ${value} encontrada`);
     }
 
-    // Cambiar estado
     // Cambiar estado
     function setTipoFoto(tipo) {
         tipoSeleccionado = tipo;
@@ -214,29 +202,58 @@
         if (tipo === "Validación AC") { tipoOrden.className = "badge badge-color-personalizado"; }
     }
 
-   // Guardar
+   // Guardar y redirigir a fotos-index
    function guardarFoto() {
-    if (!tipoSeleccionado) {
-        alert("Debe seleccionar un tipo de fotografia antes de guardar");
+    console.log('Iniciando guardado de fotos...');
+    console.log('Imágenes a guardar:', uploadedImages);
+
+    if (uploadedImages.length === 0) {
+        alert("Debe subir al menos una imagen antes de guardar");
         return;
     }
-    alert(`Foto guardada con tipo: ${tipoSeleccionado}`);
-    // Espacio para agregar luego logica de guardado
 
+    // Verificar que todas las imágenes tengan datos completos
+    const imagenesCompletas = uploadedImages.filter(img =>
+        img.url && img.descripcion && img.tipoFotografia
+    );
+
+    console.log('Imágenes con datos completos:', imagenesCompletas);
+
+    if (imagenesCompletas.length === 0) {
+        alert("No hay imágenes válidas para guardar");
+        return;
+    }
+
+    // Guardar datos en localStorage para transferir a fotos-index
+    const dataToTransfer = {
+        images: imagenesCompletas,
+        timestamp: new Date().toISOString()
+    };
+
+    console.log('Datos a transferir:', dataToTransfer);
+
+    localStorage.setItem('newUploadedImages', JSON.stringify(dataToTransfer));
+    console.log('Datos guardados en localStorage');
+
+    alert(`Se guardaron ${imagenesCompletas.length} imagen(es) correctamente. Redirigiendo...`);
+
+    // Redirigir a fotos-index
+    console.log('Redirigiendo a fotos-index...');
     window.location.href = "{{ route('fotos-index') }}";
-
    }
 
-    // Lightbox
+    // Lightbox functions
     function openLightbox(imageUrl, description, type) {
         document.getElementById('lightboxImage').src = imageUrl;
-        document.getElementById('lightboxDescription').textContent = description;
-        document.getElementById('lightboxType').textContent = type;
+        document.getElementById('previewDescripcion').textContent = description || '-';
+        document.getElementById('previewTipo').textContent = type || '-';
         document.getElementById('imageLightbox').style.display = 'flex';
     }
+
     function closeLightbox() {
         document.getElementById('imageLightbox').style.display = 'none';
     }
+
     function downloadImage() {
         const imgSrc = document.getElementById('lightboxImage').src;
         const link = document.createElement('a');
@@ -249,6 +266,7 @@
 <!--/=/=/=/=/=/=/=//=/=/=/=/=/=/=//=/=/=/=/=/=/=//=/=/=/=/=/=/=//=/=/=/=/=/=/=//=/=/=/=/=/=/=/ -->
 <script>
     // ===== SCRIPT FUNCIONALIDAD SUBIDA DE IMAGENES =====
+
     function initializeUploadButtons() {
         const cameraUpload = document.getElementById('cameraUpload');
         const fileUpload = document.getElementById('fileUpload');
@@ -328,9 +346,11 @@
                 console.log(' Todas las imágenes subidas correctamente');
                 showNotification(`${results.length} imagen(es) subida(s) correctamente`, 'success');
 
-                // Agregar imágenes a la tabla
+                // Agregar imágenes al array
                 results.forEach(imageData => {
-                    addImageToTable(imageData);
+                    uploadedImages.push(imageData);
+                    // Actualizar imagen de vista previa en el card
+                    updateCardPreview(imageData);
                 });
 
                 setUploadState(uploadBtn, 'success');
@@ -348,118 +368,150 @@
     }
 
     function uploadSingleImage(file) {
-    return new Promise((resolve, reject) => {
-        const formData = new FormData();
-        formData.append('image', file);
-        formData.append('timestamp', new Date().toISOString());
+        return new Promise((resolve, reject) => {
+            console.log('Procesando archivo:', file.name);
 
-        setTimeout(() => {
-            const imageUrl = URL.createObjectURL(file);
+            // Convertir archivo a Base64 para almacenamiento persistente
+            const reader = new FileReader();
 
-            // Datos base de la imagen
-            const tempData = {
-                id: Date.now() + Math.random(),
-                url: imageUrl,
-                name: file.name,
-                size: file.size,
-                uploadDate: new Date().toISOString(),
-                ordenSit: generateOrderNumber(),
-                po: generatePONumber(),
-                oc: generateOCNumber()
+            reader.onload = function(e) {
+                const base64Data = e.target.result;
+                console.log('Imagen convertida a Base64');
+
+                // Datos base de la imagen
+                const tempData = {
+                    id: Date.now() + Math.random(),
+                    url: base64Data, // Usar Base64 en lugar de blob URL
+                    name: file.name,
+                    size: file.size,
+                    uploadDate: new Date().toISOString(),
+                    ordenSit: document.getElementById('ordenSitValue').textContent || 'N/A',
+                    po: generatePONumber(),
+                    oc: generateOCNumber()
+                };
+
+                console.log('Datos temporales preparados');
+
+                // Abrir modal y esperar datos del usuario
+                const modalEl = document.getElementById('imageDataModal');
+                const modal = new bootstrap.Modal(modalEl);
+
+                // Limpiar formulario antes de mostrar
+                document.getElementById('descripcionInput').value = '';
+                document.getElementById('tipoFotografiaSelect').selectedIndex = 0;
+
+                // Prevenir que el modal se cierre al hacer clic fuera
+                modalEl.setAttribute('data-bs-backdrop', 'static');
+                modalEl.setAttribute('data-bs-keyboard', 'false');
+
+                // Evento al guardar
+                const saveBtn = document.getElementById('saveImageData');
+
+                const handleSave = () => {
+                    const descripcionVal = document.getElementById('descripcionInput').value.trim();
+                    const tipoFotografia = document.getElementById('tipoFotografiaSelect').value;
+
+                    console.log('Guardando datos:', { descripcionVal, tipoFotografia });
+
+                    if (!descripcionVal || !tipoFotografia) {
+                        alert("Por favor ingrese todos los campos.");
+                        return;
+                    }
+
+                    // Desactivar el boton mientras se procesa
+                    saveBtn.disabled = true;
+
+                    // Datos completos
+                    const completeData = {
+                        ...tempData,
+                        descripcion: descripcionVal,
+                        tipoFotografia
+                    };
+
+                    console.log('Datos completos preparados');
+
+                    // SINCRONIZACIÓN: Actualizar elementos del card
+                    descripcion.textContent = descripcionVal;
+                    tipoOrden.textContent = tipoFotografia;
+                    tipoOrden.className = "badge badge-color-personalizado";
+                    tipoSeleccionado = tipoFotografia;
+
+                    // Actualizar imagen de vista previa
+                    prendaPreview.src = base64Data;
+                    prendaPreview.onclick = () => openLightbox(base64Data, descripcionVal, tipoFotografia);
+
+                    // Guardar datos actuales
+                    currentImageData = completeData;
+
+                    // cerrar modal y Resolver la promesa con los datos
+                    modal.hide();
+                    resolve(completeData);
+
+                    // Remover listener
+                    saveBtn.removeEventListener('click', handleSave);
+
+                    // Habilitar boton nuevamente
+                    saveBtn.disabled = false;
+
+                    console.log('🎉 Imagen procesada exitosamente');
+                };
+
+                // Manejar cierre del modal con botón cancelar
+                const cancelBtn = modalEl.querySelector('.btn-secondary');
+                const handleCancel = () => {
+                    console.log('Upload cancelado');
+                    reject(new Error('Upload cancelled'));
+                    saveBtn.removeEventListener('click', handleSave);
+                    cancelBtn.removeEventListener('click', handleCancel);
+                };
+                cancelBtn.addEventListener('click', handleCancel);
+
+                // Agregar event listener para el boton guardar
+                saveBtn.addEventListener('click', handleSave);
+
+                // Mostrar modal
+                modal.show();
+                console.log('Modal mostrado');
             };
 
-            // Abrir modal y esperar datos del usuario
-            const modalEl = document.getElementById('imageDataModal');
-            const modal = new bootstrap.Modal(modalEl);
-            modal.show();
-
-            // Limpiar formulario
-            document.getElementById('descripcionInput').value = '';
-            document.getElementById('tipoFotografiaSelect').selectedIndex = 0;
-
-            // Evento al guardar
-            const saveBtn = document.getElementById('saveImageData');
-
-            const handleSave = () => {
-                const descripcion = document.getElementById('descripcionInput').value.trim();
-                const tipoFotografia = document.getElementById('tipoFotografiaSelect').value;
-
-                if (!descripcion || !tipoFotografia) {
-                    alert("Por favor ingrese todos los campos.");
-                    return;
-                }
-
-                modal.hide();
-
-                // Resolver con los datos completos
-                resolve({
-                    ...tempData,
-                    descripcion,
-                    tipoFotografia
-                });
-
-                // Eliminar listener para evitar duplicados
-                saveBtn.removeEventListener('click', handleSave);
+            reader.onerror = function() {
+                console.error('Error leyendo archivo:', file.name);
+                reject(new Error('Error reading file'));
             };
 
-            saveBtn.addEventListener('click', handleSave);
-        }, 1000 + Math.random() * 2000);
-    });
-}
+            // Leer archivo como Base64
+            reader.readAsDataURL(file);
+        });
+    }
 
-    function addImageToTable(imageData) {
-        const tableBody = document.getElementById('imagesTableBody');
-        if (!tableBody) return;
+    function updateCardPreview(imageData) {
+        // Actualizar la imagen de vista previa en el card
+        if (prendaPreview && imageData.url) {
+            prendaPreview.src = imageData.url;
+            prendaPreview.onclick = () => openLightbox(
+                imageData.url,
+                imageData.descripcion,
+                imageData.tipoFotografia
+            );
 
-        const row = document.createElement('tr');
-        row.innerHTML = `
-            <td data-column="imagen">
-                <img src="${imageData.url}"
-                    alt="${imageData.name}"
-                    class="img-thumbnail preview-image"
-                    style="width: 60px; height: 60px; cursor: pointer;"
-                    onclick="openImageLightbox('${imageData.url}', '${imageData.name}', '${imageData.descripcion}', '${imageData.tipoFotografia}')">
-            </td>
-            <td data-column="orden-sit">${imageData.ordenSit}</td>
-            <td data-column="po">${imageData.po}</td>
-            <td data-column="oc">${imageData.oc}</td>
-            <td data-column="descripcion">${imageData.descripcion}</td>
-            <td data-column="tipo-fotografia">${imageData.tipoFotografia}</td>
-            <td data-column="acciones">
-                <button class="btn btn-danger btn-sm me-1 btn-delete" onclick="deleteImage(this)" title="Eliminar">
-                    <i class="fas fa-trash"></i>
-                </button>
-                <button class="btn btn-warning btn-sm me-1 btn-edit" onclick="editImage(this)" title="Editar información">
-                    <i class="fas fa-edit"></i>
-                </button>
-                <button class="btn btn-info btn-sm comment-btn"
-                    onclick="openCommentsModal(this)"
-                    title="Ver/Agregar comentarios"
-                    data-comment-count="0"
-                    style="background-color: #17a2b8 !important; border-color: #17a2b8 !important; color: white !important; position: relative;">
-                <i class="fas fa-comments"></i>
-            </button>
-            </td>
-        `;
+            console.log('Vista previa actualizada');
+        }
 
-        // Agregar al inicio de la tabla
-        tableBody.insertBefore(row, tableBody.firstChild);
+        // Actualizar información mostrada
+        if (descripcion && imageData.descripcion) {
+            descripcion.textContent = imageData.descripcion;
+        }
 
-        // Añadir animación
-        row.style.opacity = '0';
-        row.style.transform = 'translateY(-10px)';
-
-        setTimeout(() => {
-            row.style.transition = 'all 0.5s ease';
-            row.style.opacity = '1';
-            row.style.transform = 'translateY(0)';
-        }, 100);
+        if (tipoOrden && imageData.tipoFotografia) {
+            tipoOrden.textContent = imageData.tipoFotografia;
+            tipoOrden.className = "badge badge-color-personalizado";
+            tipoSeleccionado = imageData.tipoFotografia;
+        }
     }
 
     function setUploadState(button, state) {
         if (!button) return;
 
-        // Remover clases anteriores
         button.classList.remove('active', 'uploading');
 
         switch (state) {
@@ -480,12 +532,10 @@
         const uploadBtns = document.querySelectorAll('.upload-btn');
 
         uploadBtns.forEach(btn => {
-            // Prevenir comportamiento por defecto
             ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
                 btn.addEventListener(eventName, preventDefaults, false);
             });
 
-            // Highlight en drag over
             ['dragenter', 'dragover'].forEach(eventName => {
                 btn.addEventListener(eventName, () => btn.classList.add('active'), false);
             });
@@ -494,7 +544,6 @@
                 btn.addEventListener(eventName, () => btn.classList.remove('active'), false);
             });
 
-            // Handle drop
             btn.addEventListener('drop', handleDrop, false);
         });
     }
@@ -510,11 +559,6 @@
         handleImageUpload(files, isCamera ? 'camera' : 'file');
     }
 
-    // Utility functions para generar números
-    function generateOrderNumber() {
-        return '100' + Math.floor(Math.random() * 90000 + 10000);
-    }
-
     function generatePONumber() {
         return '6000' + Math.floor(Math.random() * 900000 + 100000);
     }
@@ -523,25 +567,35 @@
         return '4200' + Math.floor(Math.random() * 9000000 + 1000000);
     }
 
-    // En caso de querer descargar la imagen
-    function downloadImageFromRow(button) {
-        const row = button.closest('tr');
-        const img = row.querySelector('img');
-        if (img) {
-            const link = document.createElement('a');
-            link.href = img.src;
-            link.download = img.alt || 'imagen';
-            link.click();
-            showNotification('Descarga iniciada', 'success');
-        }
+    // Función para mostrar notificaciones
+    function showNotification(message, type) {
+        // Implementación básica con alert, puedes mejorar con toast notifications
+        alert(message);
     }
 
-    // Agregar a la inicialización principal
+    // Inicialización principal
     document.addEventListener("DOMContentLoaded", function() {
-        // ... otras inicializaciones
         initializeUploadButtons();
+
+        const ordenSitInput = document.getElementById('ordenSitInput');
+        const searchBoton = document.getElementById('searchBoton');
+
+        if (ordenSitInput) {
+            ordenSitInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    buscarOrdenSit();
+                }
+            });
+        }
+
+        if (searchBoton) {
+            searchBoton.addEventListener('click', function(e) {
+                e.preventDefault();
+                buscarOrdenSit();
+            });
+        }
     });
 </script>
-
 
 @endsection

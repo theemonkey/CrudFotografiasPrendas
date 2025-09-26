@@ -1,358 +1,425 @@
 /*!
- * Mobile Cards Generator
- * Convierte tabla de imágenes en cards responsive para móviles
+ * Sistema Responsive Completo
+ * Convierte tabla en cards para móviles de forma eficiente
  */
 
 // ================================================================
-// GENERADOR DE CARDS RESPONSIVE PARA MÓVILES
+// CLASE PRINCIPAL RESPONSIVE SYSTEM
 // ================================================================
 
-class MobileCardsStable {
+class ResponsiveSystem {
     constructor() {
         this.initialized = false;
-        this.isGenerating = false; //  Flag para evitar bucles
-        this.lastGenerationTime = 0;
-        this.generationCooldown = 1000; // 1 segundo de cooldown
+        this.currentView = null; // 'desktop' o 'mobile'
+        this.breakpoint = 768; // Punto de cambio tablet/móvil
+        this.debounceTimer = null;
         this.observer = null;
+
+        console.log('ResponsiveSystem: Inicializando...');
     }
 
-    //  INIT controlado sin bucles
     init() {
         if (this.initialized) {
-            console.log(' [STABLE] Ya inicializado, saltando...');
+            console.log('Ya inicializado');
             return;
         }
 
-        console.log(' [STABLE] Iniciando Mobile Cards Generator Estable...');
+        this.setupMediaQuery();
+        this.setupTableObserver();
+        this.handleResize();
 
-        //  SOLO una ejecución inicial
-        this.generateCardsOnce();
-
-        //  Observer inteligente (sin bucles)
-        this.setupSmartObserver();
+        // Event listeners
+        window.addEventListener('resize', () => this.debounceResize());
+        window.addEventListener('orientationchange', () => {
+            setTimeout(() => this.handleResize(), 100);
+        });
 
         this.initialized = true;
-        console.log(' [STABLE] Mobile Cards Generator inicializado');
+        console.log('ResponsiveSystem: Inicializado correctamente');
     }
 
-    //  GENERACIÓN única con protección anti-bucle
-    generateCardsOnce() {
-        const now = Date.now();
-
-        //  PROTECCIÓN: Si se está generando o es muy pronto, salir
-        if (this.isGenerating || (now - this.lastGenerationTime) < this.generationCooldown) {
-            console.log(' [STABLE] Generación bloqueada (anti-bucle)');
-            return;
-        }
-
-        this.isGenerating = true;
-        this.lastGenerationTime = now;
-
-        console.log(' [STABLE] Generando cards (protegido)...');
-
-        try {
-            this.createMobileCardsSafe();
-        } catch (error) {
-            console.error(' [STABLE] Error en generación:', error);
-        } finally {
-            //  LIBERAR flag después de un tiempo
-            setTimeout(() => {
-                this.isGenerating = false;
-            }, 500);
+    setupMediaQuery() {
+        // Media query listener más eficiente
+        if (window.matchMedia) {
+            const mediaQuery = window.matchMedia(`(max-width: ${this.breakpoint - 1}px)`);
+            mediaQuery.addListener(() => this.handleResize());
         }
     }
 
-    //  CREACIÓN segura de cards
-    createMobileCardsS安e() {
+    debounceResize() {
+        clearTimeout(this.debounceTimer);
+        this.debounceTimer = setTimeout(() => this.handleResize(), 150);
+    }
+
+    handleResize() {
+        const isMobile = window.innerWidth < this.breakpoint;
+        const newView = isMobile ? 'mobile' : 'desktop';
+
+        if (this.currentView !== newView) {
+            console.log(`Cambiando vista: ${this.currentView} → ${newView}`);
+            this.currentView = newView;
+            this.switchView();
+        }
+    }
+
+    switchView() {
+        if (this.currentView === 'mobile') {
+            this.showMobileView();
+        } else {
+            this.showDesktopView();
+        }
+    }
+
+    showMobileView() {
+        console.log('Activando vista móvil');
+
+        // Ocultar tabla
+        const table = document.querySelector('.table-responsive');
+        if (table) {
+            table.style.display = 'none';
+        }
+
+        // Mostrar cards
+        this.generateMobileCards();
+    }
+
+    showDesktopView() {
+        console.log('Activando vista desktop');
+
+        // Mostrar tabla
+        const table = document.querySelector('.table-responsive');
+        if (table) {
+            table.style.display = 'block';
+        }
+
+        // Ocultar cards
+        const mobileContainer = document.querySelector('.mobile-cards-container');
+        if (mobileContainer) {
+            mobileContainer.style.display = 'none';
+        }
+    }
+
+    generateMobileCards() {
+        console.log('Generando cards móviles...');
+
         const tableBody = document.getElementById('imagesTableBody');
-        let mobileContainer = document.querySelector('.mobile-cards-container');
-
         if (!tableBody) {
-            console.error(' [STABLE] No se encontró tabla');
+            console.error('No se encontró tabla');
             return;
         }
 
-        //  CREAR contenedor si no existe
+        let mobileContainer = document.querySelector('.mobile-cards-container');
         if (!mobileContainer) {
-            mobileContainer = this.createContainerSafely();
-            if (!mobileContainer) return;
+            mobileContainer = this.createMobileContainer();
         }
 
-        //  OBTENER filas de forma segura
-        const rows = this.getTableRowsSafely(tableBody);
-        console.log(` [STABLE] Procesando ${rows.length} filas`);
+        mobileContainer.style.display = 'block';
+
+        const rows = Array.from(tableBody.querySelectorAll('tr'));
+        console.log(`Procesando ${rows.length} filas`);
 
         if (rows.length === 0) {
-            this.showEmptyState(mobileContainer);
+            mobileContainer.innerHTML = this.getEmptyStateHTML();
             return;
         }
 
-        //  GENERAR cards de forma segura
-        this.generateCardsHTML(mobileContainer, rows);
+        const cardsHTML = rows.map((row, index) => this.createMobileCard(row, index))
+            .filter(Boolean)
+            .join('');
+
+        mobileContainer.innerHTML = cardsHTML;
+        console.log(`${rows.length} cards generados exitosamente`);
     }
 
-    //  CREAR contenedor de forma segura
-    createContainerSafely() {
+    createMobileContainer() {
+        console.log('Creando contenedor móvil');
+
         const cardBody = document.querySelector('.card-body');
         if (!cardBody) {
-            console.error(' [STABLE] No se encontró card-body');
+            console.error('No se encontró .card-body');
             return null;
         }
 
         const container = document.createElement('div');
-        container.className = 'mobile-cards-container mobile-only';
-        container.style.display = 'block';
+        container.className = 'mobile-cards-container';
+        container.style.cssText = `
+            display: none;
+            width: 100%;
+            padding: 10px 0;
+        `;
 
-        //  INSERTAR antes de la tabla para evitar conflictos
+        // Insertar después de la tabla
         const table = cardBody.querySelector('.table-responsive');
         if (table) {
-            cardBody.insertBefore(container, table);
+            cardBody.insertBefore(container, table.nextSibling);
         } else {
             cardBody.appendChild(container);
         }
 
-        console.log(' [STABLE] Contenedor móvil creado seguramente');
         return container;
     }
 
-    //  OBTENER filas de forma segura
-    getTableRowsSafely(tableBody) {
-        try {
-            const allRows = Array.from(tableBody.querySelectorAll('tr'));
-            //  FILTRAR filas válidas (que tengan al menos una imagen o datos)
-            return allRows.filter(row => {
-                const cells = row.querySelectorAll('td');
-                return cells.length >= 3; // Al menos 3 celdas para ser válida
-            });
-        } catch (error) {
-            console.error(' [STABLE] Error obteniendo filas:', error);
-            return [];
-        }
-    }
-
-    //  MOSTRAR estado vacío
-    showEmptyState(container) {
-        container.innerHTML = `
-            <div class="text-center text-muted p-4">
-                <i class="fas fa-inbox fa-2x mb-2"></i>
-                <p>No hay registros para mostrar</p>
-            </div>
-        `;
-    }
-
-    //  GENERAR HTML de cards de forma segura
-    generateCardsHTML(container, rows) {
-        try {
-            const cardsHTML = rows.map((row, index) => {
-                return this.createSingleCard(row, index);
-            }).filter(Boolean).join('');
-
-            if (cardsHTML) {
-                container.innerHTML = cardsHTML;
-                console.log(` [STABLE] ${rows.length} cards generados`);
-            } else {
-                this.showEmptyState(container);
-            }
-
-        } catch (error) {
-            console.error(' [STABLE] Error generando HTML:', error);
-            container.innerHTML = `
-                <div class="alert alert-danger">
-                    <i class="fas fa-exclamation-triangle"></i>
-                    Error cargando contenido
-                </div>
-            `;
-        }
-    }
-
-    //  CREAR card individual de forma segura
-    createSingleCard(row, index) {
+    createMobileCard(row, index) {
         try {
             const cells = row.querySelectorAll('td');
             if (cells.length < 6) {
-                console.warn(` [STABLE] Fila ${index} incompleta`);
+                console.warn(`Fila ${index} incompleta (${cells.length} celdas)`);
                 return '';
             }
 
-            //  EXTRAER datos con fallbacks seguros
-            const data = {
-                ordenSit: this.getTextSafely(cells[1]) || `Registro ${index + 1}`,
-                po: this.getTextSafely(cells[2]) || 'N/A',
-                oc: this.getTextSafely(cells[3]) || 'N/A',
-                descripcion: this.getTextSafely(cells[4]) || 'Sin descripción',
-                tipo: this.getTextSafely(cells[5]) || 'Sin tipo'
-            };
+            // Extraer datos de la fila
+            const data = this.extractRowData(cells);
+            const imageData = this.extractImageData(cells[0], index);
+            const actionsHTML = this.extractActionsHTML(cells[6]);
 
-            //  MANEJAR imagen de forma segura
-            const img = cells[0]?.querySelector('img');
-            const imgData = this.getImageDataSafely(img, index);
-
-            return this.generateCardHTML(data, imgData, index);
+            return this.generateCardHTML(data, imageData, actionsHTML, index);
 
         } catch (error) {
-            console.error(` [STABLE] Error en card ${index}:`, error);
-            return '';
+            console.error(`Error creando card ${index}:`, error);
+            return this.getErrorCardHTML(index, error.message);
         }
     }
 
-    //  EXTRAER texto de forma segura
-    getTextSafely(cell) {
-        try {
-            return cell?.textContent?.trim() || '';
-        } catch {
-            return '';
-        }
+    extractRowData(cells) {
+        return {
+            ordenSit: this.getTextContent(cells[1]) || 'Sin orden',
+            po: this.getTextContent(cells[2]) || 'N/A',
+            oc: this.getTextContent(cells[3]) || 'N/A',
+            descripcion: this.getTextContent(cells[4]) || 'Sin descripción',
+            tipo: this.getTextContent(cells[5]) || 'Sin tipo'
+        };
     }
 
-    //  EXTRAER datos de imagen de forma segura
-    getImageDataSafely(img, index) {
+    extractImageData(imageCell, index) {
+        const img = imageCell?.querySelector('img');
         if (!img) {
             return {
-                src: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="60" height="60"><rect width="60" height="60" fill="%23f8f9fa"/><text x="30" y="35" text-anchor="middle" fill="%23666">No img</text></svg>',
+                src: this.getPlaceholderImage(),
                 alt: `Imagen ${index + 1}`,
                 onclick: ''
             };
         }
 
         return {
-            src: img.src || 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="60" height="60"><rect width="60" height="60" fill="%23f8f9fa"/><text x="30" y="35" text-anchor="middle" fill="%23666">Error</text></svg>',
+            src: img.src || this.getPlaceholderImage(),
             alt: img.alt || `Imagen ${index + 1}`,
             onclick: img.getAttribute('onclick') || ''
         };
     }
 
-    //  GENERAR HTML del card
-    generateCardHTML(data, imgData, index) {
-        const tipoBadge = this.getTipoBadge(data.tipo);
+    extractActionsHTML(actionsCell) {
+        if (!actionsCell) return '';
+
+        const buttons = Array.from(actionsCell.querySelectorAll('button'));
+        return buttons.map(btn => this.convertButtonForMobile(btn)).join('');
+    }
+
+    convertButtonForMobile(button) {
+        const icon = button.querySelector('i')?.className || 'fas fa-cog';
+        const onclick = button.getAttribute('onclick') || '';
+        const title = button.getAttribute('title') || '';
+        const classes = this.getMobileButtonClasses(button);
 
         return `
-            <div class="mobile-card" data-card-id="${index}">
+            <button class="${classes}" onclick="${onclick}" title="${title}">
+                <i class="${icon}"></i>
+            </button>
+        `;
+    }
+
+    getMobileButtonClasses(button) {
+        let baseClasses = 'btn btn-sm';
+
+        if (button.classList.contains('btn-danger')) {
+            baseClasses += ' btn-danger';
+        } else if (button.classList.contains('btn-warning')) {
+            baseClasses += ' btn-warning';
+        } else if (button.classList.contains('btn-info')) {
+            baseClasses += ' btn-info';
+        } else if (button.classList.contains('btn-success')) {
+            baseClasses += ' btn-success';
+        } else {
+            baseClasses += ' btn-secondary';
+        }
+
+        return baseClasses;
+    }
+
+    generateCardHTML(data, imageData, actionsHTML, index) {
+        const tipoBadge = this.getTipoBadge(data.tipo);
+        const imageOnclick = imageData.onclick ? `onclick="${imageData.onclick}"` : '';
+
+        return `
+            <div class="mobile-card" data-row-index="${index}">
                 <div class="mobile-card-header">
-                    <img src="${imgData.src}"
-                         alt="${imgData.alt}"
+                    <img src="${imageData.src}"
+                         alt="${imageData.alt}"
                          class="mobile-card-image"
-                         ${imgData.onclick ? `onclick="${imgData.onclick}"` : ''}
-                         onerror="this.src='data:image/svg+xml,<svg xmlns=&quot;http://www.w3.org/2000/svg&quot; width=&quot;60&quot; height=&quot;60&quot;><rect width=&quot;60&quot; height=&quot;60&quot; fill=&quot;%23f8f9fa&quot;/><text x=&quot;30&quot; y=&quot;35&quot; text-anchor=&quot;middle&quot; fill=&quot;%23666&quot;>Error</text></svg>'">
+                         ${imageOnclick}
+                         onerror="this.src='${this.getPlaceholderImage()}';"
+                         loading="lazy">
                     <div class="mobile-card-info">
-                        <div class="mobile-card-title">${data.ordenSit}</div>
-                        <div class="mobile-card-subtitle">${tipoBadge}</div>
+                        <div class="mobile-card-title">
+                            <i class="fas fa-hashtag me-1"></i>
+                            ${data.ordenSit}
+                        </div>
+                        <div class="mobile-card-subtitle">
+                            ${tipoBadge}
+                        </div>
                     </div>
                 </div>
+
                 <div class="mobile-card-body">
                     <div class="mobile-card-field">
-                        <span class="mobile-card-field-label">P.O:</span>
-                        <span class="mobile-card-field-value">${data.po}</span>
+                        <span class="mobile-card-label">
+                            <i class="fas fa-file-alt me-1"></i>
+                            P.O:
+                        </span>
+                        <span class="mobile-card-value">${data.po}</span>
                     </div>
                     <div class="mobile-card-field">
-                        <span class="mobile-card-field-label">O.C:</span>
-                        <span class="mobile-card-field-value">${data.oc}</span>
+                        <span class="mobile-card-label">
+                            <i class="fas fa-clipboard me-1"></i>
+                            O.C:
+                        </span>
+                        <span class="mobile-card-value">${data.oc}</span>
                     </div>
                     <div class="mobile-card-field">
-                        <span class="mobile-card-field-label">Descripción:</span>
-                        <span class="mobile-card-field-value">${data.descripcion}</span>
+                        <span class="mobile-card-label">
+                            <i class="fas fa-align-left me-1"></i>
+                            Descripción:
+                        </span>
+                        <span class="mobile-card-value">${data.descripcion}</span>
                     </div>
                 </div>
+
                 <div class="mobile-card-actions">
-                    <button class="btn btn-danger btn-sm" onclick="deleteImage(this)" title="Eliminar">
-                        <i class="fas fa-trash"></i>
-                    </button>
-                    <button class="btn btn-warning btn-sm" onclick="editImage(this)" title="Editar">
-                        <i class="fas fa-edit"></i>
-                    </button>
-                    <button class="btn btn-info btn-sm" onclick="openCommentsModal(this)" title="Comentarios">
-                        <i class="fas fa-comments"></i>
-                    </button>
+                    ${actionsHTML}
                 </div>
             </div>
         `;
     }
 
-    //  BADGE de tipo
     getTipoBadge(tipo) {
-        const tipoClean = tipo.toUpperCase();
+        const tipoUpper = tipo.toUpperCase();
         let badgeClass = 'bg-secondary';
+        let icon = 'fas fa-tag';
 
-        if (tipoClean.includes('PRENDA FINAL')) {
+        if (tipoUpper.includes('PRENDA FINAL')) {
             badgeClass = 'bg-success';
-        } else if (tipoClean.includes('MUESTRA')) {
+            icon = 'fas fa-check';
+        } else if (tipoUpper.includes('MUESTRA')) {
             badgeClass = 'bg-info';
+            icon = 'fas fa-camera';
+        } else if (tipoUpper.includes('VALIDACION')) {
+            badgeClass = 'bg-warning';
+            icon = 'fas fa-search';
         }
 
-        return `<span class="badge ${badgeClass}">${tipo}</span>`;
+        return `
+            <span class="badge ${badgeClass}">
+                <i class="${icon} me-1"></i>
+                ${tipo}
+            </span>
+        `;
     }
 
-    //  OBSERVER inteligente sin bucles
-    setupSmartObserver() {
+    getTextContent(cell) {
+        return cell?.textContent?.trim() || '';
+    }
+
+    getPlaceholderImage() {
+        return 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjYwIiBoZWlnaHQ9IjYwIiBmaWxsPSIjRjhGOUZBIi8+CjxwYXRoIGQ9Ik0yMCAyMEg0MFY0MEgyMFYyMFoiIGZpbGw9IiNERUUyRTYiLz4KPHN2Zz4K';
+    }
+
+    getEmptyStateHTML() {
+        return `
+            <div class="text-center p-4" style="color: #6c757d;">
+                <i class="fas fa-inbox fa-2x mb-3" style="color: #dee2e6;"></i>
+                <p class="mb-0">No hay registros para mostrar</p>
+            </div>
+        `;
+    }
+
+    getErrorCardHTML(index, error) {
+        return `
+            <div class="mobile-card" style="border-left: 3px solid #dc3545;">
+                <div class="mobile-card-body text-center text-danger p-3">
+                    <i class="fas fa-exclamation-triangle mb-2"></i>
+                    <small>Error cargando registro ${index + 1}</small>
+                </div>
+            </div>
+        `;
+    }
+
+    setupTableObserver() {
         const tableBody = document.getElementById('imagesTableBody');
         if (!tableBody) return;
 
-        //  OBSERVER que NO se activa por sus propios cambios
         this.observer = new MutationObserver((mutations) => {
             let shouldUpdate = false;
 
-            //  FILTRAR solo cambios relevantes
             mutations.forEach(mutation => {
-                //  IGNORAR cambios en el contenedor móvil
-                if (mutation.target.closest('.mobile-cards-container')) {
-                    return;
-                }
-
-                //  SOLO reaccionar a cambios en tbody
                 if (mutation.type === 'childList' &&
-                    mutation.target === tableBody) {
+                    !mutation.target.closest('.mobile-cards-container')) {
                     shouldUpdate = true;
                 }
             });
 
-            if (shouldUpdate && !this.isGenerating) {
-                console.log(' [STABLE] Cambio relevante detectado');
-                setTimeout(() => this.generateCardsOnce(), 200);
+            if (shouldUpdate && this.currentView === 'mobile') {
+                console.log('Actualizando cards por cambio en tabla');
+                setTimeout(() => this.generateMobileCards(), 100);
             }
         });
 
-        //  OBSERVAR solo el tbody, no todo el árbol
         this.observer.observe(tableBody, {
             childList: true,
-            subtree: false //  NO observar cambios internos
+            subtree: true
         });
-
-        console.log(' [STABLE] Observer inteligente configurado');
     }
 
-    //  DESTRUIR observer
+    // Método público para actualizar manualmente
+    refresh() {
+        if (this.currentView === 'mobile') {
+            this.generateMobileCards();
+        }
+    }
+
     destroy() {
         if (this.observer) {
             this.observer.disconnect();
-            this.observer = null;
         }
+        window.removeEventListener('resize', () => this.debounceResize());
         this.initialized = false;
-        console.log(' [STABLE] Mobile Cards destruido');
+        console.log('ResponsiveSystem destruido');
     }
 }
 
 // ================================================================
-// INICIALIZACIÓN CONTROLADA
+// INICIALIZACIÓN GLOBAL
 // ================================================================
 
-console.log(' [STABLE] Cargando Mobile Cards Estable...');
+console.log('Cargando ResponsiveSystem...');
 
-//  UNA SOLA instancia global
-if (!window.mobileCardsStable) {
-    window.mobileCardsStable = new MobileCardsStable();
+// Crear instancia única global
+window.responsiveSystem = new ResponsiveSystem();
 
-    //  INICIALIZAR solo una vez
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', () => {
-            window.mobileCardsStable.init();
-        });
-    } else {
-        window.mobileCardsStable.init();
-    }
-
-    //  FUNCIÓN global para llamada manual
-    window.refreshMobileCards = () => {
-        if (window.mobileCardsStable && !window.mobileCardsStable.isGenerating) {
-            window.mobileCardsStable.generateCardsOnce();
-        }
-    };
+// Inicializar cuando esté listo
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => {
+        window.responsiveSystem.init();
+    });
+} else {
+    window.responsiveSystem.init();
 }
+
+// Funciones globales para compatibilidad
+window.refreshMobileCards = () => {
+    if (window.responsiveSystem) {
+        window.responsiveSystem.refresh();
+    }
+};
+
+window.mobileCardsStable = window.responsiveSystem;
+
+console.log('ResponsiveSystem cargado');

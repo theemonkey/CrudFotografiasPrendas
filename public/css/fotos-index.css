@@ -234,254 +234,252 @@
 }
 
 .mobile-card {
-    background: white !important;
-    border: 1px solid #e9ecef !important;
-    border-radius: 8px !important;
-    margin-bottom: 16px !important;
-    padding: 16px !important;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1) !important;
-    display: block !important;
-    width: 100% !important;
-    box-sizing: border-box !important;
+    background: white;
+    border: 1px solid #e9ecef;
+    border-radius: 12px;
+    margin-bottom: 16px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    transition: box-shadow 0.3s ease;
+}
+
+.mobile-card:hover {
+    box-shadow: 0 4px 12px rgba(0,0,0,0.12);
 }
 
 .mobile-card-header {
-    display: flex !important;
-    align-items: center !important;
-    gap: 12px !important;
-    margin-bottom: 12px !important;
-    padding-bottom: 12px !important;
-    border-bottom: 1px solid #f0f0f0 !important;
+    display: flex;
+    align-items: center;
+    padding: 16px;
+    border-bottom: 1px solid #f8f9fa;
+    background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
 }
 
 .mobile-card-image {
-    width: 60px !important;
-    height: 60px !important;
-    border-radius: 6px !important;
-    object-fit: cover !important;
-    cursor: pointer !important;
-    flex-shrink: 0 !important;
+    width: 64px;
+    height: 64px;
+    border-radius: 8px;
+    object-fit: cover;
+    cursor: pointer;
+    flex-shrink: 0;
+    border: 2px solid #e9ecef;
+    transition: all 0.3s ease;
+}
+
+.mobile-card-image:hover {
+    border-color: #007bff;
+    transform: scale(1.05);
 }
 
 .mobile-card-info {
-    flex: 1 !important;
-    min-width: 0 !important;
+    flex: 1;
+    margin-left: 12px;
+    min-width: 0;
 }
 
 .mobile-card-title {
-    font-weight: 600 !important;
-    font-size: 16px !important;
-    color: #343a40 !important;
-    margin-bottom: 4px !important;
-    word-break: break-word !important;
-}
-
-.mobile-card-subtitle {
-    font-size: 14px !important;
-    color: #6c757d !important;
-    word-break: break-word !important;
-}
-
-.mobile-card-body {
-    margin-bottom: 12px !important;
-}
-
-.mobile-card-field {
-    display: flex !important;
-    justify-content: space-between !important;
-    align-items: flex-start !important;
-    padding: 8px 0 !important;
-    border-bottom: 1px solid #f8f9fa !important;
-    font-size: 14px !important;
-}
-
-.mobile-card-field:last-child {
-    border-bottom: none !important;
-}
-
-.mobile-card-field-label {
-    font-weight: 500 !important;
-    color: #6c757d !important;
-    flex-shrink: 0 !important;
-    margin-right: 12px !important;
-    min-width: 60px !important;
-}
-
-.mobile-card-field-value {
-    text-align: right !important;
-    word-break: break-word !important;
-    flex: 1 !important;
-    color: #343a40 !important;
-}
-
-.mobile-card-actions {
-    display: flex !important;
-    flex-wrap: wrap !important;
-    gap: 8px !important;
-    margin-top: 12px !important;
-    padding-top: 12px !important;
-    border-top: 1px solid #f0f0f0 !important;
-}
-
-.mobile-card-actions .btn {
-    flex: 1 !important;
-    min-width: 0 !important;
-    padding: 10px 8px !important;
-    font-size: 12px !important;
-    border-radius: 6px !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    gap: 4px !important;
-    text-align: center !important;
-}
-
-/* =================================================================================================
-   ESTILOS EXTRAS ->>>>>  BOTON EXPORTAR TODO - Botones(delete,edit,comment) - Botones fotos-sit-add
-   ================================================================================================*/
-.btn-pink {
-    background-color: #e91e63 !important;
-    border-color: #e91e63 !important;
-    color: white !important;
-}
-
-.btn-pink:hover {
-    background-color: #c2185b !important;
-    border-color: #c2185b !important;
-    color: white !important;
-}
-/*----->>>>> Botones(delete,edit,comment)  */
-.btn-delete:hover,
-.btn-edit:hover,
-.comment-btn:hover {
-    transform: scale(1.1) !important;
-    transition: transform 0.2s ease !important;
-}
-
-.comment-btn.comment-added::after {
-    animation: commentPulse 0.6s ease !important;
-}
-
-/*====>>>>>>> ESTILOS BOTONES(fotos-sit-add)>>>>>>>>>>====*/
-.btn-personalizado {
-    background-color: rgb(255 193 7);
-    border-color: #E0D8D3;
-    color: #333; /* O un color de texto que contraste bien */
-}
-
-/* Opcional: para el efecto hover/activo */
-.btn-personalizado:hover,
-.btn-personalizado:active,
-.btn-personalizado:focus {
-    background-color: rgb(236, 181, 13) ;/* Un color ligeramente más oscuro para el efecto */
-    /*border-color: #c9c2bd;*/
-    color: #333;
-}
-
-.badge-color-personalizado {
-    background-color: rgb(255 193 7);
-    color: #333;
-}
-
-/* ================================================================
-   SISTEMA DE COMENTARIOS ---> VISUAL
-   ================================================================ */
-.comment-count {
-    display: none !important;
-}
-
-.comments-list {
-    max-height: 400px;
-    overflow-y: auto;
-}
-
-.comment-item {
-    border-bottom: 1px solid #eee;
-    padding: 15px 20px;
-    transition: background-color 0.3s ease;
-}
-
-.comment-item:hover {
-    background-color: #f8f9fa;
-}
-
-.comment-meta {
+    font-weight: 600;
+    font-size: 16px;
+    color: #343a40;
+    margin-bottom: 6px;
     display: flex;
     align-items: center;
-    gap: 10px;
-    margin-bottom: 8px;
 }
 
-.comment-author {
-    font-weight: 600;
+.mobile-card-title i {
     color: #007bff;
     font-size: 14px;
 }
 
-.comment-type-badge {
-    font-size: 11px;
-    padding: 2px 8px;
-    border-radius: 12px;
+.mobile-card-subtitle {
+    margin: 0;
+}
+
+.mobile-card-body {
+    padding: 16px;
+    background: white;
+}
+
+.mobile-card-field {
+    display: flex;
+    align-items: flex-start;
+    margin-bottom: 12px;
+    padding: 8px 0;
+}
+
+.mobile-card-field:last-child {
+    margin-bottom: 0;
+}
+
+.mobile-card-label {
+    font-weight: 500;
+    color: #6c757d;
+    font-size: 13px;
+    min-width: 80px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+}
+
+.mobile-card-label i {
+    width: 14px;
+    font-size: 12px;
+}
+
+.mobile-card-value {
+    color: #343a40;
+    font-size: 14px;
+    word-break: break-word;
+    margin-left: 8px;
+    flex: 1;
+}
+
+.mobile-card-actions {
+    display: flex;
+    justify-content: space-around;
+    padding: 12px 16px;
+    background: #f8f9fa;
+    border-top: 1px solid #e9ecef;
+    gap: 8px;
+}
+
+.mobile-card-actions .btn {
+    flex: 1;
+    padding: 8px 12px;
+    font-size: 13px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 36px;
+    transition: all 0.3s ease;
+}
+
+.mobile-card-actions .btn i {
+    font-size: 14px;
+}
+
+.mobile-card-actions .btn:hover {
+    transform: translateY(-1px);
+}
+
+/* ================================================================
+   TABLA RESPONSIVE MEJORADA
+   ================================================================ */
+
+@media screen and (min-width: 768px) {
+    .table-responsive {
+        display: block !important;
+    }
+
+    .mobile-cards-container {
+        display: none !important;
+    }
+}
+
+/* Mejorar tabla en desktop */
+.images-table {
+    margin-bottom: 0;
+}
+
+.images-table th {
+    background: #f8f9fa;
+    border-color: #dee2e6;
     font-weight: 600;
+    color: #495057;
+    font-size: 13px;
     text-transform: uppercase;
+    letter-spacing: 0.5px;
 }
 
-.comment-priority {
-    font-size: 11px;
-    padding: 2px 6px;
-    border-radius: 10px;
-    font-weight: 600;
+.images-table td {
+    vertical-align: middle;
+    border-color: #f1f3f4;
 }
 
-/* ================================================================
-   CONTADOR DE COMENTARIOS
-   ================================================================ */
-.comment-btn {
-    position: relative !important;
-    display: inline-flex !important;
-    align-items: center !important;
-    justify-content: center !important;
+.images-table img {
+    border-radius: 6px;
+    transition: transform 0.3s ease;
 }
 
-.comment-btn::after {
-    content: attr(data-comment-count) !important;
-    position: absolute !important;
-    top: -8px !important;
-    right: -6px !important;
-    background: #dc3545 !important;
-    color: white !important;
-    border-radius: 50% !important;
-    padding: 2px 5px !important;
-    font-size: 10px !important;
-    font-weight: bold !important;
-    line-height: 1 !important;
-    min-width: 16px !important;
-    height: 16px !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    border: 2px solid white !important;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.2) !important;
-    z-index: 10 !important;
-}
-
-.comment-btn[data-comment-count="0"]::after,
-.comment-btn[data-comment-count=""]::after,
-.comment-btn:not([data-comment-count])::after {
-    display: none !important;
-}
-
-.comment-btn[data-comment-count]:not([data-comment-count="0"])::after {
-    display: flex !important;
+.images-table img:hover {
+    transform: scale(1.1);
 }
 
 /* ================================================================
-   -->> PRIORIDAD; COLORES TIPO COMENTARIO
+   BADGES MEJORADOS
    ================================================================ */
-.priority-low { background: #d4edda; color: #155724; }
-.priority-medium { background: #fff3cd; color: #856404; }
-.priority-high { background: #f8d7da; color: #721c24; }
-.priority-critical { background: #721c24; color: white; }
+
+.badge {
+    font-weight: 500 !important;
+    padding: 6px 10px !important;
+    border-radius: 20px !important;
+    font-size: 11px !important;
+    display: inline-flex;
+    align-items: center;
+}
+
+.badge i {
+    font-size: 10px;
+    margin-right: 4px;
+}
+
+/* ================================================================
+   RESPONSIVE UTILITIES
+   ================================================================ */
+
+/* Touch targets mínimos para móvil */
+@media screen and (max-width: 767px) {
+    .btn {
+        min-height: 44px;
+    }
+
+    .mobile-card-image {
+        min-height: 44px;
+        min-width: 44px;
+    }
+
+    /* Mejorar legibilidad en móvil */
+    .mobile-card-title {
+        font-size: 15px;
+        line-height: 1.3;
+    }
+
+    .mobile-card-value {
+        font-size: 13px;
+        line-height: 1.4;
+    }
+}
+
+/* Tablets */
+@media screen and (min-width: 768px) and (max-width: 1023px) {
+    .images-table th,
+    .images-table td {
+        padding: 8px 6px;
+        font-size: 13px;
+    }
+
+    .images-table img {
+        width: 50px;
+        height: 50px;
+    }
+}
+
+/* Desktop grande */
+@media screen and (min-width: 1024px) {
+    .images-table th,
+    .images-table td {
+        padding: 12px 8px;
+        font-size: 14px;
+    }
+
+    .images-table img {
+        width: 60px;
+        height: 60px;
+    }
+}
+
+.priority-critical { background: #721c24; color: (white); }
 
 .type-quality { background: #e7f3ff; color: #0066cc; }
 .type-technical { background: #fff2e7; color: #cc6600; }
@@ -855,18 +853,20 @@
 }
 
 /* ================================================================
-   FILTRO TIPO FOTOGRAFÍA - ESTILOS
+   FILTRO TIPO FOTOGRAFÍA - ESTILOS MEJORADOS
    ================================================================ */
 
 /*  DROPDOWN mejorado */
 #tipoFotografiaDropdown {
     transition: all 0.3s ease !important;
+    position: relative;
 }
 
 #tipoFotografiaDropdown.btn-primary {
     background-color: #007bff !important;
     border-color: #007bff !important;
     color: white !important;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25) !important;
 }
 
 #tipoFotografiaDropdown.btn-primary:hover {
@@ -874,19 +874,35 @@
     border-color: #0056b3 !important;
 }
 
+/* Indicador de filtro activo en el botón */
+#tipoFotografiaDropdown.btn-primary::after {
+    content: '';
+    position: absolute;
+    top: -2px;
+    right: -2px;
+    width: 8px;
+    height: 8px;
+    background: #28a745;
+    border-radius: 50%;
+    border: 2px solid white;
+}
+
 /*  MENU del dropdown */
 #tipoFotografiaMenu {
-    min-width: 200px !important;
+    min-width: 280px !important;
+    max-width: 320px !important;
     box-shadow: 0 4px 12px rgba(0,0,0,0.15) !important;
     border: 1px solid #e9ecef !important;
     border-radius: 8px !important;
+    padding: 8px 0 !important;
 }
 
 /*  ITEMS del dropdown */
 #tipoFotografiaMenu .dropdown-item {
-    padding: 8px 16px !important;
+    padding: 10px 16px !important;
     cursor: pointer !important;
     transition: background-color 0.2s ease !important;
+    font-size: 14px !important;
 }
 
 #tipoFotografiaMenu .dropdown-item:hover {
@@ -897,6 +913,7 @@
 #tipoFotografiaMenu .form-check-input {
     cursor: pointer !important;
     margin-top: 0 !important;
+    transform: scale(1.1);
 }
 
 #tipoFotografiaMenu .form-check-input:checked {
@@ -904,7 +921,7 @@
     border-color: #007bff !important;
 }
 
-/* CONTADORES */
+/* CONTADORES mejorados */
 #tipoFotografiaMenu .text-muted {
     font-size: 11px !important;
     background: #e9ecef !important;
@@ -912,39 +929,687 @@
     border-radius: 10px !important;
     min-width: 20px !important;
     text-align: center !important;
+    font-weight: 600 !important;
 }
 
 /*  HEADER del dropdown */
 #tipoFotografiaMenu .dropdown-header {
     background: #f8f9fa !important;
     border-bottom: 1px solid #e9ecef !important;
-    margin-bottom: 0 !important;
+    margin-bottom: 8px !important;
     padding: 8px 16px !important;
     font-size: 12px !important;
     text-transform: uppercase !important;
     letter-spacing: 0.5px !important;
+    font-weight: 600 !important;
 }
 
 /*  BOTONES de control */
 #tipoFotografiaMenu .btn-sm {
     font-size: 11px !important;
-    padding: 4px 8px !important;
+    padding: 6px 8px !important;
     border-radius: 4px !important;
+    font-weight: 500 !important;
 }
 
 /*  DIVIDERS */
 #tipoFotografiaMenu .dropdown-divider {
-    margin: 4px 0 !important;
+    margin: 8px 0 !important;
+    border-color: #e9ecef !important;
 }
 
-/*  RESPONSIVE */
+/* INDICADOR de filtro activo */
+#filterStatusIndicator {
+    background: linear-gradient(90deg, #e3f2fd, #bbdefb) !important;
+    border-radius: 4px !important;
+    margin: 4px 8px !important;
+    padding: 6px 8px !important;
+    border: 1px solid #2196f3 !important;
+}
+
+#filterStatusIndicator small {
+    font-weight: 600 !important;
+    color: #1976d2 !important;
+}
+
+/* Animación para botones */
+#tipoFotografiaMenu .btn {
+    transition: all 0.2s ease !important;
+}
+
+#tipoFotografiaMenu .btn:hover {
+    transform: translateY(-1px) !important;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1) !important;
+}
+
+/*  RESPONSIVE para dropdown */
 @media (max-width: 768px) {
     #tipoFotografiaMenu {
-        min-width: 180px !important;
+        min-width: 250px !important;
         font-size: 14px !important;
     }
 
     #tipoFotografiaMenu .dropdown-item {
-        padding: 10px 12px !important;
+        padding: 12px 16px !important;
     }
+
+    #tipoFotografiaMenu .btn-sm {
+        font-size: 12px !important;
+        padding: 8px 12px !important;
+    }
+}
+
+/* Estados hover para labels */
+#tipoFotografiaMenu label:hover {
+    background-color: rgba(0, 123, 255, 0.05) !important;
+    border-radius: 4px !important;
+}
+
+/* Estilo para checkboxes seleccionados */
+#tipoFotografiaMenu .form-check-input:checked + span {
+    color: #007bff !important;
+    font-weight: 600 !important;
+}
+/* Estados completado y pendiente */
+.step-circle.completed {
+    transform: scale(1.1);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+}
+
+.step-circle.pending {
+    background: #6c757d !important;
+    opacity: 0.6;
+    transform: scale(0.9);
+}
+
+/* Numeración de pasos */
+.step-number {
+    position: absolute;
+    top: -12px;
+    right: -8px;
+    background: white;
+    color: #333;
+    border-radius: 50%;
+    width: 28px;
+    height: 28px;
+    font-size: 14px;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 3px solid #dee2e6;
+    z-index: 3;
+}
+
+.step-circle.completed .step-number {
+    background: #28a745;
+    color: white;
+    border-color: #28a745;
+}
+
+.step-circle.pending .step-number {
+    background: #6c757d;
+    color: white;
+    border-color: #6c757d;
+}
+
+/* Etiquetas de pasos */
+.step-label {
+    font-size: 14px;
+    font-weight: 600;
+    color: #495057;
+    margin-top: 8px;
+    text-align: center;
+    white-space: nowrap;
+}
+
+.step-circle.completed + .step-number + .step-label {
+    color: #28a745;
+    font-weight: 700;
+}
+
+.step-circle.pending + .step-number + .step-label {
+    color: #6c757d;
+    opacity: 0.7;
+}
+
+/* Flechas entre pasos */
+.step-arrow {
+    margin: 0 15px;
+    font-size: 28px;
+    color: #dee2e6;
+    position: relative;
+    top: -35px;
+    z-index: 1;
+}
+
+.step-arrow i {
+    transition: color 0.3s ease;
+}
+
+/* Indicadores de estado */
+.status-indicator {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    display: inline-block;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.status-muestra {
+    background: linear-gradient(135deg, #17a2b8, #20c997);
+}
+
+.status-validacion {
+    background: linear-gradient(135deg, #ffc107, #fd7e14);
+}
+
+.status-final {
+    background: linear-gradient(135deg, #28a745, #20c997);
+}
+
+/* Contenedores de fotografías */
+.photos-container {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    min-height: 100px;
+    padding: 16px;
+    background: linear-gradient(145deg, #f8f9fa, #e9ecef);
+    border-radius: 12px;
+    border: 2px dashed #dee2e6;
+    transition: all 0.3s ease;
+}
+
+.photos-container:hover {
+    border-color: #adb5bd;
+    background: linear-gradient(145deg, #e9ecef, #f8f9fa);
+}
+
+/* Items de fotografías */
+.photo-item {
+    position: relative;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.photo-item:hover {
+    transform: translateY(-4px) scale(1.05);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+}
+
+.photo-item img {
+    width: 90px;
+    height: 90px;
+    object-fit: cover;
+    border-radius: 8px;
+    border: 3px solid #fff;
+    transition: all 0.3s ease;
+}
+
+.photo-item:hover img {
+    border-color: #007bff;
+}
+
+/* Fechas de fotografías */
+.photo-date {
+    position: absolute;
+    bottom: -25px;
+    left: 0;
+    right: 0;
+    text-align: center;
+    font-size: 11px;
+    font-weight: 500;
+    color: #6c757d;
+    background: rgba(255,255,255,0.95);
+    padding: 4px 2px;
+    border-radius: 6px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.photo-item:hover .photo-date {
+    opacity: 1;
+}
+
+/* Estado vacío */
+.empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: #6c757d;
+    font-size: 14px;
+    font-weight: 500;
+    width: 100%;
+    padding: 30px;
+    text-align: center;
+}
+
+.empty-state i {
+    font-size: 32px;
+    margin-bottom: 12px;
+    opacity: 0.4;
+    color: #adb5bd;
+}
+
+/* Badges de conteo */
+.badge.bg-info,
+.badge.bg-warning,
+.badge.bg-success {
+    font-weight: 600;
+    padding: 6px 10px;
+    border-radius: 20px;
+    font-size: 12px;
+}
+
+/* Secciones de estado */
+#muestraSection .d-flex strong,
+#validacionSection .d-flex strong,
+#finalSection .d-flex strong {
+    font-weight: 600;
+    font-size: 16px;
+    color: #495057;
+}
+
+/* Responsive para móviles */
+@media (max-width: 768px) {
+    .step-container {
+        margin: 0 10px;
+    }
+
+    .step-circle {
+        width: 50px;
+        height: 50px;
+        font-size: 18px;
+    }
+
+    .step-number {
+        width: 22px;
+        height: 22px;
+        font-size: 11px;
+        top: -8px;
+        right: -6px;
+    }
+
+    .step-arrow {
+        margin: 0 8px;
+        font-size: 20px;
+    }
+
+    .photos-container {
+        padding: 12px;
+        gap: 8px;
+    }
+
+    .photo-item img {
+        width: 70px;
+        height: 70px;
+    }
+
+    .step-label {
+        font-size: 12px;
+    }
+}
+
+/* Animaciones */
+@keyframes stepComplete {
+    0% { transform: scale(0.9); }
+    50% { transform: scale(1.15); }
+    100% { transform: scale(1.1); }
+}
+
+.step-circle.completed {
+    animation: stepComplete 0.6s ease-out;
+}
+
+@keyframes photoLoad {
+    0% { opacity: 0; transform: translateY(20px); }
+    100% { opacity: 1; transform: translateY(0); }
+}
+
+.photo-item {
+    animation: photoLoad 0.4s ease-out;
+}
+
+/* Efectos adicionales */
+.photos-container::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(45deg, transparent 49%, rgba(255,255,255,0.1) 50%, transparent 51%);
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.photos-container:hover::before {
+    opacity: 1;
+}
+
+/* ================================================================
+   SISTEMA DE COMENTARIOS ---> VISUAL
+   ================================================================ */
+.comment-count {
+    display: none !important;
+}
+
+.comments-list {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.comment-item {
+    border-bottom: 1px solid #eee;
+    padding: 15px 20px;
+    transition: background-color 0.3s ease;
+}
+
+.comment-item:hover {
+    background-color: #f8f9fa;
+}
+
+.comment-meta {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+}
+
+.comment-author {
+    font-weight: 600;
+    color: #007bff;
+    font-size: 14px;
+}
+
+.comment-type-badge {
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.comment-priority {
+    font-size: 11px;
+    padding: 2px 6px;
+    border-radius: 10px;
+    font-weight: 600;
+}
+
+/* ================================================================
+   CONTADOR DE COMENTARIOS
+   ================================================================ */
+.comment-btn {
+    position: relative !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+
+.comment-btn::after {
+    content: attr(data-comment-count) !important;
+    position: absolute !important;
+    top: -8px !important;
+    right: -6px !important;
+    background: #dc3545 !important;
+    color: white !important;
+    border-radius: 50% !important;
+    padding: 2px 5px !important;
+    font-size: 10px !important;
+    font-weight: bold !important;
+    line-height: 1 !important;
+    min-width: 16px !important;
+    height: 16px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    border: 2px solid white !important;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2) !important;
+    z-index: 10 !important;
+}
+
+.comment-btn[data-comment-count="0"]::after,
+.comment-btn[data-comment-count=""]::after,
+.comment-btn:not([data-comment-count])::after {
+    display: none !important;
+}
+
+.comment-btn[data-comment-count]:not([data-comment-count="0"])::after {
+    display: flex !important;
+}
+
+/* Animación cuando se agrega comentario */
+@keyframes commentPulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.2); }
+    100% { transform: scale(1); }
+}
+
+.comment-btn.comment-added::after {
+    animation: commentPulse 0.6s ease !important;
+}
+
+/* ================================================================
+   PRIORIDAD Y COLORES TIPO COMENTARIO
+   ================================================================ */
+.priority-low {
+    background: #d4edda;
+    color: #155724;
+}
+
+.priority-medium {
+    background: #fff3cd;
+    color: #856404;
+}
+
+.priority-high {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+.priority-critical {
+    background: #721c24;
+    color: white;
+}
+
+.type-quality {
+    background: #e7f3ff;
+    color: #0066cc;
+}
+
+.type-technical {
+    background: #fff2e7;
+    color: #cc6600;
+}
+
+.type-production {
+    background: #e7ffe7;
+    color: #006600;
+}
+
+.type-design {
+    background: #f3e7ff;
+    color: #6600cc;
+}
+
+.type-general {
+    background: #f0f0f0;
+    color: #666;
+}
+
+.type-urgent {
+    background: #ffe7e7;
+    color: #cc0000;
+}
+
+/* ================================================================
+   ESTILOS EXTRAS - BOTONES Y BADGES
+   ================================================================ */
+.btn-pink {
+    background-color: #e91e63 !important;
+    border-color: #e91e63 !important;
+    color: white !important;
+}
+
+.btn-pink:hover {
+    background-color: #c2185b !important;
+    border-color: #c2185b !important;
+    color: white !important;
+}
+
+/* Botones de acciones con hover */
+.btn-delete:hover,
+.btn-edit:hover,
+.comment-btn:hover,
+.btn-historial:hover {
+    transform: scale(1.1) !important;
+    transition: transform 0.2s ease !important;
+}
+
+/* Badge personalizado para tipo fotografía */
+.badge-color-personalizado {
+    background-color: rgb(255 193 7);
+    color: #333;
+}
+
+/* ================================================================
+   NOTIFICACIONES
+   ================================================================ */
+.notification {
+    min-width: 300px;
+    margin-bottom: 10px;
+    animation: slideInRight 0.3s ease;
+}
+
+@keyframes slideInRight {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes scaleIn {
+    from {
+        opacity: 0;
+        transform: scale(0.8);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+/* ================================================================
+   CHARACTER COUNT STYLES
+   ================================================================ */
+.form-text small {
+    color: #6c757d;
+}
+
+.form-text small.warning {
+    color: #ffc107 !important;
+}
+
+.form-text small.danger {
+    color: #dc3545 !important;
+}
+
+#charCount {
+    font-weight: 500;
+}
+
+#charCount.warning {
+    color: #ffc107 !important;
+    font-weight: 600;
+}
+
+#charCount.danger {
+    color: #dc3545 !important;
+    font-weight: bold;
+    animation: pulse 1s infinite;
+}
+
+@keyframes pulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.7; }
+    100% { opacity: 1; }
+}
+
+/* ================================================================
+   NUEVOS COMENTARIOS - ANIMACIÓN
+   ================================================================ */
+.comment-item.new-comment {
+    background: linear-gradient(90deg, #d4edda, transparent);
+    border-left: 4px solid #28a745;
+    animation: newCommentGlow 2s ease-out;
+}
+
+@keyframes newCommentGlow {
+    0% {
+        background: linear-gradient(90deg, #d4edda, transparent);
+        transform: translateY(-5px);
+    }
+    100% {
+        background: white;
+        transform: translateY(0);
+    }
+}
+
+/* ================================================================
+   TIMESTAMP STYLES
+   ================================================================ */
+.comment-timestamp {
+    font-size: 12px;
+    color: #6c757d;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.comment-timestamp i {
+    font-size: 10px;
+}
+
+/* ================================================================
+   COMMENT ACTIONS
+   ================================================================ */
+.comment-actions {
+    margin-top: 10px;
+    padding-top: 8px;
+    border-top: 1px solid #f0f0f0;
+}
+
+.comment-actions .btn {
+    padding: 4px 8px;
+    font-size: 11px;
+    border-radius: 4px;
+}
+
+/* ================================================================
+   COMMENT TEXT STYLES
+   ================================================================ */
+.comment-text {
+    color: #343a40;
+    font-size: 14px;
+    line-height: 1.4;
+    margin: 8px 0;
+    white-space: pre-wrap;
+    word-wrap: break-word;
 }

@@ -102,7 +102,7 @@
     </div>
 </div>
 
-<!-- Datos Tabla -->
+<!-- =======>>>>>>>>>>>> Datos Tabla <<<<<<<<<========== -->
 <div class="row">
     <div class="col-12">
         <div class="card">
@@ -140,7 +140,7 @@
                                     ACCIONES
                                 </th>
                             </tr>
-                            <!-- Fila de filtros -->
+                            <!-- =======>>>>>>>>>>>> Fila de filtros <<<<<<<<<========== -->
                             <tr class="bg-light">
                                 <td data-column="imagen">
                                 </td>
@@ -168,55 +168,83 @@
                                             <span id="tipoFotografiaLabel">Buscar</span>
                                         </button>
                                         <ul class="dropdown-menu w-100" aria-labelledby="tipoFotografiaDropdown" id="tipoFotografiaMenu">
+                                            <!-- Header del filtro -->
+                                            <li class="dropdown-header">
+                                                <i class="fas fa-filter me-1"></i>
+                                                Filtrar por Tipo
+                                            </li>
+
                                             <!-- Opciones con checkboxes -->
                                             <li>
-                                                <label class="dropdown-item d-flex align-items-center" for="filtroMuestra">
-                                                    <input type="checkbox"
-                                                        class="form-check-input me-2"
-                                                        id="filtroMuestra"
-                                                        value="MUESTRA"
-                                                        onchange="filterByTipoFotografia()">
-                                                    <span class="flex-grow-1">Muestra</span>
+                                                <label class="dropdown-item d-flex align-items-center justify-content-between" for="filtroMuestra">
+                                                    <div class="d-flex align-items-center">
+                                                        <input type="checkbox"
+                                                            class="form-check-input me-2"
+                                                            id="filtroMuestra"
+                                                            value="MUESTRA"
+                                                            onchange="filterByTipoFotografia()">
+                                                        <span>Muestra</span>
+                                                    </div>
+
                                                 </label>
                                             </li>
 
                                             <li>
-                                                <label class="dropdown-item d-flex align-items-center" for="filtroPrendaFinal">
-                                                    <input type="checkbox"
-                                                        class="form-check-input me-2"
-                                                        id="filtroPrendaFinal"
-                                                        value="PRENDA FINAL"
-                                                        onchange="filterByTipoFotografia()">
-                                                    <span class="flex-grow-1">Prenda Final</span>
+                                                <label class="dropdown-item d-flex align-items-center justify-content-between" for="filtroPrendaFinal">
+                                                    <div class="d-flex align-items-center">
+                                                        <input type="checkbox"
+                                                            class="form-check-input me-2"
+                                                            id="filtroPrendaFinal"
+                                                            value="PRENDA FINAL"
+                                                            onchange="filterByTipoFotografia()">
+                                                        <span>Prenda Final</span>
+                                                    </div>
+
                                                 </label>
                                             </li>
 
                                             <li>
-                                                <label class="dropdown-item d-flex align-items-center" for="filtroValidacionAC">
-                                                    <input type="checkbox"
-                                                        class="form-check-input me-2"
-                                                        id="filtroValidacionAC"
-                                                        value="VALIDACION AC"
-                                                        onchange="filterByTipoFotografia()">
-                                                    <span class="flex-grow-1">Validación AC</span>
+                                                <label class="dropdown-item d-flex align-items-center justify-content-between" for="filtroValidacionAC">
+                                                    <div class="d-flex align-items-center">
+                                                        <input type="checkbox"
+                                                            class="form-check-input me-2"
+                                                            id="filtroValidacionAC"
+                                                            value="VALIDACION AC"
+                                                            onchange="filterByTipoFotografia()">
+                                                        <span>Validación AC</span>
+                                                    </div>
+
                                                 </label>
                                             </li>
 
-                                            <!-- Controles del filtro tipo fotografia en caso de requerir descomentar
+                                            <!-- Separador -->
+                                            <li><hr class="dropdown-divider"></li>
+
+                                            <!-- NUEVO: Controles del filtro -->
                                             <li class="dropdown-item-text">
                                                 <div class="d-flex gap-2">
                                                     <button class="btn btn-sm btn-outline-primary flex-grow-1"
-                                                            onclick="selectAllTipoFotografia()">
+                                                            onclick="selectAllTipoFotografia()"
+                                                            title="Seleccionar todos los tipos">
                                                         <i class="fas fa-check-double me-1"></i>
                                                         Todos
                                                     </button>
                                                     <button class="btn btn-sm btn-outline-danger flex-grow-1"
-                                                            onclick="clearTipoFotografiaFilter()">
+                                                            onclick="clearTipoFotografiaFilter()"
+                                                            title="Limpiar filtro aplicado">
                                                         <i class="fas fa-times me-1"></i>
                                                         Limpiar
                                                     </button>
                                                 </div>
-                                            </li> -->
+                                            </li>
+
+                                            <!-- NUEVO: Indicador de filtro activo -->
+                                            <li id="filterStatusIndicator" class="dropdown-item-text text-center" style="display: none;">
+                                                <small class="text-primary">
+                                                    <i class="fas fa-filter me-1"></i>
+                                                    Filtro activo
+                                                </small>
+                                            </li>
                                         </ul>
                                     </div>
                                 </td>
@@ -246,9 +274,12 @@
                                     <button class="btn btn-warning btn-sm me-1 btn-edit" onclick="editImage(this)" title="Editar información">
                                         <i class="fas fa-edit"></i>
                                     </button>
-                                    <button class="btn btn-info btn-sm comment-btn" onclick="openCommentsModal(this)" title="Ver/Agregar comentarios">
+                                    <button class="btn btn-info btn-sm comment-btn me-1" onclick="openCommentsModal(this)" title="Ver/Agregar comentarios">
                                         <i class="fas fa-comments"></i>
                                         <span class="comment-count" data-count="0"></span>
+                                    </button>
+                                    <button class="btn btn-success btn-sm btn-historial" onclick="openHistorialModal(this)" title="Historial de la Prenda">
+                                        <i class="fas fa-history"></i>
                                     </button>
                                 </td>
                             </tr>
@@ -312,7 +343,7 @@
                     </table>
                 </div>
 
-                <!-- Paginacion -->
+                <!-- =========>>>> Paginacion <<<<<<============= -->
                 <div class="d-flex justify-content-between align-items-center mt-3">
                     <div>
                         <span class="text-muted">Mostrando registros del 1 al 3 de un total de 3</span>
@@ -342,7 +373,7 @@
     </div>
 </div>
 
-<!-- Lightbox para visualizar imágenes -->
+<!-- ==========>>>>>>>> Lightbox para visualizar imágenes <<<<<<<<<<<========== -->
 <div id="imageLightbox" class="lightbox-overlay" style="display: none;">
     <div class="lightbox-content">
         <div class="lightbox-header">
@@ -379,7 +410,7 @@
     </div>
 </div>
 
-<!-- Container de notificaciones -->
+<!-- =========>>>>>>>> Container de notificaciones <<<<<<<<<<========= -->
 <div id="notificationContainer" class="position-fixed top-0 end-0 p-3" style="z-index: 9999;"></div>
 
 <!-- MODAL DE COMENTARIOS -->
@@ -482,7 +513,7 @@
                     </div>
                 </div>
 
-                <!-- Lista de comentarios existentes -->
+                <!-- =========>>>>>>> Lista de comentarios existentes <<<<<<<=========== -->
                 <div class="card">
                     <div class="card-header bg-light d-flex justify-content-between align-items-center">
                         <h6 class="mb-0">
@@ -527,7 +558,7 @@
     </div>
 </div>
 
-<!-- Modal para ingresar datos(Descripcion - Tipo fotografia) de la imagen -->
+<!-- ==========>>>>>>>> Modal para ingresar datos(Descripcion - Tipo fotografia) de la imagen <<<<<<<<<<<========== -->
 <div class="modal fade" id="imageDataModal" tabindex="-1" aria-labelledby="imageDataModalLabel" aria-hidden="true">
   <div class="modal-dialog">
     <div class="modal-content">
@@ -564,6 +595,131 @@
   </div>
 </div>
 
+
+<!-- =======>>>>>>>>>>>> MODAL DE HISTORIAL DE LA PRENDA <<<<<<<<<========== -->
+<div class="modal fade" id="historialModal" tabindex="-1" aria-labelledby="historialModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-light">
+                <h5 class="modal-title" id="historialModalLabel">
+                    <i class="fas fa-history me-2 text-success"></i>
+                    Historial de la Prenda
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <!-- Información de la orden -->
+                <div class="mb-4">
+                    <p class="mb-1 text-muted">Orden de estados para revisión</p>
+                </div>
+
+                <!-- Progress Steps -->
+                <div class="row mb-4">
+                    <div class="col-12">
+                        <div class="d-flex justify-content-center align-items-center position-relative">
+                            <!-- Step 1: Muestra -->
+                            <div class="text-center step-container">
+                                <div class="step-circle step-muestra" id="stepMuestra">
+                                    <i class="fas fa-camera"></i>
+                                </div>
+                                <div class="step-number">1</div>
+                                <div class="step-label">Muestra</div>
+                            </div>
+
+                            <!-- Arrow 1 -->
+                            <div class="step-arrow">
+                                <i class="fas fa-arrow-right text-muted"></i>
+                            </div>
+
+                            <!-- Step 2: Validación AC -->
+                            <div class="text-center step-container">
+                                <div class="step-circle step-validacion" id="stepValidacion">
+                                    <i class="fas fa-search"></i>
+                                </div>
+                                <div class="step-number">2</div>
+                                <div class="step-label">Validación AC</div>
+                            </div>
+
+                            <!-- Arrow 2 -->
+                            <div class="step-arrow">
+                                <i class="fas fa-arrow-right text-muted"></i>
+                            </div>
+
+                            <!-- Step 3: Prenda Final -->
+                            <div class="text-center step-container">
+                                <div class="step-circle step-final" id="stepFinal">
+                                    <i class="fas fa-check"></i>
+                                </div>
+                                <div class="step-number">3</div>
+                                <div class="step-label">Prenda Final</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <hr class="my-4">
+
+                <!-- Fotografías por Estado -->
+                <div class="row">
+                    <div class="col-12">
+                        <h6 class="mb-3">
+                            <i class="fas fa-images me-2"></i>
+                            Fotografías por Estado
+                        </h6>
+                    </div>
+                </div>
+
+                <!-- Muestra -->
+                <div class="row mb-4" id="muestraSection">
+                    <div class="col-12">
+                        <div class="d-flex align-items-center mb-2">
+                            <div class="status-indicator status-muestra me-2"></div>
+                            <strong>Muestra</strong>
+                            <span class="badge bg-info ms-2" id="muestraCount">2 fotos</span>
+                        </div>
+                        <div class="photos-container" id="muestraPhotos">
+                            <!-- Fotos de muestra se cargarán aquí -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Validación AC -->
+                <div class="row mb-4" id="validacionSection">
+                    <div class="col-12">
+                        <div class="d-flex align-items-center mb-2">
+                            <div class="status-indicator status-validacion me-2"></div>
+                            <strong>Validación AC</strong>
+                            <span class="badge bg-warning ms-2" id="validacionCount">1 foto</span>
+                        </div>
+                        <div class="photos-container" id="validacionPhotos">
+                            <!-- Fotos de validación se cargarán aquí -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Prenda Final -->
+                <div class="row mb-4" id="finalSection">
+                    <div class="col-12">
+                        <div class="d-flex align-items-center mb-2">
+                            <div class="status-indicator status-final me-2"></div>
+                            <strong>Prenda Final</strong>
+                            <span class="badge bg-success ms-2" id="finalCount">0 fotos</span>
+                        </div>
+                        <div class="photos-container" id="finalPhotos">
+                            <!-- Fotos finales se cargarán aquí -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-1"></i>
+                    Cerrar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
 
 <!-- Meta tag para el usuario actual (para detección automática) -->
 <meta name="current-user" content="{{ auth()->user()->name ?? 'Usuario Sistema' }}">
@@ -879,8 +1035,16 @@
             console.log('Lightbox inicializado');
         }
 
+        // =====>>>>>>>>> INICIALIZACIÓN MEJORADA CON RESPONSIVE <<<<<<<<<<<<=====
+        // Inicialización del responsive system
+        if (window.responsiveSystem && !window.responsiveSystem.initialized) {
+            window.responsiveSystem.init();
+        }
+
         // Inicialización normal
         initializeUploadButtons();
+
+        console.log('📱 Sistema completamente inicializado');
     });
 
     function getDefaultImageByType(tipo) {
@@ -896,6 +1060,7 @@
         return defaultImages[tipo] || 'https://picsum.photos/200/300';
     }
 
+    // Agregar función para refrescar cards cuando se agregue nueva imagen
     function addImageToTable(imageData) {
         console.log('Agregando imagen a la tabla:', imageData);
 
@@ -958,6 +1123,9 @@
                 <button class="btn btn-info btn-sm comment-btn" onclick="openCommentsModal(this)" title="Ver/Agregar comentarios" data-comment-count="0">
                     <i class="fas fa-comments"></i>
                 </button>
+                <button class="btn btn-success btn-sm btn-historial" onclick="openHistorialModal(this)" title="Historial de la Prenda">
+                    <i class="fas fa-history"></i>
+                </button>
             </td>
         `;
 
@@ -981,7 +1149,7 @@
             row.style.backgroundColor = '';
         }, 3000);
 
-        console.log('✨ Animación aplicada');
+        console.log('Animación aplicada');
 
         // Mostrar mensaje si es imagen por defecto
         if (imageData.isDefaultImage) {
@@ -1075,6 +1243,318 @@
     window.downloadImage = downloadImage;
 
     console.log('Funciones de lightbox registradas globalmente');
+
+    // =/=/=/=/=/=/=/=/=/=/=>>>>>>>>> Función para abrir el modal de historial
+    function openHistorialModal(button) {
+        console.log('Abriendo modal de historial...');
+
+        const row = button.closest('tr');
+        if (!row) {
+            showNotification('Error: No se encontró la fila', 'error');
+            return;
+        }
+
+        const imageData = extractImageDataFromRowReal(row);
+        if (!imageData) {
+            showNotification('Error: No se pudieron extraer datos', 'error');
+            return;
+        }
+
+        console.log('Datos extraídos para historial:', imageData);
+
+        // Cargar historial con datos REALES únicamente
+        loadRealHistorialData(imageData.ordenSit, imageData);
+
+        // Mostrar modal
+        const modalElement = document.getElementById('historialModal');
+        if (modalElement) {
+            const modal = new bootstrap.Modal(modalElement);
+            modal.show();
+        }
+    }
+
+    function extractImageDataFromRowReal(row) {
+        const img = row.querySelector('img');
+        const ordenSitCell = row.querySelector('[data-column="orden-sit"]');
+        const poCell = row.querySelector('[data-column="po"]');
+        const ocCell = row.querySelector('[data-column="oc"]');
+        const descripcionCell = row.querySelector('[data-column="descripcion"]');
+        const tipoCell = row.querySelector('[data-column="tipo-fotografia"]');
+
+        let imageId = row.dataset.imageId;
+        if (!imageId) {
+            imageId = 'img_' + Date.now() + '_' + Math.random().toString(36).substring(2, 9);
+            row.dataset.imageId = imageId;
+        }
+
+        const data = {
+            id: imageId,
+            imageUrl: img ? img.src : '',
+            imageAlt: img ? img.alt : '',
+            ordenSit: ordenSitCell ? ordenSitCell.textContent.trim() : '',
+            po: poCell ? poCell.textContent.trim() : '',
+            oc: ocCell ? ocCell.textContent.trim() : '',
+            descripcion: descripcionCell ? descripcionCell.textContent.trim() : '',
+            tipo: tipoCell ? tipoCell.textContent.trim() : ''
+        };
+
+        console.log('Datos extraídos:', data);
+        return data;
+    }
+
+    function loadRealHistorialData(ordenSit, currentImageData = null) {
+        console.log('Cargando historial REAL para orden:', ordenSit);
+
+        // Buscar TODAS las imágenes reales de la misma orden SIT
+        const allRealImages = findAllImagesFromOrder(ordenSit);
+        console.log('Imágenes reales encontradas:', allRealImages);
+
+        // Generar historial basado SOLO en datos reales
+        const historialData = generateRealOnlyHistorialData(ordenSit, allRealImages, currentImageData);
+
+        console.log('Historial real generado:', historialData);
+
+        // Actualizar interfaz con datos reales
+        updateRealProgressSteps(historialData.estados);
+        loadRealPhotosByCategory('muestra', historialData.fotos.muestra);
+        loadRealPhotosByCategory('validacion', historialData.fotos.validacion);
+        loadRealPhotosByCategory('final', historialData.fotos.final);
+
+        console.log('Historial real cargado correctamente');
+    }
+
+    function findAllImagesFromOrder(ordenSit) {
+        const allImages = [];
+        const tableBody = document.getElementById('imagesTableBody');
+
+        if (!tableBody) {
+            console.warn('No se encontró la tabla');
+            return allImages;
+        }
+
+        // Buscar en todas las filas de la tabla y comparar # Orden SIT
+        const rows = tableBody.querySelectorAll('tr[data-image-id]');
+        console.log(`Buscando en ${rows.length} filas para orden SIT: "${ordenSit}"`);
+
+        rows.forEach((row, index) => {
+            const ordenCell = row.querySelector('[data-column="orden-sit"]');
+            const currentOrdenSit = ordenCell ? ordenCell.textContent.trim() : '';
+
+            console.log(`Fila ${index}: "${currentOrdenSit}" vs "${ordenSit}"`);
+
+            if (currentOrdenSit === ordenSit) {
+                const imageData = extractImageDataFromRowReal(row);
+                allImages.push({
+                    ...imageData,
+                    source: 'table',
+                    timestamp: Date.now() - (Math.random() * 86400000)
+                });
+                console.log(`Imagen real encontrada:`, imageData);
+            }
+        });
+
+        // También verificar en localStorage por imágenes recién transferidas
+        try {
+            const recentData = localStorage.getItem('newUploadedImages');
+            if (recentData) {
+                const parsed = JSON.parse(recentData);
+                if (parsed.images) {
+                    parsed.images.forEach(img => {
+                        if (img.ordenSit === ordenSit) {
+                            allImages.push({
+                                id: img.id || 'localStorage_' + Date.now(),
+                                imageUrl: img.url,
+                                imageAlt: img.name || img.descripcion,
+                                ordenSit: img.ordenSit,
+                                po: img.po,
+                                oc: img.oc,
+                                descripcion: img.descripcion,
+                                tipo: img.tipoFotografia,
+                                source: 'localStorage-transfer',
+                                timestamp: img.uploadTimestamp || Date.now()
+                            });
+                            console.log('Imagen encontrada en localStorage:', img);
+                        }
+                    });
+                }
+            }
+        } catch (error) {
+            console.warn('Error leyendo localStorage:', error);
+        }
+
+        console.log(`Total imágenes reales encontradas: ${allImages.length}`);
+        return allImages;
+    }
+
+    function generateRealOnlyHistorialData(ordenSit, realImages, currentImage) {
+        console.log('Generando historial con SOLO datos reales...');
+
+        // Categorizar imágenes REALES por tipo
+        const imagesByType = {
+            muestra: [],
+            validacion: [],
+            final: []
+        };
+
+        // Estados basados SOLO en imágenes reales existentes
+        const estados = {
+            muestra: false,
+            validacion: false,
+            final: false
+        };
+
+        // Procesar cada imagen real
+        realImages.forEach((imageData, index) => {
+            console.log(`Procesando imagen real ${index + 1}:`, imageData);
+
+            const tipo = imageData.tipo ? imageData.tipo.toUpperCase() : '';
+            const imageForHistory = {
+                url: imageData.imageUrl,
+                fecha: new Date(imageData.timestamp || Date.now()).toISOString(),
+                descripcion: imageData.descripcion || imageData.imageAlt || 'Sin descripción',
+                ordenSit: imageData.ordenSit,
+                po: imageData.po,
+                oc: imageData.oc,
+                source: imageData.source || 'unknown',
+                isReal: true // Marcar como imagen real
+            };
+
+            // Categorizar POR TIPO REAL
+            if (tipo.includes('MUESTRA')) {
+                imagesByType.muestra.push(imageForHistory);
+                estados.muestra = true;
+                console.log('MUESTRA real agregada');
+            } else if (tipo.includes('VALIDACION') || tipo.includes('VALIDACIÓN')) {
+                imagesByType.validacion.push(imageForHistory);
+                estados.validacion = true;
+                console.log('VALIDACIÓN real agregada');
+            } else if (tipo.includes('FINAL') || tipo.includes('PRENDA FINAL')) {
+                imagesByType.final.push(imageForHistory);
+                estados.final = true;
+                console.log('PRENDA FINAL real agregada');
+            } else {
+                console.log(`Tipo no reconocido: "${tipo}"`);
+            }
+        });
+
+        // SI NO hay imágenes reales, mantener estados en false
+        console.log('Estados finales basados en imágenes reales:', estados);
+
+        const result = {
+            estados: estados,
+            fotos: imagesByType,
+            totalImages: realImages.length,
+            metadata: {
+                ordenSit,
+                generatedAt: new Date().toISOString(),
+                source: 'real-data-only',
+                realImagesOnly: true
+            }
+        };
+
+        console.log('Historial real final:', result);
+        return result;
+    }
+
+    function updateRealProgressSteps(estados) {
+        console.log('Actualizando pasos con datos REALES:', estados);
+
+        const stepMuestra = document.getElementById('stepMuestra');
+        const stepValidacion = document.getElementById('stepValidacion');
+        const stepFinal = document.getElementById('stepFinal');
+
+        // Reset classes
+        [stepMuestra, stepValidacion, stepFinal].forEach(step => {
+            if (step) {
+                step.classList.remove('completed', 'pending');
+            }
+        });
+
+        // Aplicar estados REALES con animación
+        setTimeout(() => {
+            if (stepMuestra) {
+                stepMuestra.classList.add(estados.muestra ? 'completed' : 'pending');
+                console.log(`MUESTRA: ${estados.muestra ? 'COMPLETADO (tiene imágenes reales)' : 'PENDIENTE (sin imágenes)'}`);
+            }
+        }, 100);
+
+        setTimeout(() => {
+            if (stepValidacion) {
+                stepValidacion.classList.add(estados.validacion ? 'completed' : 'pending');
+                console.log(`VALIDACIÓN: ${estados.validacion ? 'COMPLETADO (tiene imágenes reales)' : 'PENDIENTE (sin imágenes)'}`);
+            }
+        }, 200);
+
+        setTimeout(() => {
+            if (stepFinal) {
+                stepFinal.classList.add(estados.final ? 'completed' : 'pending');
+                console.log(`FINAL: ${estados.final ? 'COMPLETADO (tiene imágenes reales)' : 'PENDIENTE (sin imágenes)'}`);
+            }
+        }, 300);
+    }
+
+    function loadRealPhotosByCategory(categoria, fotos) {
+        console.log(`Cargando ${fotos.length} fotos REALES para ${categoria}`);
+
+        const photosContainer = document.getElementById(`${categoria}Photos`);
+        const countBadge = document.getElementById(`${categoria}Count`);
+
+        if (!photosContainer || !countBadge) {
+            console.warn(`Contenedores no encontrados para: ${categoria}`);
+            return;
+        }
+
+        // Actualizar contador
+        countBadge.textContent = `${fotos.length} foto${fotos.length !== 1 ? 's' : ''}`;
+
+        // Limpiar contenedor
+        photosContainer.innerHTML = '';
+
+        if (fotos.length === 0) {
+            // Estado vacío REAL (sin fotos de este tipo)
+            photosContainer.innerHTML = `
+                <div class="empty-state">
+                    <i class="fas fa-image"></i>
+                    <span>No hay fotografías reales en esta etapa</span>
+                </div>
+            `;
+            console.log(` ${categoria}: Sin fotos reales`);
+        } else {
+            // Ordenar fotos por fecha (más recientes primero)
+            const sortedFotos = fotos.sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
+
+            // Agregar fotos REALES únicamente
+            sortedFotos.forEach((foto, index) => {
+                setTimeout(() => {
+                    const photoDiv = document.createElement('div');
+                    photoDiv.className = 'photo-item';
+                    photoDiv.innerHTML = `
+                        <img src="${foto.url}"
+                             alt="${foto.descripcion}"
+                             title="Descripción: ${foto.descripcion}\n OrdenSIT: ${foto.ordenSit}\n Fuente: ${foto.source}"
+                             onclick="openImageLightbox('${foto.url}', '${foto.descripcion}', '${foto.descripcion}', '${categoria.toUpperCase()}')">
+                        <div class="photo-date">${formatRealDate(foto.fecha)}</div>
+                    `;
+                    photosContainer.appendChild(photoDiv);
+                }, index * 100);
+            });
+
+            console.log(` ${categoria}: ${fotos.length} fotos REALES cargadas`);
+        }
+    }
+
+    function formatRealDate(dateString) {
+        const date = new Date(dateString);
+        return date.toLocaleDateString('es-ES', {
+            day: '2-digit',
+            month: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+    }
+
+    // Hacer función global
+    window.openHistorialModal = openHistorialModal;
 </script>
 
 <!-- Adicionales para el uso del selector rango de fechas -->

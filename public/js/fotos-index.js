@@ -6,15 +6,26 @@
  */
 
 // ================================================================================================
-// VARIABLES GLOBALES Y CONFIGURACIÓN
+// VARIABLES GLOBALES Y CONFIGURACIÓN - CONSOLIDADAS
 // ================================================================================================
 
 let currentUser = null;
 let currentImageData = null;
 let commentsData = new Map();
 let bootstrapReady = false;
-let uploadCount = 0; // Nuevo para validar carga de imagenes duplicadas (corregir, aun se suben varias imagenes)
+let uploadCount = 0;
 let commentCounterInitialized = false;
+
+// Variables para historial - consolidadas aquí
+let tipoFotografiaFilter = {
+    active: false,
+    selectedTypes: [],
+    totalCounts: {
+        'MUESTRA': 0,
+        'PRENDA FINAL': 0,
+        'VALIDACION AC': 0
+    }
+};
 
 const CONFIG = {
     MAX_FILE_SIZE: 10 * 1024 * 1024,
@@ -27,133 +38,17 @@ const CONFIG = {
 // ================================================================================================
 
 function debugSystem() {
-    console.log(' === DEBUG SISTEMA ===');
-    console.log(' Upload count:', uploadCount);
-    console.log(' Bootstrap ready:', bootstrapReady);
-    console.log(' Elementos upload:', {
-        cameraUpload: !!document.getElementById('cameraUpload'),
-        fileUpload: !!document.getElementById('fileUpload'),
-        cameraInput: !!document.getElementById('cameraInput'),
-        fileInput: !!document.getElementById('fileInput')
-    });
+    console.log('=== DEBUG SISTEMA ===');
+    console.log('Upload count:', uploadCount);
+    console.log('Bootstrap ready:', bootstrapReady);
+    console.log('Current image data:', currentImageData);
+    console.log('Comments data size:', commentsData.size);
+    console.log('Filtro tipo fotografía:', tipoFotografiaFilter);
 
     const commentButtons = document.querySelectorAll('.btn-info');
-    console.log(' Botones comentarios encontrados:', commentButtons.length);
-    commentButtons.forEach((btn, index) => {
-        console.log(`  - Botón ${index}:`, {
-            onclick: btn.getAttribute('onclick'),
-            classes: btn.className,
-            color: window.getComputedStyle(btn).backgroundColor
-        });
-    });
+    console.log('Botones comentarios encontrados:', commentButtons.length);
 
-    console.log(' === FIN DEBUG ===');
-}
-
-// ================================================================================================
-// LIMPIEZA TOTAL DE EVENTOS
-// ================================================================================================
-
-function clearAllUploadEvents() {
-    console.log(' Limpiando TODOS los eventos de subida...');
-
-    const elements = ['cameraUpload', 'fileUpload', 'cameraInput', 'fileInput'];
-
-    elements.forEach(id => {
-        const element = document.getElementById(id);
-        if (element) {
-            // Clonar elemento para eliminar TODOS los event listeners
-            const newElement = element.cloneNode(true);
-            element.parentNode.replaceChild(newElement, element);
-            console.log(` Elemento ${id} clonado y reemplazado`);
-        }
-    });
-
-    console.log(' Todos los eventos de subida limpiados');
-}
-
-// ================================================================================================
-// VERIFICACIÓN ROBUSTA DE BOOTSTRAP
-// ================================================================================================
-
-function waitForBootstrap() {
-    return new Promise((resolve, reject) => {
-        let attempts = 0;
-        const maxAttempts = 50;
-
-        function checkBootstrap() {
-            attempts++;
-            console.log(` Verificando Bootstrap - Intento ${attempts}/${maxAttempts}`);
-
-            if (typeof bootstrap !== 'undefined' && bootstrap.Modal) {
-                console.log(' Bootstrap encontrado y funcional');
-                bootstrapReady = true;
-                resolve(true);
-                return;
-            }
-
-            if (attempts >= maxAttempts) {
-                console.error(' Bootstrap no se cargó después de múltiples intentos');
-                reject(new Error('Bootstrap no disponible'));
-                return;
-            }
-
-            setTimeout(checkBootstrap, 100);
-        }
-
-        checkBootstrap();
-    });
-}
-
-// ================================================================================================
-// INICIALIZACIÓN CON ESPERA DE BOOTSTRAP
-// ================================================================================================
-
-document.addEventListener("DOMContentLoaded", function () {
-    console.log(' DOM cargado, esperando Bootstrap...');
-
-    if (window.fotografiasSystemInitialized) {
-        console.warn(' Sistema ya inicializado');
-        return;
-    }
-
-    waitForBootstrap()
-        .then(() => {
-            console.log(' Bootstrap confirmado, iniciando sistema...');
-            initializeSystem();
-        })
-        .catch((error) => {
-            console.error(' Error esperando Bootstrap:', error);
-            bootstrapReady = false;
-            initializeSystem();
-        });
-});
-
-function initializeSystem() {
-    if (window.fotografiasSystemInitialized) {
-        return;
-    }
-
-    window.fotografiasSystemInitialized = true;
-
-    try {
-        console.log(' Iniciando todos los sistemas...');
-
-        initializeUserSystem();
-        initializeColumnToggle();
-        initializeLightbox();
-        initializeNotifications();
-        initializeSearch();
-        initializeCommentsSystem();
-        initializeCommentCounterSystem();
-        initializeTipoFotografiaFilter(); /*Ver archivo filtro-tipo-fotografia*/
-
-        console.log(' Sistema completo inicializado correctamente');
-
-    } catch (error) {
-        console.error(' Error durante la inicialización:', error);
-        showNotification('Error durante la inicialización: ' + error.message, 'error');
-    }
+    console.log('=== FIN DEBUG ===');
 }
 
 // ================================================================================================
@@ -161,7 +56,7 @@ function initializeSystem() {
 // ================================================================================================
 
 function initializeUserSystem() {
-    console.log(' Inicializando sistema de usuarios...');
+    console.log('👤 Inicializando sistema de usuarios...');
 
     const metaUser = document.querySelector('meta[name="current-user"]');
     if (metaUser && metaUser.content) {
@@ -170,14 +65,14 @@ function initializeUserSystem() {
             username: generateUsernameFromDisplayName(metaUser.content),
             source: 'meta-tag'
         };
-        console.log(' Usuario detectado desde meta tag:', currentUser);
+        console.log('Usuario detectado desde meta tag:', currentUser);
     } else {
         currentUser = {
-            displayName: '',
-            username: '',
+            displayName: 'Usuario Sistema',
+            username: 'usuario-sistema',
             source: 'fallback-hardcoded'
         };
-        console.log(' Usuario fallback configurado:', currentUser);
+        console.log('Usuario fallback configurado:', currentUser);
     }
 
     updateUserInterface(currentUser);
@@ -194,7 +89,7 @@ function generateUsernameFromDisplayName(displayName) {
 }
 
 function updateUserInterface(user) {
-    console.log(` Usuario activo: ${user.displayName} (${user.username})`);
+    console.log(`👤 Usuario activo: ${user.displayName} (${user.username})`);
 
     const userDisplayElements = document.querySelectorAll('.current-user-display');
     userDisplayElements.forEach(element => {
@@ -203,11 +98,95 @@ function updateUserInterface(user) {
 }
 
 // ================================================================================================
+// INICIALIZACIÓN PRINCIPAL - CONSOLIDADA
+// ================================================================================================
+
+document.addEventListener("DOMContentLoaded", function () {
+    console.log('DOM cargado, iniciando sistema...');
+
+    if (window.fotografiasSystemInitialized) {
+        console.warn('Sistema ya inicializado');
+        return;
+    }
+
+    waitForBootstrap()
+        .then(() => {
+            console.log('Bootstrap confirmado, iniciando sistema...');
+            initializeCompleteSystem();
+        })
+        .catch((error) => {
+            console.error('Error esperando Bootstrap:', error);
+            bootstrapReady = false;
+            initializeCompleteSystem();
+        });
+});
+
+function initializeCompleteSystem() {
+    if (window.fotografiasSystemInitialized) {
+        return;
+    }
+
+    window.fotografiasSystemInitialized = true;
+
+    try {
+        console.log('Iniciando todos los sistemas...');
+
+        // Sistemas principales
+        initializeUserSystem();
+        initializeLightbox();
+        initializeNotifications();
+        initializeSearch();
+        initializeCommentsSystem();
+        initializeCommentCounterSystem();
+        initializeTipoFotografiaFilter();
+
+        console.log('Sistema completo inicializado correctamente');
+
+    } catch (error) {
+        console.error('Error durante la inicialización:', error);
+        showNotification('Error durante la inicialización: ' + error.message, 'error');
+    }
+}
+
+// ================================================================================================
+// VERIFICACIÓN ROBUSTA DE BOOTSTRAP
+// ================================================================================================
+
+function waitForBootstrap() {
+    return new Promise((resolve, reject) => {
+        let attempts = 0;
+        const maxAttempts = 50;
+
+        function checkBootstrap() {
+            attempts++;
+            console.log(`Verificando Bootstrap - Intento ${attempts}/${maxAttempts}`);
+
+            if (typeof bootstrap !== 'undefined' && bootstrap.Modal) {
+                console.log('Bootstrap encontrado y funcional');
+                bootstrapReady = true;
+                resolve(true);
+                return;
+            }
+
+            if (attempts >= maxAttempts) {
+                console.error('Bootstrap no se cargó después de múltiples intentos');
+                reject(new Error('Bootstrap no disponible'));
+                return;
+            }
+
+            setTimeout(checkBootstrap, 100);
+        }
+
+        checkBootstrap();
+    });
+}
+
+// ================================================================================================
 // SISTEMA DE COMENTARIOS CON VERIFICACIÓN
 // ================================================================================================
 
 function initializeCommentsSystem() {
-    console.log(' Inicializando sistema de comentarios...');
+    console.log('Inicializando sistema de comentarios...');
 
     const commentForm = document.getElementById('commentForm');
     if (commentForm) {
@@ -216,7 +195,7 @@ function initializeCommentsSystem() {
             e.preventDefault();
             handleCommentSubmit(e);
         };
-        console.log(' Formulario de comentarios configurado');
+        console.log('Formulario de comentarios configurado');
     }
 
     const commentText = document.getElementById('commentText');
@@ -224,64 +203,56 @@ function initializeCommentsSystem() {
         commentText.oninput = updateCharacterCount;
     }
 
-    console.log(' Sistema de comentarios inicializado');
+    console.log('Sistema de comentarios inicializado');
 }
 
 function initializeCommentCounterSystem() {
-    console.log(' Inicializando sistema de contador de comentarios...');
+    console.log('Inicializando sistema de contador de comentarios...');
 
     if (commentCounterInitialized) {
-        console.log(' Sistema de contador ya inicializado');
+        console.log('Sistema de contador ya inicializado');
         return;
     }
 
-    // Corregir botones existentes
     fixExistingCommentButtons();
-
     commentCounterInitialized = true;
-    console.log(' Sistema de contador inicializado');
+    console.log('Sistema de contador inicializado');
 }
 
 function fixExistingCommentButtons() {
-    console.log(' Corrigiendo botones existentes...');
+    console.log('Corrigiendo botones existentes...');
 
     const commentButtons = document.querySelectorAll('.comment-btn, .comment-btn-override, .comment-btn-fixed, button[onclick*="openCommentsModal"]');
 
     commentButtons.forEach((button, index) => {
-        // Obtener contador actual del span viejo
         const oldBadge = button.querySelector('.comment-count');
         let currentCount = 0;
 
         if (oldBadge) {
             currentCount = parseInt(oldBadge.getAttribute('data-count') || '0');
-            oldBadge.remove(); // Eliminar el span rojo
+            oldBadge.remove();
         }
 
-        // Establecer el contador en el atributo data
         button.setAttribute('data-comment-count', currentCount);
         button.style.position = 'relative';
-
-        // Limpiar contenido y dejar solo el ícono
         button.innerHTML = '<i class="fas fa-comments"></i>';
 
-        console.log(` Botón ${index} corregido con contador: ${currentCount}`);
+        console.log(`Botón ${index} corregido con contador: ${currentCount}`);
     });
 }
 
-//=====================================================//
+// ================================================================================================
+// FUNCIONES DE COMENTARIOS - CONSOLIDADAS
+// ================================================================================================
 
 function openCommentsModal(button) {
-    console.log(' openCommentsModal llamado');
-    console.log(' Bootstrap disponible:', bootstrapReady, typeof bootstrap);
+    console.log('openCommentsModal llamado');
 
-    // Verificación más robusta
     if (!bootstrapReady || typeof bootstrap === 'undefined' || !bootstrap.Modal) {
-        console.error(' Bootstrap Modal no disponible');
-
-        // Intentar esperar un poco más
+        console.error('Bootstrap Modal no disponible');
         setTimeout(() => {
             if (typeof bootstrap !== 'undefined' && bootstrap.Modal) {
-                console.log(' Bootstrap apareció, reintentando...');
+                console.log('Bootstrap apareció, reintentando...');
                 bootstrapReady = true;
                 openCommentsModal(button);
             } else {
@@ -304,7 +275,7 @@ function openCommentsModal(button) {
     }
 
     currentImageData = imageData;
-    console.log(' Datos extraídos:', imageData);
+    console.log('Datos extraídos:', imageData);
 
     updateCommentsModalInfo(imageData);
     loadCommentsForImage(imageData.id);
@@ -316,41 +287,15 @@ function openCommentsModal(button) {
     }
 
     try {
-        console.log(' Creando instancia de Bootstrap Modal...');
         const modal = new bootstrap.Modal(modalElement, {
             backdrop: true,
             keyboard: true
         });
-
-        console.log(' Mostrando modal...');
         modal.show();
-        console.log(' Modal abierto correctamente');
-
+        console.log('Modal abierto correctamente');
     } catch (error) {
-        console.error(' Error abriendo modal:', error);
-
-        // Fallback manual
-        modalElement.classList.add('show');
-        modalElement.style.display = 'block';
-        modalElement.style.backgroundColor = 'rgba(0,0,0,0.5)';
-        document.body.classList.add('modal-open');
-
-        showNotification('Modal abierto en modo de compatibilidad', 'warning');
-
-        modalElement.onclick = function (e) {
-            if (e.target === modalElement) {
-                closeCommentsModalManually();
-            }
-        };
-    }
-}
-
-function closeCommentsModalManually() {
-    const modalElement = document.getElementById('commentsModal');
-    if (modalElement) {
-        modalElement.classList.remove('show');
-        modalElement.style.display = 'none';
-        document.body.classList.remove('modal-open');
+        console.error('Error abriendo modal:', error);
+        showNotification('Error abriendo modal', 'error');
     }
 }
 
@@ -401,12 +346,12 @@ function updateCommentsModalInfo(imageData) {
     if (elements.commentTipo) elements.commentTipo.textContent = imageData.tipo;
     if (elements.commentDescripcion) elements.commentDescripcion.textContent = imageData.descripcion;
 
-    console.log(' Información del modal actualizada');
+    console.log('Información del modal actualizada');
 }
 
 function handleCommentSubmit(e) {
     e.preventDefault();
-    console.log(' handleCommentSubmit llamado');
+    console.log('handleCommentSubmit llamado');
 
     if (!currentImageData) {
         showNotification('Error: No hay imagen seleccionada', 'error');
@@ -453,16 +398,12 @@ function handleCommentSubmit(e) {
     showNotification(`Comentario agregado por ${currentUser.displayName}`, 'success');
 }
 
-function generateCommentId() {
-    return 'comment_' + Date.now() + '_' + Math.random().toString(36).substring(2, 9);
-}
-
 function addCommentToStorage(comment) {
     if (!commentsData.has(comment.imageId)) {
         commentsData.set(comment.imageId, []);
     }
     commentsData.get(comment.imageId).push(comment);
-    console.log(' Comentario guardado:', comment);
+    console.log('Comentario guardado:', comment);
 }
 
 function loadCommentsForImage(imageId) {
@@ -577,18 +518,18 @@ function updateCommentButtonBadge() {
     const comments = commentsData.get(currentImageData.id) || [];
     const commentCount = comments.length;
 
-    console.log(` Actualizando contador para imagen ${currentImageData.id}: ${commentCount} comentarios`);
+    console.log(`Actualizando contador para imagen ${currentImageData.id}: ${commentCount} comentarios`);
 
     // Buscar el botón de comentarios para esta imagen
     const row = document.querySelector(`tr[data-image-id="${currentImageData.id}"]`);
     if (!row) {
-        console.warn(` No se encontró la fila para imagen ${currentImageData.id}`);
+        console.warn(`No se encontró la fila para imagen ${currentImageData.id}`);
         return;
     }
 
     const commentButton = row.querySelector('.comment-btn, .comment-btn-override, .comment-btn-fixed, button[onclick*="openCommentsModal"]');
     if (!commentButton) {
-        console.warn(` No se encontró el botón de comentarios en la fila`);
+        console.warn(`No se encontró el botón de comentarios en la fila`);
         return;
     }
 
@@ -612,7 +553,7 @@ function updateCommentButtonBadge() {
         }, 600);
     }
 
-    console.log(` Contador actualizado: ${commentCount}`);
+    console.log(`Contador actualizado: ${commentCount}`);
 }
 
 function deleteComment(commentId) {
@@ -637,37 +578,20 @@ function deleteComment(commentId) {
 }
 
 // ================================================================================================
-// SISTEMA DE COLUMNAS - FILAS TIPO FOTOGRAFIA
+// FUNCIONES AUXILIARES
 // ================================================================================================
 
-function initializeColumnToggle() {
-    console.log(' Inicializando control de columnas...');
-
-    const dropdown = document.getElementById('columnsDropdown');
-    if (!dropdown) {
-        console.warn(' Dropdown de columnas no encontrado');
-        return;
-    }
-
-    dropdown.onclick = function (e) {
-        if (e.target.type === 'checkbox') {
-            e.stopPropagation();
-
-            const columnName = e.target.dataset.column;
-            const isVisible = e.target.checked;
-
-            if (columnName) {
-                toggleColumn(columnName, isVisible);
-                showNotification(
-                    `Columna "${getColumnDisplayName(columnName)}" ${isVisible ? 'mostrada' : 'ocultada'}`,
-                    'info'
-                );
-            }
-        }
-    };
-
-    console.log(' Control de columnas inicializado');
+function generateUniqueImageId() {
+    return 'img_' + Date.now() + '_' + Math.random().toString(36).substring(2, 9);
 }
+
+function generateCommentId() {
+    return 'comment_' + Date.now() + '_' + Math.random().toString(36).substring(2, 9);
+}
+
+// ================================================================================================
+// SISTEMAS DE COLUMNAS
+// ================================================================================================
 
 function toggleColumn(columnName, isVisible) {
     const display = isVisible ? '' : 'none';
@@ -690,7 +614,7 @@ function toggleColumn(columnName, isVisible) {
         cell.style.display = display;
     });
 
-    console.log(` Columna ${columnName} ${isVisible ? 'mostrada' : 'ocultada'}`);
+    console.log(`Columna ${columnName} ${isVisible ? 'mostrada' : 'ocultada'}`);
 }
 
 function getColumnDisplayName(columnKey) {
@@ -706,72 +630,43 @@ function getColumnDisplayName(columnKey) {
     return names[columnKey] || columnKey;
 }
 
-// ================================================================
-// VARIABLES GLOBALES DEL FILTRO TIPO FOTOGRAFIA
-// ================================================================
-
-let tipoFotografiaFilter = {
-    active: false,
-    selectedTypes: [],
-    totalCounts: {
-        'MUESTRA': 0,
-        'PRENDA FINAL': 0,
-        'VALIDACION AC': 0
-    }
-};
-
-// ================================================================
-// FUNCIÓN PRINCIPAL DE FILTRADO
-// ================================================================
+// ================================================================================================
+// FILTRO TIPO FOTOGRAFÍA - CONSOLIDADO
+// ================================================================================================
 
 function filterByTipoFotografia() {
-    console.log(' Aplicando filtro por tipo de fotografía...');
+    console.log('🏷️ Aplicando filtro por tipo de fotografía...');
 
-    //  OBTENER checkboxes seleccionados
     const muestraCheck = document.getElementById('filtroMuestra');
     const prendaFinalCheck = document.getElementById('filtroPrendaFinal');
     const validacionACCheck = document.getElementById('filtroValidacionAC');
 
     if (!muestraCheck || !prendaFinalCheck || !validacionACCheck) {
-        console.error(' No se encontraron los checkboxes');
+        console.error('❌ No se encontraron los checkboxes');
         return;
     }
 
-    //  ACTUALIZAR estado del filtro
     tipoFotografiaFilter.selectedTypes = [];
 
-    if (muestraCheck.checked) {
-        tipoFotografiaFilter.selectedTypes.push('MUESTRA');
-    }
+    if (muestraCheck.checked) tipoFotografiaFilter.selectedTypes.push('MUESTRA');
+    if (prendaFinalCheck.checked) tipoFotografiaFilter.selectedTypes.push('PRENDA FINAL');
+    if (validacionACCheck.checked) tipoFotografiaFilter.selectedTypes.push('VALIDACION AC');
 
-    if (prendaFinalCheck.checked) {
-        tipoFotografiaFilter.selectedTypes.push('PRENDA FINAL');
-    }
-
-    if (validacionACCheck.checked) {
-        tipoFotografiaFilter.selectedTypes.push('VALIDACION AC');
-    }
-
-    // DETERMINAR si el filtro está activo
     tipoFotografiaFilter.active = tipoFotografiaFilter.selectedTypes.length > 0;
 
-    console.log(' Tipos seleccionados:', tipoFotografiaFilter.selectedTypes);
+    console.log('🏷️ Tipos seleccionados:', tipoFotografiaFilter.selectedTypes);
 
-    //  APLICAR filtro a las filas
     applyTipoFotografiaFilter();
-
-    //  ACTUALIZAR interfaz
     updateTipoFotografiaUI();
-}
 
-// ================================================================
-// APLICAR FILTRO A LAS FILAS
-// ================================================================
+    // NUEVO: Actualizar indicador visual
+    updateFilterStatusIndicator();
+}
 
 function applyTipoFotografiaFilter() {
     const tableBody = document.getElementById('imagesTableBody');
     if (!tableBody) {
-        console.error(' No se encontró el tbody de la tabla');
+        console.error('No se encontró el tbody de la tabla');
         return;
     }
 
@@ -783,21 +678,19 @@ function applyTipoFotografiaFilter() {
         const tipoCell = row.querySelector('td[data-column="tipo-fotografia"]');
 
         if (!tipoCell) {
-            console.warn(' Fila sin columna de tipo fotografía');
+            console.warn('Fila sin columna de tipo fotografía');
             return;
         }
 
         const tipoText = tipoCell.textContent.trim().toUpperCase();
         let shouldShow = true;
 
-        // SI el filtro está activo, verificar si coincide
         if (tipoFotografiaFilter.active) {
             shouldShow = tipoFotografiaFilter.selectedTypes.some(selectedType =>
                 tipoText.includes(selectedType)
             );
         }
 
-        //  MOSTRAR u ocultar fila
         if (shouldShow) {
             row.style.display = '';
             visibleCount++;
@@ -807,25 +700,20 @@ function applyTipoFotografiaFilter() {
         }
     });
 
-    //  ACTUALIZAR cards móviles si existen
-    if (window.mobileCardsStable) {
+    // Actualizar cards móviles si existen
+    if (window.responsiveSystem) {
         setTimeout(() => {
-            window.mobileCardsStable.generateCardsOnce();
+            window.responsiveSystem.refresh();
         }, 100);
     }
 
-    console.log(` Filtro aplicado: ${visibleCount} visibles, ${hiddenCount} ocultas`);
+    console.log(`Filtro aplicado: ${visibleCount} visibles, ${hiddenCount} ocultas`);
 
-    //  MOSTRAR notificación
     if (tipoFotografiaFilter.active) {
         const tipos = tipoFotografiaFilter.selectedTypes.join(', ');
         showNotification(`Filtro aplicado: ${tipos} (${visibleCount} registros)`, 'success');
     }
 }
-
-// ================================================================
-// ACTUALIZAR INTERFAZ DEL FILTRO
-// ================================================================
 
 function updateTipoFotografiaUI() {
     const label = document.getElementById('tipoFotografiaLabel');
@@ -833,74 +721,48 @@ function updateTipoFotografiaUI() {
 
     if (!label || !button) return;
 
-    //  ACTUALIZAR texto del botón
     if (tipoFotografiaFilter.active) {
         const count = tipoFotografiaFilter.selectedTypes.length;
-        label.textContent = `Filtrado (${count})`;
+        label.innerHTML = `<i class="fas fa-filter me-1"></i>Filtrado (${count})`;
         button.classList.add('btn-primary');
         button.classList.remove('btn-buscar');
+        button.style.backgroundColor = '#007bff';
+        button.style.borderColor = '#007bff';
+        button.style.color = 'white';
     } else {
-        label.textContent = 'Buscar';
+        label.innerHTML = '<i class="fas fa-search me-1"></i>Buscar';
         button.classList.remove('btn-primary');
         button.classList.add('btn-buscar');
+        button.style.backgroundColor = 'white';
+        button.style.borderColor = '#ced4da';
+        button.style.color = '#212529';
     }
 
-    //  ACTUALIZAR contadores
-    updateTipoFotografiaCounts();
+    // updateTipoFotografiaCounts();
 }
 
-// ================================================================
-// ACTUALIZAR CONTADORES
-// ================================================================
+// NUEVA FUNCIÓN: Actualizar indicador de estado del filtro
+function updateFilterStatusIndicator() {
+    const indicator = document.getElementById('filterStatusIndicator');
 
-function updateTipoFotografiaCounts() {
-    const tableBody = document.getElementById('imagesTableBody');
-    if (!tableBody) return;
+    if (!indicator) return;
 
-    const counts = {
-        'MUESTRA': 0,
-        'PRENDA FINAL': 0,
-        'VALIDACION AC': 0
-    };
-
-    //  CONTAR tipos en filas visibles
-    const rows = tableBody.querySelectorAll('tr');
-    rows.forEach(row => {
-        if (row.style.display !== 'none') {
-            const tipoCell = row.querySelector('td[data-column="tipo-fotografia"]');
-            if (tipoCell) {
-                const tipoText = tipoCell.textContent.trim().toUpperCase();
-
-                if (tipoText.includes('MUESTRA')) {
-                    counts['MUESTRA']++;
-                } else if (tipoText.includes('PRENDA FINAL')) {
-                    counts['PRENDA FINAL']++;
-                } else if (tipoText.includes('VALIDACION AC')) {
-                    counts['VALIDACION AC']++;
-                }
-            }
-        }
-    });
-
-    //  ACTUALIZAR elementos de contador
-    const countMuestra = document.getElementById('countMuestra');
-    const countPrendaFinal = document.getElementById('countPrendaFinal');
-    const countValidacionAC = document.getElementById('countValidacionAC');
-
-    if (countMuestra) countMuestra.textContent = counts['MUESTRA'];
-    if (countPrendaFinal) countPrendaFinal.textContent = counts['PRENDA FINAL'];
-    if (countValidacionAC) countValidacionAC.textContent = counts['VALIDACION AC'];
-
-    //  GUARDAR contadores globales
-    tipoFotografiaFilter.totalCounts = counts;
+    if (tipoFotografiaFilter.active && tipoFotografiaFilter.selectedTypes.length > 0) {
+        indicator.style.display = 'block';
+        indicator.innerHTML = `
+            <small class="text-primary">
+                <i class="fas fa-filter me-1"></i>
+                Filtro activo: ${tipoFotografiaFilter.selectedTypes.length} tipo(s)
+            </small>
+        `;
+    } else {
+        indicator.style.display = 'none';
+    }
 }
 
-// ================================================================
-// FUNCIONES DE CONTROL
-// ================================================================
-
-// SELECCIONAR TODOS
 function selectAllTipoFotografia() {
+    console.log('✅ Seleccionando todos los tipos...');
+
     const muestraCheck = document.getElementById('filtroMuestra');
     const prendaFinalCheck = document.getElementById('filtroPrendaFinal');
     const validacionACCheck = document.getElementById('filtroValidacionAC');
@@ -911,11 +773,13 @@ function selectAllTipoFotografia() {
 
     filterByTipoFotografia();
 
-    console.log(' Todos los tipos seleccionados');
+    showNotification('Todos los tipos seleccionados', 'success');
+    console.log('✅ Todos los tipos seleccionados');
 }
 
-//  LIMPIAR FILTRO
 function clearTipoFotografiaFilter() {
+    console.log('🧹 Limpiando filtro de tipo fotografía...');
+
     const muestraCheck = document.getElementById('filtroMuestra');
     const prendaFinalCheck = document.getElementById('filtroPrendaFinal');
     const validacionACCheck = document.getElementById('filtroValidacionAC');
@@ -924,11 +788,9 @@ function clearTipoFotografiaFilter() {
     if (prendaFinalCheck) prendaFinalCheck.checked = false;
     if (validacionACCheck) validacionACCheck.checked = false;
 
-    //  RESETEAR estado
     tipoFotografiaFilter.active = false;
     tipoFotografiaFilter.selectedTypes = [];
 
-    //  MOSTRAR todas las filas
     const tableBody = document.getElementById('imagesTableBody');
     if (tableBody) {
         const rows = tableBody.querySelectorAll('tr');
@@ -937,63 +799,41 @@ function clearTipoFotografiaFilter() {
         });
     }
 
-    //  ACTUALIZAR interfaz
     updateTipoFotografiaUI();
+    updateFilterStatusIndicator();
 
-    //  ACTUALIZAR cards móviles
-    if (window.mobileCardsStable) {
+    if (window.responsiveSystem) {
         setTimeout(() => {
-            window.mobileCardsStable.generateCardsOnce();
+            window.responsiveSystem.refresh();
         }, 100);
     }
 
     showNotification('Filtro de tipo fotografía eliminado', 'info');
-    console.log(' Filtro limpiado');
+    console.log('✅ Filtro limpiado');
 }
 
-// ================================================================
-// INTEGRACIÓN CON OTROS FILTROS
-// ================================================================
-
-//  FUNCIÓN para integrar con filtros existentes
-function integrateTipoFotografiaWithOtherFilters() {
-    // Esta función se puede llamar desde otros filtros
-    // para asegurar que se respeten todos los filtros activos
-
-    if (tipoFotografiaFilter.active) {
-        console.log(' Reintegrando filtro de tipo fotografía con otros filtros');
-        applyTipoFotografiaFilter();
-    }
-}
-
-// ================================================================
-// INICIALIZACIÓN
-// ================================================================
-
+// MEJORAR: Inicialización del filtro con indicadores
 function initializeTipoFotografiaFilter() {
-    console.log(' Inicializando filtro de tipo fotografía...');
+    console.log('🏷️ Inicializando filtro de tipo fotografía...');
 
-    //  ACTUALIZAR contadores iniciales
-    updateTipoFotografiaCounts();
+    // updateTipoFotografiaCounts();
+    updateFilterStatusIndicator();
 
-    //  PREVENIR cierre del dropdown al hacer click en checkboxes
     const dropdownMenu = document.getElementById('tipoFotografiaMenu');
     if (dropdownMenu) {
         dropdownMenu.addEventListener('click', function (e) {
-            //  NO cerrar si se hace click en checkbox o label
-            if (e.target.type === 'checkbox' || e.target.closest('label')) {
+            if (e.target.type === 'checkbox' || e.target.closest('label') || e.target.closest('.btn')) {
                 e.stopPropagation();
             }
         });
     }
 
-    //  ACTUALIZAR contadores cuando cambien las filas
     const tableBody = document.getElementById('imagesTableBody');
     if (tableBody) {
         const observer = new MutationObserver(() => {
             setTimeout(() => {
-                updateTipoFotografiaCounts();
-                //  REAPLICAR filtro si está activo
+                //  updateTipoFotografiaCounts();
+                updateFilterStatusIndicator();
                 if (tipoFotografiaFilter.active) {
                     applyTipoFotografiaFilter();
                 }
@@ -1006,11 +846,11 @@ function initializeTipoFotografiaFilter() {
         });
     }
 
-    console.log(' Filtro de tipo fotografía inicializado');
+    console.log('✅ Filtro de tipo fotografía inicializado');
 }
 
 // ================================================================================================
-// FUNCIONES DE UTILIDAD - comentarios, prioridad
+// FUNCIONES DE UTILIDAD
 // ================================================================================================
 
 function getTypeDisplayName(type) {
@@ -1071,7 +911,7 @@ function initializeNotifications() {
 }
 
 function showNotification(message, type = 'info', duration = 5000) {
-    console.log(` Notificación: [${type.toUpperCase()}] ${message}`);
+    console.log(`Notificación: [${type.toUpperCase()}] ${message}`);
 
     const container = document.getElementById('notificationContainer');
     if (!container) return;
@@ -1117,14 +957,13 @@ function initializeLightbox() {
         };
     }
 
-    // Asegurar que las funciones estén disponibles globalmente
     window.openImageLightbox = openImageLightbox;
     window.closeLightbox = closeLightbox;
     window.downloadImage = downloadImageFromLightbox;
 }
 
 function openImageLightbox(imageUrl, alt, description, type) {
-    console.log(' Abriendo lightbox:', { imageUrl, alt, description, type });
+    console.log('Abriendo lightbox:', { imageUrl, alt, description, type });
 
     const lightbox = document.getElementById('imageLightbox');
     const lightboxImage = document.getElementById('lightboxImage');
@@ -1180,7 +1019,6 @@ function initializeSearch() {
     const searchInput = document.getElementById('searchInput');
     const searchButton = document.getElementById('searchButton');
 
-    // Enter para buscar
     if (searchInput) {
         searchInput.addEventListener('keyup', function (e) {
             if (e.key === 'Enter') {
@@ -1188,9 +1026,8 @@ function initializeSearch() {
             }
         });
     }
-    // Clic para buscar
+
     if (searchButton) {
-        // Clic en el botón
         searchButton.addEventListener('click', function (e) {
             e.preventDefault();
             searchRecords();
@@ -1220,18 +1057,6 @@ function searchRecords() {
 
     showNotification(`${visibleCount} resultado(s) encontrado(s)`, 'info');
 }
-
-/*function clearSearch() {
-    const searchInput = document.getElementById('searchInput');
-    if (searchInput) {
-        searchInput.value = '';
-        const tableRows = document.querySelectorAll('#imagesTableBody tr');
-        tableRows.forEach(row => {
-            row.style.display = '';
-        });
-        showNotification('Búsqueda limpiada', 'info');
-    }
-}*/
 
 // ================================================================================================
 // ACCIONES
@@ -1272,35 +1097,254 @@ function showFilters() {
 }
 
 // ================================================================================================
-// FUNCIONES GLOBALES
+// SISTEMA DE HISTORIAL
 // ================================================================================================
 
-window.openImageLightbox = openImageLightbox;
-window.closeLightbox = closeLightbox;
-window.downloadImage = downloadImageFromLightbox;
-window.searchRecords = searchRecords;
-//window.clearSearch = clearSearch;
-//window.applyDateFilter = applyDateFilter;
-window.exportAll = exportAll;
-window.exportSelected = exportSelected;
-window.showFilters = showFilters;
-window.deleteImage = deleteImage;
-window.editImage = editImage;
-window.openCommentsModal = openCommentsModal;
-window.deleteComment = deleteComment;
-window.debugSystem = debugSystem;
-//window.initializeDateRangeSelector = initializeDateRangeSelector;
+function openHistorialModal(button) {
+    console.log('Abriendo modal de historial...');
 
+    const row = button.closest('tr');
+    if (!row) {
+        showNotification('Error: No se encontró la fila', 'error');
+        return;
+    }
 
+    const imageData = extractImageDataFromRow(row);
+    if (!imageData) {
+        showNotification('Error: No se pudieron extraer datos', 'error');
+        return;
+    }
 
-//  INICIALIZAR cuando el DOM esté listo
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initializeTipoFotografiaFilter);
-} else {
-    initializeTipoFotografiaFilter();
+    console.log('Datos de imagen para historial:', imageData);
+    loadSynchronizedHistorialData(imageData.ordenSit, imageData);
+
+    const modalElement = document.getElementById('historialModal');
+    if (modalElement) {
+        try {
+            const modal = new bootstrap.Modal(modalElement);
+            modal.show();
+            console.log('Modal de historial abierto');
+        } catch (error) {
+            console.error('Error abriendo modal:', error);
+            showNotification('Error al abrir el historial', 'error');
+        }
+    }
 }
 
+function loadSynchronizedHistorialData(ordenSit, currentImageDataParam = null) {
+    console.log('Cargando historial sincronizado para orden:', ordenSit);
+
+    const allImagesFromOrder = collectAllImagesFromOrder(ordenSit);
+    console.log('Total imágenes encontradas:', allImagesFromOrder.length);
+
+    const historialData = generateRealHistorialData(ordenSit, allImagesFromOrder, currentImageDataParam);
+    console.log('Historial sincronizado generado:', historialData);
+
+    updateSynchronizedProgressSteps(historialData.estados);
+    loadSynchronizedPhotosByCategory('muestra', historialData.fotos.muestra);
+    loadSynchronizedPhotosByCategory('validacion', historialData.fotos.validacion);
+    loadSynchronizedPhotosByCategory('final', historialData.fotos.final);
+
+    console.log('Historial sincronizado cargado correctamente');
+}
+
+function collectAllImagesFromOrder(ordenSit) {
+    const allImages = [];
+    const tableBody = document.getElementById('imagesTableBody');
+
+    if (!tableBody) return allImages;
+
+    const rows = tableBody.querySelectorAll('tr[data-image-id]');
+    rows.forEach((row, index) => {
+        const ordenCell = row.querySelector('[data-column="orden-sit"]');
+        const currentOrdenSit = ordenCell ? ordenCell.textContent.trim() : '';
+
+        if (currentOrdenSit === ordenSit) {
+            const imageData = extractImageDataFromRow(row);
+            allImages.push({
+                ...imageData,
+                source: 'table',
+                timestamp: Date.now() - (Math.random() * 86400000)
+            });
+        }
+    });
+
+    try {
+        const recentData = localStorage.getItem('newUploadedImages');
+        if (recentData) {
+            const parsed = JSON.parse(recentData);
+            if (parsed.images) {
+                parsed.images.forEach(img => {
+                    if (img.ordenSit === ordenSit) {
+                        allImages.push({
+                            id: img.id || 'localStorage_' + Date.now(),
+                            imageUrl: img.url,
+                            imageAlt: img.name || img.descripcion,
+                            ordenSit: img.ordenSit,
+                            po: img.po,
+                            oc: img.oc,
+                            descripcion: img.descripcion,
+                            tipo: img.tipoFotografia,
+                            source: 'localStorage-transfer',
+                            timestamp: img.uploadTimestamp || Date.now()
+                        });
+                    }
+                });
+            }
+        }
+    } catch (error) {
+        console.warn('Error leyendo localStorage:', error);
+    }
+
+    return allImages;
+}
+
+function generateRealHistorialData(ordenSit, realImages, currentImage) {
+    const imagesByType = {
+        muestra: [],
+        validacion: [],
+        final: []
+    };
+
+    const estados = {
+        muestra: false,
+        validacion: false,
+        final: false
+    };
+
+    realImages.forEach((imageData, index) => {
+        const tipo = imageData.tipo ? imageData.tipo.toUpperCase() : '';
+        const imageForHistory = {
+            url: imageData.imageUrl,
+            fecha: new Date(imageData.timestamp || Date.now()).toISOString(),
+            descripcion: imageData.descripcion || imageData.imageAlt || 'Sin descripción',
+            ordenSit: imageData.ordenSit,
+            po: imageData.po,
+            oc: imageData.oc,
+            source: imageData.source || 'unknown',
+            isReal: true
+        };
+
+        if (tipo.includes('MUESTRA')) {
+            imagesByType.muestra.push(imageForHistory);
+            estados.muestra = true;
+        } else if (tipo.includes('VALIDACION') || tipo.includes('VALIDACIÓN')) {
+            imagesByType.validacion.push(imageForHistory);
+            estados.validacion = true;
+        } else if (tipo.includes('FINAL') || tipo.includes('PRENDA FINAL')) {
+            imagesByType.final.push(imageForHistory);
+            estados.final = true;
+        }
+    });
+
+    return {
+        estados: estados,
+        fotos: imagesByType,
+        totalImages: realImages.length,
+        metadata: {
+            ordenSit,
+            generatedAt: new Date().toISOString(),
+            source: 'real-data-only',
+            realImagesOnly: true
+        }
+    };
+}
+
+function updateSynchronizedProgressSteps(estados) {
+    const stepMuestra = document.getElementById('stepMuestra');
+    const stepValidacion = document.getElementById('stepValidacion');
+    const stepFinal = document.getElementById('stepFinal');
+
+    [stepMuestra, stepValidacion, stepFinal].forEach(step => {
+        if (step) {
+            step.classList.remove('completed', 'pending');
+        }
+    });
+
+    setTimeout(() => {
+        if (stepMuestra) {
+            stepMuestra.classList.add(estados.muestra ? 'completed' : 'pending');
+        }
+    }, 100);
+
+    setTimeout(() => {
+        if (stepValidacion) {
+            stepValidacion.classList.add(estados.validacion ? 'completed' : 'pending');
+        }
+    }, 200);
+
+    setTimeout(() => {
+        if (stepFinal) {
+            stepFinal.classList.add(estados.final ? 'completed' : 'pending');
+        }
+    }, 300);
+}
+
+function loadSynchronizedPhotosByCategory(categoria, fotos) {
+    const photosContainer = document.getElementById(`${categoria}Photos`);
+    const countBadge = document.getElementById(`${categoria}Count`);
+
+    if (!photosContainer || !countBadge) return;
+
+    countBadge.textContent = `${fotos.length} foto${fotos.length !== 1 ? 's' : ''}`;
+    photosContainer.innerHTML = '';
+
+    if (fotos.length === 0) {
+        photosContainer.innerHTML = `
+            <div class="empty-state">
+                <i class="fas fa-image"></i>
+                <span>No hay fotografías en esta etapa</span>
+            </div>
+        `;
+    } else {
+        const sortedFotos = fotos.sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
+
+        sortedFotos.forEach((foto, index) => {
+            setTimeout(() => {
+                const photoDiv = document.createElement('div');
+                photoDiv.className = 'photo-item';
+                photoDiv.innerHTML = `
+                    <img src="${foto.url}"
+                         alt="${foto.descripcion}"
+                         title="Descripción: ${foto.descripcion}\n OrdenSIT: ${foto.ordenSit}\n Fuente: ${foto.source}"
+                         onclick="openImageLightbox('${foto.url}', '${foto.descripcion}', '${foto.descripcion}', '${categoria.toUpperCase()}')">
+                    <div class="photo-date">${formatRealDate(foto.fecha)}</div>
+                `;
+                photosContainer.appendChild(photoDiv);
+            }, index * 100);
+        });
+    }
+}
+
+function formatRealDate(dateString) {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('es-ES', {
+        day: '2-digit',
+        month: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit'
+    });
+}
+
+// ================================================================================================
+// FUNCIONES GLOBALES - CONSOLIDAS
+// ================================================================================================
+
+window.openImageLightbox = openImageLightbox || function () { console.warn('openImageLightbox no definida'); };
+window.closeLightbox = closeLightbox || function () { console.warn('closeLightbox no definida'); };
+window.downloadImageFromLightbox = downloadImageFromLightbox || function () { console.warn('downloadImageFromLightbox no definida'); };
+window.searchRecords = searchRecords || function () { console.warn('searchRecords no definida'); };
+window.exportAll = exportAll || function () { console.warn('exportAll no definida'); };
+window.exportSelected = exportSelected || function () { console.warn('exportSelected no definida'); };
+window.showFilters = showFilters || function () { console.warn('showFilters no definida'); };
+window.deleteImage = deleteImage || function () { console.warn('deleteImage no definida'); };
+window.editImage = editImage || function () { console.warn('editImage no definida'); };
+window.openCommentsModal = openCommentsModal;
+window.deleteComment = deleteComment || function () { console.warn('deleteComment no definida'); };
+window.debugSystem = debugSystem;
+window.openHistorialModal = openHistorialModal;
 window.filterByTipoFotografia = filterByTipoFotografia;
-window.selectAllTipoFotografia = selectAllTipoFotografia;
-window.clearTipoFotografiaFilter = clearTipoFotografiaFilter;
-window.integrateTipoFotografiaWithOtherFilters = integrateTipoFotografiaWithOtherFilters;
+window.selectAllTipoFotografia = selectAllTipoFotografia || function () { console.warn('selectAllTipoFotografia no definida'); };
+window.clearTipoFotografiaFilter = clearTipoFotografiaFilter || function () { console.warn('clearTipoFotografiaFilter no definida'); };
+
+console.log('Sistema JS completo cargado correctamente');

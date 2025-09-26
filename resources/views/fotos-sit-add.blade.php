@@ -24,16 +24,16 @@
     <div id="ordenSitCard" class="card p-3 mb-3" style="display:none;">
         <div class="row align-items-center">
             <div class="row align-items-center">
-                <div class="col-md-3 text-center">
-                    <!-- Miniatura -->
+                <div class="col-md-4 text-center">
+                    <!-- Miniatura más grande -->
                     <img id="prendaPreview"
-                        src="https://picsum.photos/200/300"
+                        src="https://picsum.photos/400/600"
                         alt="Prenda"
                         class="img-thumbnail"
-                        style="max-width:120px; cursor:pointer;"
+                        style="max-width:200px; min-width:150px; height:auto; cursor:pointer; object-fit:cover; border-radius:8px;"
                         onclick="openLightbox(this.src, tipoSeleccionado)">
                 </div>
-                <div class="col-md-9">
+                <div class="col-md-8">
                     <p class="mb-1"><strong>Orden SIT:</strong> <span id="ordenSitValue"></span></p>
                     <p class="mb-1"><strong>Tipo:</strong> <span id="tipoOrden"></span></p>
                     <p class="mb-1"><strong>Descripción:</strong> <span id="descripcion"></span></p>
@@ -54,15 +54,7 @@
                             </div>
                         </div>
                     </div>
-                    <!-- Estado -->
-                    <div class="mb-3">
-                        <label class="text-muted">Tipo del último cargue</label>
-                        <div class="d-flex gap-2">
-                            <button class="btn btn-personalizado" onclick="setTipoFoto('Muestra')">Muestra</button>
-                            <button class="btn btn-personalizado" onclick="setTipoFoto('Prenda Final')">Prenda Final</button>
-                            <button class="btn btn-personalizado" onclick="setTipoFoto('Validación AC')">Validación AC</button>
-                        </div>
-                    </div>
+
                 </div>
             </div>
         </div>
@@ -176,9 +168,9 @@
             return;
         }
 
-        // Simular orden encontrada(Eliminar luego)
+        // Simular orden encontrada(Eliminar luego) - Imagen más grande
         ordenSitValue.textContent = value;
-        prendaPreview.src = "https://picsum.photos/200/300";
+        prendaPreview.src = "https://picsum.photos/400/600";
 
         // Limpiar datos previos
         descripcion.textContent = "";
@@ -224,16 +216,27 @@
         return;
     }
 
-    // Guardar datos en localStorage para transferir a fotos-index
+    // PREPARAR datos con información adicional para historial
     const dataToTransfer = {
-        images: imagenesCompletas,
-        timestamp: new Date().toISOString()
+        images: imagenesCompletas.map(img => ({
+            ...img,
+            transferTimestamp: Date.now(),
+            transferDate: new Date().toISOString(),
+            readyForHistorial: true // Marca para que el historial sepa que están listas
+        })),
+        timestamp: new Date().toISOString(),
+        source: 'fotos-sit-add',
+        totalImages: imagenesCompletas.length,
+        metadata: {
+            ordenSit: imagenesCompletas[0]?.ordenSit || 'N/A',
+            uploadSession: Date.now().toString(36) // ID único de sesión de subida
+        }
     };
 
-    console.log('Datos a transferir:', dataToTransfer);
+    console.log('Datos preparados para transferencia:', dataToTransfer);
 
     localStorage.setItem('newUploadedImages', JSON.stringify(dataToTransfer));
-    console.log('Datos guardados en localStorage');
+    console.log('Datos guardados en localStorage con metadatos de historial');
 
     alert(`Se guardaron ${imagenesCompletas.length} imagen(es) correctamente. Redirigiendo...`);
 
@@ -378,19 +381,22 @@
                 const base64Data = e.target.result;
                 console.log('Imagen convertida a Base64');
 
-                // Datos base de la imagen
+                // DATOS BASE MEJORADOS para sincronización con historial
                 const tempData = {
                     id: Date.now() + Math.random(),
-                    url: base64Data, // Usar Base64 en lugar de blob URL
+                    url: base64Data, // Base64 persistente
                     name: file.name,
                     size: file.size,
                     uploadDate: new Date().toISOString(),
+                    uploadTimestamp: Date.now(), // Timestamp para ordenamiento
                     ordenSit: document.getElementById('ordenSitValue').textContent || 'N/A',
                     po: generatePONumber(),
-                    oc: generateOCNumber()
+                    oc: generateOCNumber(),
+                    source: 'fotos-sit-add', // Identificador de origen
+                    fileType: file.type
                 };
 
-                console.log('Datos temporales preparados');
+                console.log('Datos temporales preparados para historial');
 
                 // Abrir modal y esperar datos del usuario
                 const modalEl = document.getElementById('imageDataModal');
@@ -421,14 +427,17 @@
                     // Desactivar el boton mientras se procesa
                     saveBtn.disabled = true;
 
-                    // Datos completos
+                    // DATOS COMPLETOS con metadatos para historial
                     const completeData = {
                         ...tempData,
                         descripcion: descripcionVal,
-                        tipoFotografia
+                        tipoFotografia,
+                        categoria: determineImageCategory(tipoFotografia), // Para agrupación en historial
+                        completionTimestamp: Date.now(), // Cuando se completó el proceso
+                        status: 'completed'
                     };
 
-                    console.log('Datos completos preparados');
+                    console.log('Datos completos preparados con metadatos de historial');
 
                     // SINCRONIZACIÓN: Actualizar elementos del card
                     descripcion.textContent = descripcionVal;
@@ -453,7 +462,7 @@
                     // Habilitar boton nuevamente
                     saveBtn.disabled = false;
 
-                    console.log('🎉 Imagen procesada exitosamente');
+                    console.log('Imagen procesada exitosamente con datos de historial');
                 };
 
                 // Manejar cierre del modal con botón cancelar
@@ -484,7 +493,20 @@
         });
     }
 
+    // NUEVA FUNCIÓN: Determinar categoría para historial
+    function determineImageCategory(tipoFotografia) {
+        const tipo = tipoFotografia.toUpperCase();
+
+        if (tipo.includes('MUESTRA')) return 'muestra';
+        if (tipo.includes('VALIDACION') || tipo.includes('VALIDACIÓN')) return 'validacion';
+        if (tipo.includes('FINAL') || tipo.includes('PRENDA FINAL')) return 'final';
+
+        return 'general'; // Categoría por defecto
+    }
+
     function updateCardPreview(imageData) {
+        console.log('Actualizando vista previa del card:', imageData);
+
         // Actualizar la imagen de vista previa en el card
         if (prendaPreview && imageData.url) {
             prendaPreview.src = imageData.url;
@@ -507,6 +529,12 @@
             tipoOrden.className = "badge badge-color-personalizado";
             tipoSeleccionado = imageData.tipoFotografia;
         }
+
+        //  SINCRONIZACIÓN: Asegurar que los datos incluyan timestamps y metadatos para historial
+        imageData.uploadTimestamp = new Date().toISOString();
+        imageData.source = 'fotos-sit-add';
+
+        console.log('Datos de imagen preparados para historial:', imageData);
     }
 
     function setUploadState(button, state) {

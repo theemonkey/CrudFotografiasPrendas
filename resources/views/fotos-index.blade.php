@@ -103,7 +103,7 @@
 </div>
 
 <!-- =======>>>>>>>>>>>> Datos Tabla <<<<<<<<<========== -->
-<div class="row">
+<div class="row mt-3">
     <div class="col-12">
         <div class="card">
             <div class="card-body">
@@ -596,6 +596,151 @@
 </div>
 
 
+<!-- ==========>>>>>>>> Modal para Editar Información de la Prenda(BTN EDITAR) <<<<<<<<<<<========== -->
+<div class="modal fade" id="editImageModal" tabindex="-1" aria-labelledby="editImageModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editImageModalLabel">
+                    <i class="fas fa-edit me-2"></i>
+                    Editar Información de la Prenda
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <!-- Columna izquierda - Imagen con herramientas -->
+                    <div class="col-md-6">
+                        <div class="image-edit-container">
+                            <!-- Imagen principal -->
+                            <div id="imageDisplayContainer" class="image-display-container">
+                                <img id="editModalImage" src="" alt="" class="img-fluid">
+
+                                <!-- Overlay para recorte (oculto inicialmente) -->
+                                <div id="cropOverlay" class="crop-overlay d-none">
+                                    <canvas id="cropCanvas"></canvas>
+                                </div>
+                            </div>
+
+                            <!-- Herramientas de imagen -->
+                            <div class="image-tools mt-3">
+                                <div class="btn-group w-100" role="group">
+                                    <button type="button" class="btn btn-outline-primary" id="cropImageBtn" title="Recortar Imagen">
+                                        <i class="fas fa-crop"></i>
+                                    </button>
+                                    <button type="button" class="btn btn-outline-secondary" id="resetImageBtn" title="Sin cambios que restablecer">
+                                        <i class="fas fa-sync"></i>
+                                    </button>
+                                </div>
+
+                                <!-- Botones de recorte (ocultos inicialmente) -->
+                                <div id="cropControls" class="crop-controls mt-2 d-none">
+                                    <div class="btn-group w-100">
+                                        <button type="button" class="btn btn-success" id="applyCropBtn">
+                                            <i class="fas fa-check me-1"></i>
+                                            Recortar Imagen
+                                        </button>
+                                        <button type="button" class="btn btn-secondary" id="cancelCropBtn">
+                                            <i class="fas fa-times me-1"></i>
+                                            Cancelar
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Columna derecha - Formulario de edición -->
+                    <div class="col-md-6">
+                        <form id="editImageForm">
+                            <input type="hidden" id="editImageId" name="image_id">
+
+                            <!-- Tipo de Fotografía -->
+                            <div class="mb-3">
+                                <label for="editTipoFotografia" class="form-label fw-bold">Tipo de Fotografía</label>
+                                <select class="form-select" id="editTipoFotografia" name="tipo_fotografia" required>
+                                    <option value="PRENDA FINAL">PRENDA FINAL</option>
+                                    <option value="MUESTRA">MUESTRA</option>
+                                    <option value="VALIDACION AC">VALIDACIÓN AC</option>
+                                </select>
+                                <div class="form-text">Selecciona el tipo de fotografía según la etapa del producto</div>
+                            </div>
+
+                            <!-- Descripción -->
+                            <div class="mb-3">
+                                <label for="editDescripcion" class="form-label fw-bold">Descripción</label>
+                                <textarea class="form-control" id="editDescripcion" name="descripcion" rows="3"
+                                          placeholder="Ej: Polo de algodón. Color azul marino, talla M."></textarea>
+                                <div class="form-text">Describe las características principales del producto</div>
+                            </div>
+
+                            <!-- Información adicional (solo lectura) -->
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">Información de la Orden</label>
+                                <div class="row">
+                                    <div class="col-6">
+                                        <label class="form-label text-muted small">Orden SIT</label>
+                                        <input type="text" class="form-control-plaintext" id="editOrdenSit" readonly>
+                                    </div>
+                                    <div class="col-6">
+                                        <label class="form-label text-muted small">P.O</label>
+                                        <input type="text" class="form-control-plaintext" id="editPO" readonly>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-6">
+                                        <label class="form-label text-muted small">O.C</label>
+                                        <input type="text" class="form-control-plaintext" id="editOC" readonly>
+                                    </div>
+                                    <div class="col-6">
+                                        <label class="form-label text-muted small">Fecha de subida</label>
+                                        <input type="text" class="form-control-plaintext" id="editFechaSubida" readonly>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Sección de gestión de archivo -->
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">Gestión de Archivo</label>
+                                <div class="row g-2">
+                                    <!-- Subir nueva foto -->
+                                    <div class="col-6">
+                                        <input type="file" class="form-control d-none" id="newPhotoInput" accept="image/*">
+                                        <button type="button" class="btn btn-outline-primary btn-sm w-100" id="uploadNewPhotoBtn">
+                                            <i class="fas fa-upload me-1"></i>
+                                            Subir Nueva Foto
+                                        </button>
+                                    </div>
+
+                                    <!-- Borrar foto -->
+                                    <div class="col-6">
+                                        <button type="button" class="btn btn-outline-danger btn-sm w-100" id="deletePhotoBtn">
+                                            <i class="fas fa-trash me-1"></i>
+                                            Borrar Foto
+                                        </button>
+                                    </div>
+                                </div>
+                                <div id="newPhotoPreview" class="mt-2"></div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-1"></i>
+                    Cancelar
+                </button>
+                <button type="button" class="btn btn-primary" id="saveChangesBtn">
+                    <i class="fas fa-save me-1"></i>
+                    Guardar Cambios
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
 <!-- =======>>>>>>>>>>>> MODAL DE HISTORIAL DE LA PRENDA <<<<<<<<<========== -->
 <div class="modal fade" id="historialModal" tabindex="-1" aria-labelledby="historialModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg">
@@ -619,7 +764,7 @@
                         <div class="d-flex justify-content-center align-items-center position-relative">
                             <!-- Step 1: Muestra -->
                             <div class="text-center step-container">
-                                <div class="step-circle step-muestra" id="stepMuestra">
+                                <div class="step-circle step-muestra completed" id="stepMuestra">
                                     <i class="fas fa-camera"></i>
                                 </div>
                                 <div class="step-number">1</div>
@@ -633,7 +778,7 @@
 
                             <!-- Step 2: Validación AC -->
                             <div class="text-center step-container">
-                                <div class="step-circle step-validacion" id="stepValidacion">
+                                <div class="step-circle step-validacion pending" id="stepValidacion">
                                     <i class="fas fa-search"></i>
                                 </div>
                                 <div class="step-number">2</div>
@@ -647,7 +792,7 @@
 
                             <!-- Step 3: Prenda Final -->
                             <div class="text-center step-container">
-                                <div class="step-circle step-final" id="stepFinal">
+                                <div class="step-circle step-final pending" id="stepFinal">
                                     <i class="fas fa-check"></i>
                                 </div>
                                 <div class="step-number">3</div>
@@ -1044,7 +1189,7 @@
         // Inicialización normal
         initializeUploadButtons();
 
-        console.log('📱 Sistema completamente inicializado');
+        console.log('Sistema completamente inicializado');
     });
 
     function getDefaultImageByType(tipo) {

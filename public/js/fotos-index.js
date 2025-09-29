@@ -1076,14 +1076,6 @@ function deleteImage(button) {
     }
 }
 
-function editImage(button) {
-    const row = button.closest('tr');
-    if (row) {
-        const ordenSit = row.querySelector('[data-column="orden-sit"]')?.textContent || 'Sin orden';
-        showNotification(`Editando imagen: ${ordenSit}`, 'info');
-    }
-}
-
 function exportAll() {
     showNotification('Exportando todos los registros...', 'info');
 }
@@ -1095,6 +1087,443 @@ function exportSelected() {
 function showFilters() {
     showNotification('Mostrando filtros avanzados', 'info');
 }
+
+// ================================================================================================
+// FUNCIONALIDAD BTN EDITAR INFORMACION - fotos-index
+// ================================================================================================
+
+// Variables globales para el editor
+let editCropper = null;
+let originalImageSrc = null;
+let currentEditingRow = null;
+let hasImageBeenCropped = false;
+
+// Función editImage actualizada
+function editImage(button) {
+    const row = button.closest('tr');
+    if (!row) {
+        showNotification('Error: No se encontró la fila', 'error');
+        return;
+    }
+
+    // Guardar referencia a la fila actual
+    currentEditingRow = row;
+
+    // Extraer datos de la fila
+    const imageData = extractEditImageData(row);
+
+    if (!imageData) {
+        showNotification('Error: No se pudieron extraer los datos de la imagen', 'error');
+        return;
+    }
+
+    // Llenar el modal con los datos
+    populateEditModal(imageData);
+
+    // Reset estado de recorte
+    hasImageBeenCropped = false;
+    updateResetButtonState();
+
+    // Mostrar el modal
+    const modal = new bootstrap.Modal(document.getElementById('editImageModal'));
+    modal.show();
+}
+
+// Extraer datos de la imagen desde la fila
+function extractEditImageData(row) {
+    try {
+        const img = row.querySelector('img');
+        const ordenSitCell = row.querySelector('[data-column="orden-sit"]');
+        const poCell = row.querySelector('[data-column="po"]');
+        const ocCell = row.querySelector('[data-column="oc"]');
+        const descripcionCell = row.querySelector('[data-column="descripcion"]');
+        const tipoCell = row.querySelector('[data-column="tipo-fotografia"]');
+
+        return {
+            id: row.dataset.imageId || 'temp_' + Date.now(),
+            imageUrl: img ? img.src : '',
+            imageAlt: img ? img.alt : '',
+            ordenSit: ordenSitCell ? ordenSitCell.textContent.trim() : '',
+            po: poCell ? poCell.textContent.trim() : '',
+            oc: ocCell ? ocCell.textContent.trim() : '',
+            descripcion: descripcionCell ? descripcionCell.textContent.trim() : '',
+            tipo: tipoCell ? tipoCell.textContent.trim() : '',
+            fechaSubida: new Date().toLocaleDateString('es-ES')
+        };
+    } catch (error) {
+        console.error('Error extrayendo datos:', error);
+        return null;
+    }
+}
+
+// Llenar el modal con los datos
+function populateEditModal(imageData) {
+    // Imagen
+    const modalImage = document.getElementById('editModalImage');
+    modalImage.src = imageData.imageUrl;
+    originalImageSrc = imageData.imageUrl;
+
+    // Campos del formulario
+    document.getElementById('editImageId').value = imageData.id;
+    document.getElementById('editTipoFotografia').value = imageData.tipo;
+    document.getElementById('editDescripcion').value = imageData.descripcion;
+
+    // Información de solo lectura
+    document.getElementById('editOrdenSit').value = imageData.ordenSit;
+    document.getElementById('editPO').value = imageData.po;
+    document.getElementById('editOC').value = imageData.oc;
+    document.getElementById('editFechaSubida').value = imageData.fechaSubida;
+
+    // Limpiar preview de nueva foto
+    document.getElementById('newPhotoPreview').innerHTML = '';
+    document.getElementById('newPhotoInput').value = '';
+
+    console.log('Modal populado con datos:', imageData);
+}
+
+// Inicializar funcionalidad de recorte
+function initializeCropTool() {
+    const cropBtn = document.getElementById('cropImageBtn');
+    const applyCropBtn = document.getElementById('applyCropBtn');
+    const cancelCropBtn = document.getElementById('cancelCropBtn');
+    const resetBtn = document.getElementById('resetImageBtn');
+    const cropControls = document.getElementById('cropControls');
+    const imageTools = document.querySelector('.image-tools .btn-group');
+
+    cropBtn.addEventListener('click', function () {
+        const image = document.getElementById('editModalImage');
+
+        if (editCropper) {
+            editCropper.destroy();
+        }
+
+        // Inicializar Cropper.js
+        editCropper = new Cropper(image, {
+            aspectRatio: NaN,
+            viewMode: 2,
+            responsive: true,
+            restore: false,
+            guides: true,
+            center: true,
+            highlight: false,
+            cropBoxMovable: true,
+            cropBoxResizable: true,
+            toggleDragModeOnDblclick: false,
+            background: false,
+            modal: true
+        });
+
+        // Mostrar controles de recorte
+        imageTools.classList.add('d-none');
+        cropControls.classList.remove('d-none');
+    });
+    // Aplicar recorte
+    applyCropBtn.addEventListener('click', function () {
+        if (editCropper) {
+            const canvas = editCropper.getCroppedCanvas({
+                width: 800,
+                height: 600,
+                imageSmoothingEnabled: true,
+                imageSmoothingQuality: 'high'
+            });
+
+            // Actualizar imagen con la versión recortada
+            const croppedImageUrl = canvas.toDataURL('image/jpeg', 0.9);
+            document.getElementById('editModalImage').src = croppedImageUrl;
+
+            // Marcar que la imagen ha sido recortada
+            hasImageBeenCropped = true;
+            updateResetButtonState();
+
+            // Destruir cropper
+            editCropper.destroy();
+            editCropper = null;
+
+            // Ocultar controles de recorte
+            cropControls.classList.add('d-none');
+            imageTools.classList.remove('d-none');
+
+            showNotification('Imagen recortada correctamente', 'success');
+        }
+    });
+
+    cancelCropBtn.addEventListener('click', function () {
+        if (editCropper) {
+            editCropper.destroy();
+            editCropper = null;
+        }
+
+        // Ocultar controles de recorte
+        cropControls.classList.add('d-none');
+        imageTools.classList.remove('d-none');
+    });
+
+    // Boton de restablecer
+    resetBtn.addEventListener('click', function () {
+        if (hasImageBeenCropped && originalImageSrc) {
+            Swal.fire({
+                title: '¿Restablecer imagen?',
+                text: 'Se perderán los cambios de recorte realizados',
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#007bff',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: 'Sí, restablecer',
+                cancelButtonText: 'Cancelar'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    // Restablecer imagen original
+                    document.getElementById('editModalImage').src = originalImageSrc;
+                    hasImageBeenCropped = false;
+                    updateResetButtonState();
+
+                    // Limpiar preview de nueva foto
+                    document.getElementById('newPhotoPreview').innerHTML = '';
+                    document.getElementById('newPhotoInput').value = '';
+
+                    showNotification('Imagen restablecida correctamente', 'success');
+                }
+            });
+        } else {
+            showNotification('No hay cambios que restablecer', 'info');
+        }
+    });
+}
+
+// Actualizar estado del boton restablecer
+function updateResetButtonState() {
+    const resetBtn = document.getElementById('resetImageBtn');
+    if (resetBtn) {
+        if (hasImageBeenCropped) {
+            resetBtn.disabled = false;
+            resetBtn.classList.remove('btn-outline-secondary');
+            resetBtn.classList.add('btn-outline-warning');
+            resetBtn.title = 'Restablecer imagen original';
+        } else {
+            resetBtn.disabled = true;
+            resetBtn.classList.remove('btn-outline-warning');
+            resetBtn.classList.add('btn-outline-secondary');
+            resetBtn.title = 'Sin cambios que restablecer';
+        }
+    }
+}
+
+// Manejar subida de nueva foto
+function initializePhotoUpload() {
+    const uploadBtn = document.getElementById('uploadNewPhotoBtn');
+    const fileInput = document.getElementById('newPhotoInput');
+    const preview = document.getElementById('newPhotoPreview');
+
+    uploadBtn.addEventListener('click', function () {
+        fileInput.click();
+    });
+
+    fileInput.addEventListener('change', function (e) {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        if (!file.type.startsWith('image/')) {
+            showNotification('Por favor seleccione un archivo de imagen válido', 'error');
+            return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = function (e) {
+            preview.innerHTML = `
+                <div class="border rounded p-2 bg-light">
+                    <img src="${e.target.result}" class="img-thumbnail" style="max-width: 100%; max-height: 150px;">
+                    <div class="mt-1">
+                        <small class="text-success">
+                            <i class="fas fa-check me-1"></i>
+                            Nueva imagen seleccionada: ${file.name}
+                        </small>
+                    </div>
+                </div>
+            `;
+
+            // Actualizar la imagen principal del modal
+            document.getElementById('editModalImage').src = e.target.result;
+
+            // Marcar que se ha cambiado la imagen
+            hasImageBeenCropped = true;
+            updateResetButtonState();
+        };
+        reader.readAsDataURL(file);
+    });
+}
+
+// Manejar eliminación de foto
+function initializePhotoDelete() {
+    const deleteBtn = document.getElementById('deletePhotoBtn');
+
+    deleteBtn.addEventListener('click', function () {
+        Swal.fire({
+            title: '¿Estás seguro?',
+            text: 'Esta acción eliminará permanentemente la fotografía',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#3085d6',
+            confirmButtonText: 'Sí, eliminar',
+            cancelButtonText: 'Cancelar'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                deleteCurrentPhoto();
+            }
+        });
+    });
+}
+
+// Eliminar foto actual
+function deleteCurrentPhoto() {
+    if (currentEditingRow) {
+        // Animacion de eliminacion
+        currentEditingRow.style.transition = 'all 0.5s ease';
+        currentEditingRow.style.opacity = '0';
+        currentEditingRow.style.transform = 'translateX(-100%)';
+
+        setTimeout(() => {
+            currentEditingRow.remove();
+        }, 500);
+
+        // Cerrar modal
+        const modal = bootstrap.Modal.getInstance(document.getElementById('editImageModal'));
+        modal.hide();
+
+        showNotification('Fotografía eliminada correctamente', 'success');
+
+        // Reset variables
+        resetEditVariables();
+    }
+}
+
+// Guardar cambios
+function saveImageChanges() {
+    const newTipo = document.getElementById('editTipoFotografia').value;
+    const newDescripcion = document.getElementById('editDescripcion').value;
+    const newImageSrc = document.getElementById('editModalImage').src;
+
+    // Validar campos requeridos
+    if (!newTipo || !newDescripcion.trim()) {
+        showNotification('Por favor complete todos los campos requeridos', 'error');
+        return;
+    }
+
+    // Mostrar loading
+    const saveBtn = document.getElementById('saveChangesBtn');
+    saveBtn.classList.add('loading');
+    saveBtn.disabled = true;
+
+    // Simular guardado (en producción enviar a servidor)
+    setTimeout(() => {
+        // Actualizar la fila en la tabla
+        updateTableRow(currentEditingRow, { tipo_fotografia: newTipo, descripcion: newDescripcion, nueva_imagen: newImageSrc != originalImageSrc, imagen_src: newImageSrc });
+
+        // Actualizar datos para el lightbox
+        updateLightboxData(newTipo, newDescripcion, newImageSrc);
+
+        // Cerrar modal
+        const modal = bootstrap.Modal.getInstance(document.getElementById('editImageModal'));
+        modal.hide();
+
+        showNotification('Cambios guardados correctamente', 'success');
+
+        // Reset variables
+        resetEditVariables();
+
+        // Reset boton
+        saveBtn.classList.remove('loading');
+        saveBtn.disabled = false;
+    }, 1000);
+}
+
+// Actualizar datos para el lightbox
+function updateLightboxData(newTipo, newDescripcion, newImageSrc) {
+    if (currentImageData) {
+        // Actualizar datos globales
+        currentImageData.tipo = newTipo;
+        currentImageData.descripcion = newDescripcion;
+        currentImageData.imageUrl = newImageSrc;
+
+        // Si el lightbox esta abierto, actualizarlo
+        const lightbox = document.getElementById('imageLightbox');
+        if (lightbox && lightbox.style.display !== 'none') {
+            document.getElementById('lightboxImage').src = newImageSrc;
+            document.getElementById('lightboxDescription').textContent = newDescripcion;
+            document.getElementById('lightboxType').textContent = newTipo;
+        }
+    }
+}
+
+// Actualizar fila de la tabla
+function updateTableRow(row, formData) {
+    if (!row) return;
+
+    // Actualizar imagen si cambió
+    const img = row.querySelector('img');
+    if (img && formData.nueva_imagen) {
+        img.src = formData.imagen_src;
+        // Tambien el onclick del lightbox
+        const newOnclick = `openImageLightbox('${formData.imagen_src}', '${formData.descripcion}', '${formData.tipo_fotografia}')`;
+        img.setAttribute('onclick', newOnclick);
+    }
+
+    // Actualizar descripción
+    const descripcionCell = row.querySelector('[data-column="descripcion"]');
+    if (descripcionCell) {
+        descripcionCell.textContent = formData.descripcion;
+    }
+
+    // Actualizar tipo
+    const tipoCell = row.querySelector('[data-column="tipo-fotografia"]');
+    if (tipoCell) {
+        tipoCell.textContent = formData.tipo_fotografia;
+    }
+
+    // Animación de actualización
+    row.style.backgroundColor = '#d4edda';
+    row.style.transition = 'background-color 0.5s ease';
+    setTimeout(() => {
+        row.style.backgroundColor = '';
+    }, 2000);
+}
+
+// Reset variables del editor
+function resetEditVariables() {
+    currentEditingRow = null;
+    currentImageData = null;
+    hasImageBeenCropped = false;
+    originalImageSrc = null;
+
+    if (editCropper) {
+        editCropper.destroy();
+        editCropper = null;
+    }
+}
+
+// Event listener para cerrar modal
+document.addEventListener('DOMContentLoaded', function () {
+    // Event listener para guardar cambios
+    document.getElementById('saveChangesBtn').addEventListener('click', saveImageChanges);
+
+    // Event listener para limpiar variables al cerrar modal
+    const editModal = document.getElementById('editImageModal');
+    editModal.addEventListener('hidden.bs.modal', function () {
+        resetEditVariables();
+    });
+
+    // Inicializar herramientas
+    initializeCropTool();
+    initializePhotoUpload();
+    initializePhotoDelete();
+
+    console.log('Editor de imágenes inicializado');
+});
+
+// Hacer función global para ser llamada desde HTML
+window.editImage = editImage;
+
+// ================================================================================================
 
 // ================================================================================================
 // SISTEMA DE HISTORIAL
@@ -1327,7 +1756,7 @@ function formatRealDate(dateString) {
 }
 
 // ================================================================================================
-// FUNCIONES GLOBALES - CONSOLIDAS
+// FUNCIONES GLOBALES - CONSOLIDADAS
 // ================================================================================================
 
 window.openImageLightbox = openImageLightbox || function () { console.warn('openImageLightbox no definida'); };

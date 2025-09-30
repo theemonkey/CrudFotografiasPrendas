@@ -56,7 +56,7 @@ function debugSystem() {
 // ================================================================================================
 
 function initializeUserSystem() {
-    console.log('👤 Inicializando sistema de usuarios...');
+    console.log('Inicializando sistema de usuarios...');
 
     const metaUser = document.querySelector('meta[name="current-user"]');
     if (metaUser && metaUser.content) {
@@ -89,7 +89,7 @@ function generateUsernameFromDisplayName(displayName) {
 }
 
 function updateUserInterface(user) {
-    console.log(`👤 Usuario activo: ${user.displayName} (${user.username})`);
+    console.log(`Usuario activo: ${user.displayName} (${user.username})`);
 
     const userDisplayElements = document.querySelectorAll('.current-user-display');
     userDisplayElements.forEach(element => {
@@ -635,14 +635,14 @@ function getColumnDisplayName(columnKey) {
 // ================================================================================================
 
 function filterByTipoFotografia() {
-    console.log('🏷️ Aplicando filtro por tipo de fotografía...');
+    console.log('Aplicando filtro por tipo de fotografía...');
 
     const muestraCheck = document.getElementById('filtroMuestra');
     const prendaFinalCheck = document.getElementById('filtroPrendaFinal');
     const validacionACCheck = document.getElementById('filtroValidacionAC');
 
     if (!muestraCheck || !prendaFinalCheck || !validacionACCheck) {
-        console.error('❌ No se encontraron los checkboxes');
+        console.error('No se encontraron los checkboxes');
         return;
     }
 
@@ -654,7 +654,7 @@ function filterByTipoFotografia() {
 
     tipoFotografiaFilter.active = tipoFotografiaFilter.selectedTypes.length > 0;
 
-    console.log('🏷️ Tipos seleccionados:', tipoFotografiaFilter.selectedTypes);
+    console.log('Tipos seleccionados:', tipoFotografiaFilter.selectedTypes);
 
     applyTipoFotografiaFilter();
     updateTipoFotografiaUI();
@@ -761,7 +761,7 @@ function updateFilterStatusIndicator() {
 }
 
 function selectAllTipoFotografia() {
-    console.log('✅ Seleccionando todos los tipos...');
+    console.log('Seleccionando todos los tipos...');
 
     const muestraCheck = document.getElementById('filtroMuestra');
     const prendaFinalCheck = document.getElementById('filtroPrendaFinal');
@@ -774,11 +774,11 @@ function selectAllTipoFotografia() {
     filterByTipoFotografia();
 
     showNotification('Todos los tipos seleccionados', 'success');
-    console.log('✅ Todos los tipos seleccionados');
+    console.log('Todos los tipos seleccionados');
 }
 
 function clearTipoFotografiaFilter() {
-    console.log('🧹 Limpiando filtro de tipo fotografía...');
+    console.log('Limpiando filtro de tipo fotografía...');
 
     const muestraCheck = document.getElementById('filtroMuestra');
     const prendaFinalCheck = document.getElementById('filtroPrendaFinal');
@@ -809,12 +809,12 @@ function clearTipoFotografiaFilter() {
     }
 
     showNotification('Filtro de tipo fotografía eliminado', 'info');
-    console.log('✅ Filtro limpiado');
+    console.log('Filtro limpiado');
 }
 
 // MEJORAR: Inicialización del filtro con indicadores
 function initializeTipoFotografiaFilter() {
-    console.log('🏷️ Inicializando filtro de tipo fotografía...');
+    console.log('Inicializando filtro de tipo fotografía...');
 
     // updateTipoFotografiaCounts();
     updateFilterStatusIndicator();
@@ -846,7 +846,7 @@ function initializeTipoFotografiaFilter() {
         });
     }
 
-    console.log('✅ Filtro de tipo fotografía inicializado');
+    console.log('Filtro de tipo fotografía inicializado');
 }
 
 // ================================================================================================
@@ -1097,8 +1097,9 @@ let editCropper = null;
 let originalImageSrc = null;
 let currentEditingRow = null;
 let hasImageBeenCropped = false;
+let selectedPhotos = []; // Array para múltiples fotos
 
-// Función editImage actualizada
+// ===== FUNCIÓN PRINCIPAL PARA EDITAR IMAGEN =====
 function editImage(button) {
     const row = button.closest('tr');
     if (!row) {
@@ -1117,19 +1118,26 @@ function editImage(button) {
         return;
     }
 
+    // Guardar datos actuales
+    currentImageData = imageData;
+
     // Llenar el modal con los datos
     populateEditModal(imageData);
 
-    // Reset estado de recorte
+    // Reset estado de recorte y fotos múltiples
     hasImageBeenCropped = false;
+    selectedPhotos = [];
     updateResetButtonState();
+    clearMultiplePhotosContainer();
 
     // Mostrar el modal
     const modal = new bootstrap.Modal(document.getElementById('editImageModal'));
     modal.show();
+
+    showNotification(`Editando imagen: ${imageData.ordenSit}`, 'info');
 }
 
-// Extraer datos de la imagen desde la fila
+// ===== EXTRAER DATOS DE LA IMAGEN DESDE LA FILA =====
 function extractEditImageData(row) {
     try {
         const img = row.querySelector('img');
@@ -1156,7 +1164,7 @@ function extractEditImageData(row) {
     }
 }
 
-// Llenar el modal con los datos
+// ===== LLENAR EL MODAL CON LOS DATOS =====
 function populateEditModal(imageData) {
     // Imagen
     const modalImage = document.getElementById('editModalImage');
@@ -1174,12 +1182,173 @@ function populateEditModal(imageData) {
     document.getElementById('editOC').value = imageData.oc;
     document.getElementById('editFechaSubida').value = imageData.fechaSubida;
 
-    // Limpiar preview de nueva foto
-    document.getElementById('newPhotoPreview').innerHTML = '';
-    document.getElementById('newPhotoInput').value = '';
-
     console.log('Modal populado con datos:', imageData);
 }
+
+// ===== FUNCIONES PARA MÚLTIPLES FOTOS =====
+
+// Función para limpiar container de fotos múltiples
+function clearMultiplePhotosContainer() {
+    const container = document.getElementById('multiplePhotosContainer');
+    const uploadInfo = document.getElementById('uploadInfo');
+
+    if (container) {
+        container.innerHTML = '';
+    }
+    if (uploadInfo) {
+        uploadInfo.classList.add('d-none');
+    }
+}
+
+// Función para procesar múltiples archivos
+function processMultipleFiles(files) {
+    const container = document.getElementById('multiplePhotosContainer');
+
+    // Limpiar selecciones anteriores
+    selectedPhotos = [];
+    container.innerHTML = '';
+
+    files.forEach((file, index) => {
+        const reader = new FileReader();
+        reader.onload = function (e) {
+            const photoData = {
+                id: 'new_' + Date.now() + '_' + index,
+                file: file,
+                url: e.target.result,
+                name: file.name,
+                size: file.size,
+                isNew: true
+            };
+
+            selectedPhotos.push(photoData);
+            createPhotoPreview(photoData, container);
+
+            // Actualizar información
+            updateUploadInfo();
+
+            // Si es la primera foto, mostrarla en el preview principal
+            if (index === 0) {
+                document.getElementById('editModalImage').src = e.target.result;
+                hasImageBeenCropped = true;
+                updateResetButtonState();
+            }
+        };
+        reader.readAsDataURL(file);
+    });
+}
+
+// Crear preview de foto individual
+function createPhotoPreview(photoData, container) {
+    const photoDiv = document.createElement('div');
+    photoDiv.className = 'photo-preview-item';
+    photoDiv.dataset.photoId = photoData.id;
+
+    photoDiv.innerHTML = `
+        <div class="photo-preview-card">
+            <div class="photo-preview-image">
+                <img src="${photoData.url}" alt="${photoData.name}" onclick="selectPhotoForEdit('${photoData.id}')">
+                <div class="photo-preview-overlay">
+                    <button type="button" class="btn-photo-remove" onclick="removePhotoPreview('${photoData.id}')" title="Eliminar esta foto">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="photo-preview-info">
+                <div class="photo-name">${photoData.name}</div>
+                <div class="photo-size">${formatFileSize(photoData.size)}</div>
+                ${photoData.isNew ? '<div class="photo-status new">Nueva</div>' : ''}
+            </div>
+        </div>
+    `;
+
+    container.appendChild(photoDiv);
+}
+
+// Actualizar información de upload
+function updateUploadInfo() {
+    const uploadInfo = document.getElementById('uploadInfo');
+    const uploadInfoText = document.getElementById('uploadInfoText');
+
+    if (selectedPhotos.length > 0) {
+        uploadInfo.classList.remove('d-none');
+        uploadInfoText.textContent = `Fotos seleccionadas: ${selectedPhotos.length}`;
+    } else {
+        uploadInfo.classList.add('d-none');
+    }
+}
+
+// Seleccionar foto para editar
+function selectPhotoForEdit(photoId) {
+    const photo = selectedPhotos.find(p => p.id === photoId);
+    if (photo) {
+        document.getElementById('editModalImage').src = photo.url;
+
+        // Actualizar preview cards
+        document.querySelectorAll('.photo-preview-item').forEach(item => {
+            item.classList.remove('selected');
+        });
+
+        const selectedItem = document.querySelector(`[data-photo-id="${photoId}"]`);
+        if (selectedItem) {
+            selectedItem.classList.add('selected');
+        }
+
+        showNotification(`Editando: ${photo.name}`, 'info');
+    }
+}
+
+// Remover preview de foto
+function removePhotoPreview(photoId) {
+    selectedPhotos = selectedPhotos.filter(p => p.id !== photoId);
+
+    const photoElement = document.querySelector(`[data-photo-id="${photoId}"]`);
+    if (photoElement) {
+        photoElement.remove();
+    }
+
+    updateUploadInfo();
+
+    // Si no quedan fotos, restaurar imagen original
+    if (selectedPhotos.length === 0) {
+        document.getElementById('editModalImage').src = originalImageSrc;
+        hasImageBeenCropped = false;
+        updateResetButtonState();
+    } else {
+        // Mostrar la primera foto disponible
+        selectPhotoForEdit(selectedPhotos[0].id);
+    }
+}
+
+// Formatear tamaño de archivo
+function formatFileSize(bytes) {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+}
+
+// Crear filas adicionales para fotos múltiples
+function createAdditionalRows(additionalPhotos, tipo, descripcion) {
+    const tableBody = document.getElementById('imagesTableBody');
+    if (!tableBody || !currentImageData) return;
+
+    additionalPhotos.forEach((photo, index) => {
+        const newRowData = {
+            ...currentImageData,
+            id: 'new_' + Date.now() + '_' + index,
+            url: photo.url,
+            tipoFotografia: tipo,
+            descripcion: descripcion
+        };
+
+        setTimeout(() => {
+            addImageToTable(newRowData);
+        }, (index + 1) * 200);
+    });
+}
+
+// ===== FUNCIONALIDAD DE RECORTE =====
 
 // Inicializar funcionalidad de recorte
 function initializeCropTool() {
@@ -1190,6 +1359,13 @@ function initializeCropTool() {
     const cropControls = document.getElementById('cropControls');
     const imageTools = document.querySelector('.image-tools .btn-group');
 
+    // Verificar que los elementos existen
+    if (!cropBtn || !applyCropBtn || !cancelCropBtn || !resetBtn) {
+        console.warn('Algunos elementos de recorte no se encontraron');
+        return;
+    }
+
+    // Botón de recorte
     cropBtn.addEventListener('click', function () {
         const image = document.getElementById('editModalImage');
 
@@ -1214,9 +1390,10 @@ function initializeCropTool() {
         });
 
         // Mostrar controles de recorte
-        imageTools.classList.add('d-none');
-        cropControls.classList.remove('d-none');
+        if (imageTools) imageTools.classList.add('d-none');
+        if (cropControls) cropControls.classList.remove('d-none');
     });
+
     // Aplicar recorte
     applyCropBtn.addEventListener('click', function () {
         if (editCropper) {
@@ -1240,13 +1417,14 @@ function initializeCropTool() {
             editCropper = null;
 
             // Ocultar controles de recorte
-            cropControls.classList.add('d-none');
-            imageTools.classList.remove('d-none');
+            if (cropControls) cropControls.classList.add('d-none');
+            if (imageTools) imageTools.classList.remove('d-none');
 
             showNotification('Imagen recortada correctamente', 'success');
         }
     });
 
+    // Cancelar recorte
     cancelCropBtn.addEventListener('click', function () {
         if (editCropper) {
             editCropper.destroy();
@@ -1254,11 +1432,11 @@ function initializeCropTool() {
         }
 
         // Ocultar controles de recorte
-        cropControls.classList.add('d-none');
-        imageTools.classList.remove('d-none');
+        if (cropControls) cropControls.classList.add('d-none');
+        if (imageTools) imageTools.classList.remove('d-none');
     });
 
-    // Boton de restablecer
+    // Botón de restablecer
     resetBtn.addEventListener('click', function () {
         if (hasImageBeenCropped && originalImageSrc) {
             Swal.fire({
@@ -1277,9 +1455,9 @@ function initializeCropTool() {
                     hasImageBeenCropped = false;
                     updateResetButtonState();
 
-                    // Limpiar preview de nueva foto
-                    document.getElementById('newPhotoPreview').innerHTML = '';
-                    document.getElementById('newPhotoInput').value = '';
+                    // Limpiar múltiples fotos
+                    clearMultiplePhotosContainer();
+                    selectedPhotos = [];
 
                     showNotification('Imagen restablecida correctamente', 'success');
                 }
@@ -1290,7 +1468,7 @@ function initializeCropTool() {
     });
 }
 
-// Actualizar estado del boton restablecer
+// Actualizar estado del botón restablecer
 function updateResetButtonState() {
     const resetBtn = document.getElementById('resetImageBtn');
     if (resetBtn) {
@@ -1308,100 +1486,116 @@ function updateResetButtonState() {
     }
 }
 
-// Manejar subida de nueva foto
+// ===== FUNCIONALIDAD DE SUBIDA DE FOTOS =====
+
+// Manejar subida de múltiples fotos
 function initializePhotoUpload() {
     const uploadBtn = document.getElementById('uploadNewPhotoBtn');
     const fileInput = document.getElementById('newPhotoInput');
-    const preview = document.getElementById('newPhotoPreview');
+
+    if (!uploadBtn || !fileInput) {
+        console.warn('Elementos de subida no encontrados');
+        return;
+    }
 
     uploadBtn.addEventListener('click', function () {
         fileInput.click();
     });
 
     fileInput.addEventListener('change', function (e) {
-        const file = e.target.files[0];
-        if (!file) return;
+        const files = Array.from(e.target.files);
+        if (files.length === 0) return;
 
-        if (!file.type.startsWith('image/')) {
-            showNotification('Por favor seleccione un archivo de imagen válido', 'error');
-            return;
-        }
+        // Validar archivos
+        const validFiles = files.filter(file => {
+            if (!file.type.startsWith('image/')) {
+                showNotification(`"${file.name}" no es una imagen válida`, 'error');
+                return false;
+            }
+            if (file.size > 10 * 1024 * 1024) {
+                showNotification(`"${file.name}" es demasiado grande (máx 10MB)`, 'error');
+                return false;
+            }
+            return true;
+        });
 
-        const reader = new FileReader();
-        reader.onload = function (e) {
-            preview.innerHTML = `
-                <div class="border rounded p-2 bg-light">
-                    <img src="${e.target.result}" class="img-thumbnail" style="max-width: 100%; max-height: 150px;">
-                    <div class="mt-1">
-                        <small class="text-success">
-                            <i class="fas fa-check me-1"></i>
-                            Nueva imagen seleccionada: ${file.name}
-                        </small>
-                    </div>
-                </div>
-            `;
+        if (validFiles.length === 0) return;
 
-            // Actualizar la imagen principal del modal
-            document.getElementById('editModalImage').src = e.target.result;
-
-            // Marcar que se ha cambiado la imagen
-            hasImageBeenCropped = true;
-            updateResetButtonState();
-        };
-        reader.readAsDataURL(file);
+        // Procesar archivos válidos
+        processMultipleFiles(validFiles);
     });
 }
 
-// Manejar eliminación de foto
+// ===== FUNCIONALIDAD DE ELIMINACIÓN =====
+
+// Función para borrar solo la foto actual (no la fila)
 function initializePhotoDelete() {
     const deleteBtn = document.getElementById('deletePhotoBtn');
 
+    if (!deleteBtn) {
+        console.warn('Botón de eliminar no encontrado');
+        return;
+    }
+
     deleteBtn.addEventListener('click', function () {
         Swal.fire({
-            title: '¿Estás seguro?',
-            text: 'Esta acción eliminará permanentemente la fotografía',
+            title: '¿Eliminar esta fotografía?',
+            text: 'Esta acción eliminará solo esta imagen, no toda la información',
             icon: 'warning',
             showCancelButton: true,
-            confirmButtonColor: '#d33',
-            cancelButtonColor: '#3085d6',
-            confirmButtonText: 'Sí, eliminar',
+            confirmButtonColor: '#dc3545',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: 'Sí, eliminar foto',
             cancelButtonText: 'Cancelar'
         }).then((result) => {
             if (result.isConfirmed) {
-                deleteCurrentPhoto();
+                deleteCurrentPhotoOnly();
             }
         });
     });
 }
 
-// Eliminar foto actual
-function deleteCurrentPhoto() {
-    if (currentEditingRow) {
-        // Animacion de eliminacion
-        currentEditingRow.style.transition = 'all 0.5s ease';
-        currentEditingRow.style.opacity = '0';
-        currentEditingRow.style.transform = 'translateX(-100%)';
+// Eliminar solo la foto actual (no toda la fila)
+function deleteCurrentPhotoOnly() {
+    if (currentEditingRow && currentImageData) {
+        // Mostrar loading
+        const deleteBtn = document.getElementById('deletePhotoBtn');
+        deleteBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Eliminando...';
+        deleteBtn.disabled = true;
 
+        // Simular eliminación de la foto
         setTimeout(() => {
-            currentEditingRow.remove();
-        }, 500);
+            // Actualizar la imagen en la tabla con una imagen por defecto
+            const img = currentEditingRow.querySelector('img');
+            if (img) {
+                const defaultImage = getDefaultImageByType(currentImageData.tipo);
+                img.src = defaultImage;
+                img.alt = 'Imagen eliminada';
+                img.setAttribute('onclick', `openImageLightbox(this)`);
+            }
 
-        // Cerrar modal
-        const modal = bootstrap.Modal.getInstance(document.getElementById('editImageModal'));
-        modal.hide();
+            // Cerrar modal
+            const modal = bootstrap.Modal.getInstance(document.getElementById('editImageModal'));
+            modal.hide();
 
-        showNotification('Fotografía eliminada correctamente', 'success');
+            showNotification('Fotografía eliminada correctamente (fila mantenida)', 'success');
 
-        // Reset variables
-        resetEditVariables();
+            // Reset variables
+            resetEditVariables();
+
+            // Reset botón
+            deleteBtn.innerHTML = '<i class="fas fa-trash me-1"></i>Borrar Esta Foto';
+            deleteBtn.disabled = false;
+        }, 1500);
     }
 }
 
-// Guardar cambios
+// ===== FUNCIONALIDAD DE GUARDADO =====
+
+// Guardar cambios (mejorado para múltiples fotos)
 function saveImageChanges() {
     const newTipo = document.getElementById('editTipoFotografia').value;
     const newDescripcion = document.getElementById('editDescripcion').value;
-    const newImageSrc = document.getElementById('editModalImage').src;
 
     // Validar campos requeridos
     if (!newTipo || !newDescripcion.trim()) {
@@ -1414,27 +1608,46 @@ function saveImageChanges() {
     saveBtn.classList.add('loading');
     saveBtn.disabled = true;
 
-    // Simular guardado (en producción enviar a servidor)
+    // Determinar qué imagen usar
+    let finalImageSrc = document.getElementById('editModalImage').src;
+    let hasNewImages = selectedPhotos.length > 0;
+
+    // Simular guardado
     setTimeout(() => {
-        // Actualizar la fila en la tabla
-        updateTableRow(currentEditingRow, { tipo_fotografia: newTipo, descripcion: newDescripcion, nueva_imagen: newImageSrc != originalImageSrc, imagen_src: newImageSrc });
+        // Si hay múltiples fotos nuevas, crear nuevas filas
+        if (hasNewImages && selectedPhotos.length > 1) {
+            createAdditionalRows(selectedPhotos.slice(1), newTipo, newDescripcion);
+        }
+
+        // Actualizar la fila actual
+        updateTableRow(currentEditingRow, {
+            tipo_fotografia: newTipo,
+            descripcion: newDescripcion,
+            nueva_imagen: finalImageSrc !== originalImageSrc,
+            imagen_src: finalImageSrc
+        });
 
         // Actualizar datos para el lightbox
-        updateLightboxData(newTipo, newDescripcion, newImageSrc);
+        updateLightboxData(newTipo, newDescripcion, finalImageSrc);
 
         // Cerrar modal
         const modal = bootstrap.Modal.getInstance(document.getElementById('editImageModal'));
         modal.hide();
 
-        showNotification('Cambios guardados correctamente', 'success');
+        let message = 'Cambios guardados correctamente';
+        if (hasNewImages && selectedPhotos.length > 1) {
+            message += ` (${selectedPhotos.length} fotos procesadas)`;
+        }
+
+        showNotification(message, 'success');
 
         // Reset variables
         resetEditVariables();
 
-        // Reset boton
+        // Reset botón
         saveBtn.classList.remove('loading');
         saveBtn.disabled = false;
-    }, 1000);
+    }, 1500);
 }
 
 // Actualizar datos para el lightbox
@@ -1445,7 +1658,7 @@ function updateLightboxData(newTipo, newDescripcion, newImageSrc) {
         currentImageData.descripcion = newDescripcion;
         currentImageData.imageUrl = newImageSrc;
 
-        // Si el lightbox esta abierto, actualizarlo
+        // Si el lightbox está abierto, actualizarlo
         const lightbox = document.getElementById('imageLightbox');
         if (lightbox && lightbox.style.display !== 'none') {
             document.getElementById('lightboxImage').src = newImageSrc;
@@ -1463,9 +1676,7 @@ function updateTableRow(row, formData) {
     const img = row.querySelector('img');
     if (img && formData.nueva_imagen) {
         img.src = formData.imagen_src;
-        // Tambien el onclick del lightbox
-        const newOnclick = `openImageLightbox('${formData.imagen_src}', '${formData.descripcion}', '${formData.tipo_fotografia}')`;
-        img.setAttribute('onclick', newOnclick);
+        // El onclick ya usa openImageLightboxFromRow(this) que es correcto
     }
 
     // Actualizar descripción
@@ -1482,11 +1693,13 @@ function updateTableRow(row, formData) {
 
     // Animación de actualización
     row.style.backgroundColor = '#d4edda';
-    row.style.transition = 'background-color 0.5s ease';
+    row.style.transition = 'background-color 0.3s ease';
     setTimeout(() => {
         row.style.backgroundColor = '';
     }, 2000);
 }
+
+// ===== FUNCIONES AUXILIARES =====
 
 // Reset variables del editor
 function resetEditVariables() {
@@ -1494,6 +1707,7 @@ function resetEditVariables() {
     currentImageData = null;
     hasImageBeenCropped = false;
     originalImageSrc = null;
+    selectedPhotos = [];
 
     if (editCropper) {
         editCropper.destroy();
@@ -1501,13 +1715,23 @@ function resetEditVariables() {
     }
 }
 
-// Event listener para cerrar modal
+// ===== INICIALIZACIÓN =====
+
+// Event listeners principales
 document.addEventListener('DOMContentLoaded', function () {
+    // Verificar que los elementos existen antes de inicializar
+    const editModal = document.getElementById('editImageModal');
+    const saveBtn = document.getElementById('saveChangesBtn');
+
+    if (!editModal || !saveBtn) {
+        console.warn('Elementos del modal de edición no encontrados');
+        return;
+    }
+
     // Event listener para guardar cambios
-    document.getElementById('saveChangesBtn').addEventListener('click', saveImageChanges);
+    saveBtn.addEventListener('click', saveImageChanges);
 
     // Event listener para limpiar variables al cerrar modal
-    const editModal = document.getElementById('editImageModal');
     editModal.addEventListener('hidden.bs.modal', function () {
         resetEditVariables();
     });
@@ -1517,11 +1741,17 @@ document.addEventListener('DOMContentLoaded', function () {
     initializePhotoUpload();
     initializePhotoDelete();
 
-    console.log('Editor de imágenes inicializado');
+    console.log('Editor de imágenes múltiples inicializado correctamente');
 });
 
-// Hacer función global para ser llamada desde HTML
+// ===== FUNCIONES GLOBALES =====
+
+// Hacer funciones globales para ser llamadas desde HTML
 window.editImage = editImage;
+window.selectPhotoForEdit = selectPhotoForEdit;
+window.removePhotoPreview = removePhotoPreview;
+
+console.log('Módulo de edición de imágenes cargado');
 
 // ================================================================================================
 
@@ -1754,6 +1984,895 @@ function formatRealDate(dateString) {
         minute: '2-digit'
     });
 }
+
+// ================================================================================================
+// FUNCIONALIDAD DE FILTROS PREDICTIVOS - fotos-index
+// ================================================================================================
+// Variables globales para filtros predictivos
+let allTableData = [];
+let filteredData = [];
+let currentSuggestions = {};
+let selectedSuggestionIndex = -1;
+let activeFilters = {};
+let filterObserver = null;
+
+// ===== INICIALIZACIÓN DE FILTROS PREDICTIVOS =====
+function initializePredictiveFilters() {
+    console.log('Inicializando filtros predictivos completos...');
+
+    // Recopilar todos los datos de la tabla
+    extractTableData();
+
+    // Configurar event listeners para cada filtro
+    setupFilterListeners();
+
+    // Configurar observador para cambios en la tabla
+    setupTableObserver();
+
+    console.log('Filtros predictivos completos inicializados');
+}
+
+// ===== OBSERVADOR DE CAMBIOS EN LA TABLA =====
+function setupTableObserver() {
+    const tableBody = document.getElementById('imagesTableBody');
+    if (!tableBody) return;
+
+    filterObserver = new MutationObserver(function (mutations) {
+        let shouldRefresh = false;
+
+        mutations.forEach(function (mutation) {
+            if (mutation.type === 'childList') {
+                // Se agregaron o eliminaron filas
+                if (mutation.addedNodes.length > 0 || mutation.removedNodes.length > 0) {
+                    shouldRefresh = true;
+                }
+            }
+        });
+
+        if (shouldRefresh) {
+            console.log('Cambios detectados en tabla, actualizando filtros...');
+            setTimeout(() => {
+                extractTableData();
+                applyAllFilters();
+            }, 100);
+        }
+    });
+
+    filterObserver.observe(tableBody, {
+        childList: true,
+        subtree: true
+    });
+}
+
+// ===== EXTRAER DATOS DE LA TABLA (MEJORADO) =====
+function extractTableData() {
+    allTableData = [];
+    const tableBody = document.getElementById('imagesTableBody');
+
+    if (!tableBody) return;
+
+    const rows = tableBody.querySelectorAll('tr[data-image-id]');
+
+    rows.forEach((row, index) => {
+        const ordenSitCell = row.querySelector('[data-column="orden-sit"]');
+        const poCell = row.querySelector('[data-column="po"]');
+        const ocCell = row.querySelector('[data-column="oc"]');
+        const descripcionCell = row.querySelector('[data-column="descripcion"]');
+        const tipoCell = row.querySelector('[data-column="tipo-fotografia"]');
+
+        const rowData = {
+            index: index,
+            row: row,
+            ordenSit: ordenSitCell ? ordenSitCell.textContent.trim() : '',
+            po: poCell ? poCell.textContent.trim() : '',
+            oc: ocCell ? ocCell.textContent.trim() : '',
+            descripcion: descripcionCell ? descripcionCell.textContent.trim() : '',
+            tipo: tipoCell ? tipoCell.textContent.trim() : ''
+        };
+
+        allTableData.push(rowData);
+    });
+
+    filteredData = [...allTableData];
+    console.log(`Datos extraídos: ${allTableData.length} filas (incluyendo nuevas imágenes)`);
+}
+
+// ===== CONFIGURAR EVENT LISTENERS =====
+function setupFilterListeners() {
+    const filterInputs = document.querySelectorAll('.predictive-filter');
+
+    filterInputs.forEach(input => {
+        const column = input.dataset.column;
+        const suggestionsContainer = document.getElementById(`suggestions${capitalizeFirst(column.replace('-', ''))}`);
+
+        if (!suggestionsContainer) return;
+
+        // Input event - mostrar sugerencias mientras escribe
+        input.addEventListener('input', function (e) {
+            const query = e.target.value.trim();
+
+            if (query.length >= 1) {
+                showSuggestions(column, query, suggestionsContainer, input);
+            } else {
+                hideSuggestions(suggestionsContainer, input);
+                removeActiveFilter(column);
+                applyAllFilters();
+            }
+        });
+
+        // Focus event - mostrar sugerencias si hay texto
+        input.addEventListener('focus', function (e) {
+            const query = e.target.value.trim();
+            if (query.length >= 1) {
+                showSuggestions(column, query, suggestionsContainer, input);
+            }
+        });
+
+        // Blur event - ocultar sugerencias (con delay para permitir clicks)
+        input.addEventListener('blur', function (e) {
+            setTimeout(() => {
+                hideSuggestions(suggestionsContainer, input);
+            }, 150);
+        });
+
+        // Keyboard navigation
+        input.addEventListener('keydown', function (e) {
+            handleKeyboardNavigation(e, column, suggestionsContainer, input);
+        });
+    });
+
+    // Click fuera para cerrar sugerencias
+    document.addEventListener('click', function (e) {
+        if (!e.target.closest('.autocomplete-wrapper')) {
+            hideAllSuggestions();
+        }
+    });
+}
+
+// ===== GENERAR SUGERENCIAS (MEJORADO PARA NÚMEROS Y TEXTO) =====
+function generateSuggestions(column, query) {
+    const columnMap = {
+        'orden-sit': 'ordenSit',
+        'po': 'po',
+        'oc': 'oc',
+        'descripcion': 'descripcion'
+    };
+
+    const fieldName = columnMap[column];
+    if (!fieldName) return [];
+
+    // Obtener valores únicos que coincidan con la consulta
+    const matchingValues = new Map();
+
+    allTableData.forEach(item => {
+        const value = item[fieldName];
+        if (value && matchesQuery(value, query)) {
+            const count = matchingValues.get(value) || 0;
+            matchingValues.set(value, count + 1);
+        }
+    });
+
+    // Convertir a array y ordenar por relevancia
+    const suggestions = Array.from(matchingValues.entries()).map(([value, count]) => {
+        const relevance = calculateRelevance(value, query);
+
+        return {
+            value: value,
+            count: count,
+            relevance: relevance,
+            query: query
+        };
+    });
+
+    // Ordenar por relevancia y limitar resultados
+    return suggestions
+        .sort((a, b) => {
+            if (b.relevance !== a.relevance) {
+                return b.relevance - a.relevance;
+            }
+            return b.count - a.count;
+        })
+        .slice(0, 10);
+}
+
+// ===== FUNCIÓN MEJORADA PARA COINCIDENCIAS (NÚMEROS Y TEXTO) =====
+function matchesQuery(value, query) {
+    const lowerValue = value.toLowerCase();
+    const lowerQuery = query.toLowerCase();
+
+    // Coincidencia exacta
+    if (lowerValue.includes(lowerQuery)) {
+        return true;
+    }
+
+    // Para números, también verificar coincidencias parciales
+    if (isNumeric(query)) {
+        // Si la consulta es numérica, buscar en cualquier parte del número
+        const valueNumbers = value.match(/\d+/g);
+        if (valueNumbers) {
+            return valueNumbers.some(num => num.includes(query));
+        }
+    }
+
+    // Para texto, verificar palabras individuales
+    const queryWords = query.split(/\s+/);
+    const valueWords = value.toLowerCase().split(/\s+/);
+
+    return queryWords.every(queryWord =>
+        valueWords.some(valueWord => valueWord.includes(queryWord))
+    );
+}
+
+// ===== CALCULAR RELEVANCIA (MEJORADO PARA NÚMEROS) =====
+function calculateRelevance(value, query) {
+    const lowerValue = value.toLowerCase();
+    const lowerQuery = query.toLowerCase();
+
+    // Coincidencia exacta completa
+    if (lowerValue === lowerQuery) {
+        return 1000;
+    }
+
+    // Coincidencia al inicio
+    if (lowerValue.startsWith(lowerQuery)) {
+        return 500;
+    }
+
+    // Para números, alta relevancia si coincide con el inicio de cualquier número
+    if (isNumeric(query)) {
+        const valueNumbers = value.match(/\d+/g);
+        if (valueNumbers) {
+            for (let num of valueNumbers) {
+                if (num.startsWith(query)) {
+                    return 400;
+                }
+                if (num.includes(query)) {
+                    return 200;
+                }
+            }
+        }
+    }
+
+    // Coincidencia de palabra completa
+    const valueWords = lowerValue.split(/\s+/);
+    if (valueWords.includes(lowerQuery)) {
+        return 300;
+    }
+
+    // Coincidencia al inicio de palabra
+    if (valueWords.some(word => word.startsWith(lowerQuery))) {
+        return 250;
+    }
+
+    // Coincidencia después de espacio
+    if (lowerValue.includes(' ' + lowerQuery)) {
+        return 150;
+    }
+
+    // Coincidencia parcial
+    if (lowerValue.includes(lowerQuery)) {
+        return 100;
+    }
+
+    return 0;
+}
+
+// ===== FUNCIÓN AUXILIAR PARA DETECTAR NÚMEROS =====
+function isNumeric(str) {
+    return /^\d+$/.test(str);
+}
+
+// ===== MOSTRAR SUGERENCIAS =====
+function showSuggestions(column, query, container, input) {
+    const suggestions = generateSuggestions(column, query);
+
+    if (suggestions.length === 0) {
+        showEmptySuggestions(container, query);
+        return;
+    }
+
+    renderSuggestions(suggestions, container, column, query, input);
+    container.classList.add('show');
+    input.classList.add('has-suggestions');
+    selectedSuggestionIndex = -1;
+}
+
+// ===== RENDERIZAR SUGERENCIAS (MEJORADO) =====
+function renderSuggestions(suggestions, container, column, query, input) {
+    const columnNames = {
+        'orden-sit': 'Orden SIT',
+        'po': 'P.O',
+        'oc': 'O.C',
+        'descripcion': 'Descripción'
+    };
+
+    let html = `
+        <div class="suggestions-header">
+            ${suggestions.length} ${columnNames[column] || column} encontrada${suggestions.length !== 1 ? 's' : ''}
+        </div>
+    `;
+
+    suggestions.forEach((suggestion, index) => {
+        const highlightedText = highlightQuery(suggestion.value, query);
+
+        html += `
+            <div class="suggestion-item"
+                 data-value="${escapeHtml(suggestion.value)}"
+                 data-index="${index}"
+                 onclick="selectSuggestion('${column}', '${escapeHtml(suggestion.value)}', '${container.id}', '${input.id}')">
+                <span class="suggestion-text">${highlightedText}</span>
+                <span class="suggestion-count">${suggestion.count}</span>
+            </div>
+        `;
+    });
+
+    container.innerHTML = html;
+    currentSuggestions[column] = suggestions;
+}
+
+// ===== RESALTAR CONSULTA EN TEXTO (MEJORADO PARA NÚMEROS) =====
+function highlightQuery(text, query) {
+    // Escapar caracteres especiales para regex
+    const escapedQuery = escapeRegex(query);
+
+    // Resaltar coincidencias completas
+    let highlightedText = text.replace(
+        new RegExp(`(${escapedQuery})`, 'gi'),
+        '<span class="highlight">$1</span>'
+    );
+
+    // Para números, también resaltar dentro de secuencias numéricas
+    if (isNumeric(query)) {
+        highlightedText = highlightedText.replace(
+            new RegExp(`(\\d*)(${escapedQuery})(\\d*)`, 'gi'),
+            '$1<span class="highlight">$2</span>$3'
+        );
+    }
+
+    return highlightedText;
+}
+
+// ===== APLICAR FILTROS (MEJORADO) =====
+function applyAllFilters() {
+    const hasActiveFilters = Object.keys(activeFilters).length > 0;
+
+    if (!hasActiveFilters) {
+        // Mostrar todas las filas
+        allTableData.forEach(item => {
+            if (item.row.parentNode) {  // Verificar que la fila aún exista en el DOM
+                item.row.style.display = '';
+            }
+        });
+        filteredData = [...allTableData];
+        updateFilterStatus();
+        return;
+    }
+
+    // Filtrar datos
+    filteredData = allTableData.filter(item => {
+        return Object.entries(activeFilters).every(([column, filterValue]) => {
+            const columnMap = {
+                'orden-sit': 'ordenSit',
+                'po': 'po',
+                'oc': 'oc',
+                'descripcion': 'descripcion'
+            };
+
+            const fieldName = columnMap[column];
+            if (!fieldName) return true;
+
+            const itemValue = item[fieldName];
+
+            // Usar la función mejorada de coincidencias
+            return matchesQuery(itemValue, filterValue);
+        });
+    });
+
+    // Mostrar/ocultar filas según filtros
+    allTableData.forEach(item => {
+        if (item.row.parentNode) {  // Verificar que la fila aún exista en el DOM
+            const isVisible = filteredData.includes(item);
+            item.row.style.display = isVisible ? '' : 'none';
+        }
+    });
+
+    updateFilterStatus();
+    console.log(`Filtros aplicados: ${filteredData.length}/${allTableData.length} filas visibles`);
+}
+
+// ===== INTEGRACIÓN CON FUNCIONES EXISTENTES =====
+
+// Sobrescribir la función original addImageToTable para incluir filtros
+const originalAddImageToTable = window.addImageToTable;
+window.addImageToTable = function (imageData) {
+    // Llamar a la función original
+    if (originalAddImageToTable) {
+        originalAddImageToTable(imageData);
+    }
+
+    // Actualizar filtros después de agregar imagen
+    setTimeout(() => {
+        console.log('Nueva imagen agregada, actualizando filtros...');
+        extractTableData();
+        applyAllFilters();
+    }, 200);
+};
+
+// Función para refrescar filtros manualmente
+function refreshFiltersData() {
+    console.log('Refrescando datos de filtros...');
+    extractTableData();
+    applyAllFilters();
+}
+
+// ===== FUNCIONES DE NAVEGACIÓN Y SELECCIÓN (mantener las existentes) =====
+function handleKeyboardNavigation(e, column, container, input) {
+    const suggestions = currentSuggestions[column];
+    if (!suggestions || suggestions.length === 0) return;
+
+    switch (e.key) {
+        case 'ArrowDown':
+            e.preventDefault();
+            selectedSuggestionIndex = Math.min(selectedSuggestionIndex + 1, suggestions.length - 1);
+            updateSelectedSuggestion(container);
+            break;
+
+        case 'ArrowUp':
+            e.preventDefault();
+            selectedSuggestionIndex = Math.max(selectedSuggestionIndex - 1, -1);
+            updateSelectedSuggestion(container);
+            break;
+
+        case 'Enter':
+            e.preventDefault();
+            if (selectedSuggestionIndex >= 0) {
+                const selectedSuggestion = suggestions[selectedSuggestionIndex];
+                selectSuggestion(column, selectedSuggestion.value, container.id, input.id);
+            }
+            break;
+
+        case 'Escape':
+            hideSuggestions(container, input);
+            input.blur();
+            break;
+    }
+}
+
+function updateSelectedSuggestion(container) {
+    const items = container.querySelectorAll('.suggestion-item');
+
+    items.forEach((item, index) => {
+        if (index === selectedSuggestionIndex) {
+            item.classList.add('selected');
+            item.scrollIntoView({ block: 'nearest' });
+        } else {
+            item.classList.remove('selected');
+        }
+    });
+}
+
+function selectSuggestion(column, value, containerId, inputId) {
+    const input = document.getElementById(inputId);
+    const container = document.getElementById(containerId);
+
+    input.value = value;
+    hideSuggestions(container, input);
+
+    // Aplicar filtro
+    setActiveFilter(column, value);
+    applyAllFilters();
+
+    // Marcar input como activo
+    input.classList.add('active');
+
+    console.log(`Filtro aplicado: ${column} = "${value}"`);
+}
+
+function setActiveFilter(column, value) {
+    if (value && value.trim() !== '') {
+        activeFilters[column] = value.trim();
+    } else {
+        removeActiveFilter(column);
+    }
+}
+
+function removeActiveFilter(column) {
+    delete activeFilters[column];
+
+    // Remover clase activa del input
+    const input = document.querySelector(`[data-column="${column}"]`);
+    if (input) {
+        input.classList.remove('active');
+    }
+}
+
+function showEmptySuggestions(container, query) {
+    container.innerHTML = `
+        <div class="suggestions-empty">
+            <i class="fas fa-search me-2"></i>
+            No se encontraron coincidencias para "${query}"
+        </div>
+    `;
+    container.classList.add('show');
+}
+
+function hideSuggestions(container, input) {
+    container.classList.remove('show');
+    input.classList.remove('has-suggestions');
+    selectedSuggestionIndex = -1;
+}
+
+function hideAllSuggestions() {
+    document.querySelectorAll('.autocomplete-suggestions').forEach(container => {
+        container.classList.remove('show');
+    });
+
+    document.querySelectorAll('.predictive-filter').forEach(input => {
+        input.classList.remove('has-suggestions');
+    });
+
+    selectedSuggestionIndex = -1;
+}
+
+function updateFilterStatus() {
+    const activeFilterCount = Object.keys(activeFilters).length;
+    const visibleRows = filteredData.length;
+    const totalRows = allTableData.length;
+
+    console.log(`Estado de filtros: ${activeFilterCount} activos, ${visibleRows}/${totalRows} filas visibles`);
+}
+
+// ===== FUNCIONES AUXILIARES =====
+function capitalizeFirst(str) {
+    return str.charAt(0).toUpperCase() + str.slice(1);
+}
+
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+function escapeRegex(string) {
+    return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function clearAllFilters() {
+    activeFilters = {};
+
+    // Limpiar todos los inputs
+    document.querySelectorAll('.predictive-filter').forEach(input => {
+        input.value = '';
+        input.classList.remove('active');
+    });
+
+    hideAllSuggestions();
+    applyAllFilters();
+}
+
+// ===== INICIALIZACIÓN =====
+document.addEventListener('DOMContentLoaded', function () {
+    // Esperar un poco para que la tabla esté completamente cargada
+    setTimeout(() => {
+        initializePredictiveFilters();
+    }, 500);
+});
+
+// Event listener para actualizar filtros cuando se transfieran imágenes
+window.addEventListener('storage', function (e) {
+    if (e.key === 'newUploadedImages') {
+        setTimeout(() => {
+            refreshFiltersData();
+        }, 1000);
+    }
+});
+
+// Limpiar observador al salir de la página
+window.addEventListener('beforeunload', function () {
+    if (filterObserver) {
+        filterObserver.disconnect();
+    }
+});
+
+// Hacer funciones globales
+window.selectSuggestion = selectSuggestion;
+window.clearAllFilters = clearAllFilters;
+window.refreshFiltersData = refreshFiltersData;
+
+console.log('Sistema de filtros predictivos completo cargado');
+
+
+// ================================================================================================
+// FUNCIONALIDAD DE BÚSQUEDA GLOBAL DINÁMICA - Ord. SIT / P.O / O.C
+// ================================================================================================
+
+// Variables para búsqueda global
+let globalSearchActive = false;
+let globalSearchQuery = '';
+
+// ===== INICIALIZAR BÚSQUEDA GLOBAL DINÁMICA =====
+function initializeGlobalSearch() {
+    console.log('Inicializando búsqueda global dinámica...');
+
+    const globalSearchInput = document.getElementById('searchInput');
+    const globalSearchButton = document.getElementById('searchButton');
+
+    if (!globalSearchInput) {
+        console.warn('Campo de búsqueda global no encontrado');
+        return;
+    }
+
+    // Event listeners para búsqueda dinámica
+    setupGlobalSearchListeners(globalSearchInput, globalSearchButton);
+
+    console.log('Búsqueda global dinámica inicializada');
+}
+
+// ===== CONFIGURAR EVENT LISTENERS PARA BÚSQUEDA GLOBAL =====
+function setupGlobalSearchListeners(searchInput, searchButton) {
+
+    // Input event - filtrar mientras escribe (como en Descripción)
+    searchInput.addEventListener('input', function (e) {
+        const query = e.target.value.trim();
+
+        if (query.length >= 1) {
+            // Aplicar búsqueda global
+            applyGlobalSearch(query);
+            globalSearchActive = true;
+            globalSearchQuery = query;
+
+            // Cambiar estilo del input para indicar filtro activo
+            searchInput.classList.add('global-search-active');
+
+            console.log(`Búsqueda global aplicada: "${query}"`);
+        } else {
+            // Limpiar búsqueda y restaurar tabla
+            clearGlobalSearch();
+            globalSearchActive = false;
+            globalSearchQuery = '';
+
+            // Remover estilo activo
+            searchInput.classList.remove('global-search-active');
+
+            console.log('Búsqueda global limpiada, tabla restaurada');
+        }
+    });
+
+    // Focus event - resaltar campo activo
+    searchInput.addEventListener('focus', function (e) {
+        searchInput.classList.add('global-search-focused');
+    });
+
+    // Blur event - remover resaltado
+    searchInput.addEventListener('blur', function (e) {
+        searchInput.classList.remove('global-search-focused');
+    });
+
+    // Keyboard events
+    searchInput.addEventListener('keydown', function (e) {
+        switch (e.key) {
+            case 'Enter':
+                e.preventDefault();
+                const query = e.target.value.trim();
+                if (query.length >= 1) {
+                    applyGlobalSearch(query);
+                }
+                break;
+
+            case 'Escape':
+                clearGlobalSearch();
+                searchInput.blur();
+                break;
+        }
+    });
+
+    // Click en botón de búsqueda (mantener funcionalidad existente)
+    if (searchButton) {
+        searchButton.addEventListener('click', function (e) {
+            e.preventDefault();
+            const query = searchInput.value.trim();
+            if (query.length >= 1) {
+                applyGlobalSearch(query);
+                globalSearchActive = true;
+                globalSearchQuery = query;
+                searchInput.classList.add('global-search-active');
+            }
+        });
+    }
+}
+
+// ===== APLICAR BÚSQUEDA GLOBAL =====
+function applyGlobalSearch(query) {
+    console.log(`Aplicando búsqueda global para: "${query}"`);
+
+    // Asegurar que los datos de la tabla estén actualizados
+    if (typeof extractTableData === 'function') {
+        extractTableData();
+    }
+
+    // Filtrar datos en múltiples campos
+    const globalFilteredData = allTableData.filter(item => {
+        const searchableFields = [
+            item.ordenSit,
+            item.po,
+            item.oc
+        ];
+
+        // Buscar en cualquiera de los campos numéricos
+        return searchableFields.some(field => {
+            return field && matchesGlobalQuery(field, query);
+        });
+    });
+
+    // Mostrar/ocultar filas según resultado de búsqueda global
+    allTableData.forEach(item => {
+        if (item.row.parentNode) {
+            const isVisible = globalFilteredData.includes(item);
+            item.row.style.display = isVisible ? '' : 'none';
+        }
+    });
+
+    // Actualizar estado
+    updateGlobalSearchStatus(query, globalFilteredData.length, allTableData.length);
+}
+
+// ===== FUNCIÓN DE COINCIDENCIA PARA BÚSQUEDA GLOBAL =====
+function matchesGlobalQuery(value, query) {
+    if (!value || !query) return false;
+
+    const lowerValue = String(value).toLowerCase();
+    const lowerQuery = String(query).toLowerCase();
+
+    // Coincidencia directa
+    if (lowerValue.includes(lowerQuery)) {
+        return true;
+    }
+
+    // Para números, verificar coincidencias parciales más específicas
+    if (isNumeric(query)) {
+        // Coincidencia exacta de números
+        if (lowerValue === lowerQuery) {
+            return true;
+        }
+
+        // Coincidencia al inicio de número
+        if (lowerValue.startsWith(lowerQuery)) {
+            return true;
+        }
+
+        // Coincidencia de secuencia numérica
+        const valueNumbers = value.match(/\d+/g);
+        if (valueNumbers) {
+            return valueNumbers.some(num => num.includes(query));
+        }
+    }
+
+    return false;
+}
+
+// ===== LIMPIAR BÚSQUEDA GLOBAL =====
+function clearGlobalSearch() {
+    console.log('Limpiando búsqueda global...');
+
+    // Mostrar todas las filas
+    if (allTableData && allTableData.length > 0) {
+        allTableData.forEach(item => {
+            if (item.row.parentNode) {
+                item.row.style.display = '';
+            }
+        });
+    }
+
+    // Limpiar input
+    const searchInput = document.getElementById('searchInput');
+    if (searchInput) {
+        searchInput.value = '';
+        searchInput.classList.remove('global-search-active');
+    }
+
+    // Resetear variables
+    globalSearchActive = false;
+    globalSearchQuery = '';
+
+    // Reactivar otros filtros si los hay
+    if (typeof applyAllFilters === 'function') {
+        applyAllFilters();
+    }
+
+    updateGlobalSearchStatus('', allTableData ? allTableData.length : 0, allTableData ? allTableData.length : 0);
+}
+
+// ===== ACTUALIZAR ESTADO DE BÚSQUEDA GLOBAL =====
+function updateGlobalSearchStatus(query, visibleCount, totalCount) {
+    console.log(`Búsqueda global: "${query}" - ${visibleCount}/${totalCount} resultados`);
+
+    // Aquí puedes agregar indicadores visuales adicionales si necesitas
+    // Por ejemplo, actualizar contadores o mensajes de estado
+}
+
+// ===== INTEGRACIÓN CON FILTROS EXISTENTES =====
+function integrateGlobalSearchWithFilters() {
+    // Sobrescribir applyAllFilters para considerar búsqueda global
+    if (typeof applyAllFilters === 'function') {
+        const originalApplyAllFilters = applyAllFilters;
+
+        window.applyAllFilters = function () {
+            // Aplicar filtros de columnas normalmente
+            originalApplyAllFilters();
+
+            // Si hay búsqueda global activa, aplicarla también
+            if (globalSearchActive && globalSearchQuery) {
+                applyGlobalSearch(globalSearchQuery);
+            }
+        };
+    }
+}
+
+// ===== FUNCIÓN PARA LIMPIAR TODOS LOS FILTROS (INCLUYENDO GLOBAL) =====
+function clearAllFiltersIncludingGlobal() {
+    // Limpiar búsqueda global
+    clearGlobalSearch();
+
+    // Limpiar filtros de columnas
+    if (typeof clearAllFilters === 'function') {
+        clearAllFilters();
+    }
+
+    console.log('🧹 Todos los filtros limpiados (global + columnas)');
+}
+
+// ===== FUNCIÓN PARA REFRESCAR BÚSQUEDA GLOBAL =====
+function refreshGlobalSearch() {
+    if (globalSearchActive && globalSearchQuery) {
+        console.log('Refrescando búsqueda global...');
+        applyGlobalSearch(globalSearchQuery);
+    }
+}
+
+// ===== INTEGRACIÓN CON TABLA DINÁMICA =====
+function setupGlobalSearchTableIntegration() {
+    // Integrar con función de agregar imagen
+    if (typeof window.addImageToTable === 'function') {
+        const originalAddImageToTable = window.addImageToTable;
+
+        window.addImageToTable = function (imageData) {
+            // Llamar función original
+            originalAddImageToTable(imageData);
+
+            // Refrescar búsqueda global si está activa
+            setTimeout(() => {
+                refreshGlobalSearch();
+            }, 200);
+        };
+    }
+}
+
+// ===== INICIALIZACIÓN COMPLETA =====
+function initializeCompleteSearch() {
+    // Inicializar búsqueda global
+    initializeGlobalSearch();
+
+    // Integrar con filtros existentes
+    integrateGlobalSearchWithFilters();
+
+    // Integrar con tabla dinámica
+    setupGlobalSearchTableIntegration();
+
+    console.log('Sistema de búsqueda completo inicializado');
+}
+
+// ===== FUNCIONES GLOBALES =====
+window.clearGlobalSearch = clearGlobalSearch;
+window.clearAllFiltersIncludingGlobal = clearAllFiltersIncludingGlobal;
+window.refreshGlobalSearch = refreshGlobalSearch;
+
+// ===== INICIALIZACIÓN =====
+document.addEventListener('DOMContentLoaded', function () {
+    setTimeout(() => {
+        initializeCompleteSearch();
+    }, 800);
+});
+
 
 // ================================================================================================
 // FUNCIONES GLOBALES - CONSOLIDADAS

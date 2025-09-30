@@ -1982,3 +1982,558 @@
     transform: translateY(-1px);
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
 }
+
+/* ================================================================
+                ===== ESTILOS PARA MÚLTIPLES FOTOS =====
+   ================================================================ */
+
+/* Container de fotos múltiples */
+.multiple-photos-container {
+    max-height: 300px;
+    overflow-y: auto;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    padding: 10px;
+    background: #f8f9fa;
+}
+
+.multiple-photos-container:empty {
+    display: none;
+}
+
+/* Item de preview de foto */
+.photo-preview-item {
+    margin-bottom: 10px;
+    transition: all 0.3s ease;
+}
+
+.photo-preview-item:last-child {
+    margin-bottom: 0;
+}
+
+.photo-preview-item.selected {
+    transform: scale(1.02);
+}
+
+/* Card de preview */
+.photo-preview-card {
+    display: flex;
+    align-items: center;
+    background: white;
+    border-radius: 8px;
+    padding: 8px;
+    border: 2px solid transparent;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.photo-preview-item.selected .photo-preview-card {
+    border-color: #007bff;
+    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+}
+
+.photo-preview-card:hover {
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+/* Imagen de preview */
+.photo-preview-image {
+    position: relative;
+    width: 60px;
+    height: 60px;
+    border-radius: 6px;
+    overflow: hidden;
+    margin-right: 12px;
+    flex-shrink: 0;
+}
+
+.photo-preview-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    cursor: pointer;
+    transition: transform 0.3s ease;
+}
+
+.photo-preview-image:hover img {
+    transform: scale(1.1);
+}
+
+/* Overlay con botón eliminar */
+.photo-preview-overlay {
+    position: absolute;
+    top: 0;
+    right: 0;
+    background: rgba(0,0,0,0.7);
+    border-radius: 0 6px 0 6px;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.photo-preview-image:hover .photo-preview-overlay {
+    opacity: 1;
+}
+
+.btn-photo-remove {
+    background: none;
+    border: none;
+    color: white;
+    padding: 4px 6px;
+    cursor: pointer;
+    font-size: 12px;
+    transition: color 0.3s ease;
+}
+
+.btn-photo-remove:hover {
+    color: #ff6b6b;
+}
+
+/* Información de la foto */
+.photo-preview-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.photo-name {
+    font-weight: 600;
+    font-size: 14px;
+    color: #495057;
+    margin-bottom: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.photo-size {
+    font-size: 12px;
+    color: #6c757d;
+    margin-bottom: 4px;
+}
+
+.photo-status {
+    display: inline-block;
+    padding: 2px 6px;
+    border-radius: 10px;
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.photo-status.new {
+    background: #d4edda;
+    color: #155724;
+}
+
+/* Información de upload */
+.upload-info {
+    margin-top: 10px;
+}
+
+.upload-info .alert {
+    margin-bottom: 0;
+    font-size: 14px;
+}
+
+/* Botón borrar foto actualizado */
+#deletePhotoBtn {
+    position: relative;
+}
+
+#deletePhotoBtn .fa-spinner {
+    animation: spin 1s linear infinite;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .multiple-photos-container {
+        max-height: 200px;
+    }
+
+    .photo-preview-image {
+        width: 50px;
+        height: 50px;
+        margin-right: 8px;
+    }
+
+    .photo-name {
+        font-size: 13px;
+    }
+
+    .photo-size {
+        font-size: 11px;
+    }
+}
+
+/* Scrollbar personalizado */
+.multiple-photos-container::-webkit-scrollbar {
+    width: 6px;
+}
+
+.multiple-photos-container::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 3px;
+}
+
+.multiple-photos-container::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 3px;
+}
+
+.multiple-photos-container::-webkit-scrollbar-thumb:hover {
+    background: #a1a1a1;
+}
+
+/* Animaciones */
+@keyframes photoSlideIn {
+    from {
+        opacity: 0;
+        transform: translateX(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+.photo-preview-item {
+    animation: photoSlideIn 0.3s ease;
+}
+
+
+/* ================================================================
+   ESTILOS PARA FILTROS PREDICTIVOS en fotos-index
+   ================================================================ */
+
+/* Contenedor de autocomplete */
+.autocomplete-wrapper {
+    position: relative;
+    width: 100%;
+}
+
+/* Input de filtro predictivo */
+.predictive-filter {
+    width: 100% !important;
+    transition: all 0.3s ease;
+    border-radius: 6px;
+}
+
+.predictive-filter:focus {
+    border-color: #007bff;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+    outline: none;
+}
+
+.predictive-filter.has-suggestions {
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+    border-bottom-color: #007bff;
+}
+
+/* Container de sugerencias */
+.autocomplete-suggestions {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: white;
+    border: 1px solid #007bff;
+    border-top: none;
+    border-radius: 0 0 6px 6px;
+    max-height: 200px;
+    overflow-y: auto;
+    z-index: 1000;
+    display: none;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.autocomplete-suggestions.show {
+    display: block;
+}
+
+/* Items de sugerencias */
+.suggestion-item {
+    padding: 8px 12px;
+    cursor: pointer;
+    border-bottom: 1px solid #f8f9fa;
+    transition: all 0.2s ease;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.suggestion-item:last-child {
+    border-bottom: none;
+    border-radius: 0 0 6px 6px;
+}
+
+.suggestion-item:hover {
+    background-color: #f8f9fa;
+    color: #007bff;
+}
+
+.suggestion-item.selected {
+    background-color: #007bff;
+    color: white;
+}
+
+/* Texto de la sugerencia */
+.suggestion-text {
+    flex: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.suggestion-text .highlight {
+    background-color: #fff3cd;
+    color: #856404;
+    font-weight: 600;
+    padding: 1px 2px;
+    border-radius: 2px;
+}
+
+.suggestion-item.selected .suggestion-text .highlight {
+    background-color: rgba(255, 255, 255, 0.3);
+    color: white;
+}
+
+/* Contador de coincidencias */
+.suggestion-count {
+    font-size: 11px;
+    background: #e9ecef;
+    color: #6c757d;
+    padding: 2px 6px;
+    border-radius: 10px;
+    margin-left: 8px;
+    font-weight: 600;
+    min-width: 20px;
+    text-align: center;
+}
+
+.suggestion-item.selected .suggestion-count {
+    background: rgba(255, 255, 255, 0.3);
+    color: white;
+}
+
+/* Estado de carga */
+.suggestions-loading {
+    padding: 12px;
+    text-align: center;
+    color: #6c757d;
+    font-size: 13px;
+}
+
+.suggestions-loading i {
+    animation: spin 1s linear infinite;
+    margin-right: 8px;
+}
+
+/* No hay resultados */
+.suggestions-empty {
+    padding: 12px;
+    text-align: center;
+    color: #6c757d;
+    font-size: 13px;
+    font-style: italic;
+}
+
+/* Header de sugerencias */
+.suggestions-header {
+    padding: 6px 12px;
+    background: #f8f9fa;
+    border-bottom: 1px solid #e9ecef;
+    font-size: 11px;
+    color: #6c757d;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .autocomplete-suggestions {
+        max-height: 150px;
+        font-size: 13px;
+    }
+
+    .suggestion-item {
+        padding: 10px 12px;
+    }
+
+    .suggestion-count {
+        font-size: 10px;
+        padding: 1px 4px;
+        min-width: 18px;
+    }
+}
+
+/* Animaciones */
+@keyframes fadeInSuggestions {
+    from {
+        opacity: 0;
+        transform: translateY(-5px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.autocomplete-suggestions.show {
+    animation: fadeInSuggestions 0.2s ease;
+}
+
+/* Scrollbar personalizado para sugerencias */
+.autocomplete-suggestions::-webkit-scrollbar {
+    width: 6px;
+}
+
+.autocomplete-suggestions::-webkit-scrollbar-track {
+    background: #f1f1f1;
+}
+
+.autocomplete-suggestions::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 3px;
+}
+
+.autocomplete-suggestions::-webkit-scrollbar-thumb:hover {
+    background: #a1a1a1;
+}
+
+/* Indicador de filtro activo */
+.predictive-filter.active {
+    border-color: #28a745;
+    background-color: #f8fff9;
+}
+
+.predictive-filter.active:focus {
+    border-color: #28a745;
+    box-shadow: 0 0 0 0.2rem rgba(40, 167, 69, 0.25);
+}
+
+
+/* ================================================================
+   ESTILOS PARA BÚSQUEDA GLOBAL DINÁMICA
+   ================================================================ */
+
+/* Campo de búsqueda global */
+#searchInput {
+    transition: all 0.3s ease;
+}
+
+/* Estado enfocado */
+#searchInput.global-search-focused {
+    border-color: #007bff;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+/* Estado con filtro activo */
+#searchInput.global-search-active {
+    border-color: #28a745;
+    background-color: #f8fff9;
+    box-shadow: 0 0 0 0.2rem rgba(40, 167, 69, 0.25);
+}
+
+#searchInput.global-search-active:focus {
+    border-color: #28a745;
+    box-shadow: 0 0 0 0.2rem rgba(40, 167, 69, 0.25);
+}
+
+/* Botón de búsqueda cuando hay filtro activo */
+#searchInput.global-search-active + #searchButton {
+    background-color: #28a745;
+    border-color: #28a745;
+    color: white;
+}
+
+/* Indicador visual en el placeholder */
+#searchInput::placeholder {
+    color: #6c757d;
+    transition: color 0.3s ease;
+}
+
+#searchInput.global-search-active::placeholder {
+    color: #155724;
+}
+
+/* Animación para transiciones */
+@keyframes searchActive {
+    0% {
+        background-color: #ffffff;
+    }
+    100% {
+        background-color: #f8fff9;
+    }
+}
+
+#searchInput.global-search-active {
+    animation: searchActive 0.3s ease;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    #searchInput.global-search-active {
+        font-size: 16px; /* Evitar zoom en iOS */
+    }
+}
+
+
+/* ================================================================
+   ESTILOS PARA FUNCIONALIDAD DE BTN CANCELAR - Fotos-sit-add
+   ================================================================ */
+
+/* Botón cancelar con estado visual */
+.btn-cancelar,
+button:contains("Cancelar") {
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.btn-cancelar:hover {
+    background-color: #dc3545;
+    border-color: #dc3545;
+    color: white;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(220, 53, 69, 0.3);
+}
+
+/* Indicador de estado de subida activa */
+.upload-active .btn-cancelar::before {
+    content: '●';
+    color: #ffc107;
+    margin-right: 5px;
+    animation: pulse 1s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
+/* Estados de la interfaz */
+.upload-cancelled {
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+.upload-resetting {
+    transition: opacity 0.5s ease;
+}
+
+/* Indicadores de progreso que se deben ocultar */
+.progress-container.cancelled {
+    display: none !important;
+}
+
+/* Animación de limpieza */
+@keyframes clearOut {
+    0% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.5; transform: scale(0.95); }
+    100% { opacity: 0; transform: scale(0.9); }
+}
+
+.clearing {
+    animation: clearOut 0.3s ease;
+}

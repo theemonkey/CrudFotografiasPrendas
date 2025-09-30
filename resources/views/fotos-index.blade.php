@@ -145,16 +145,48 @@
                                 <td data-column="imagen">
                                 </td>
                                 <td data-column="orden-sit">
-                                    <input type="text" class="form-control form-control-sm" placeholder="Buscar">
+                                    <div class="autocomplete-wrapper">
+                                        <input type="text"
+                                            class="form-control form-control-sm predictive-filter"
+                                            placeholder="Buscar"
+                                            id="filterOrdenSit"
+                                            data-column="orden-sit"
+                                            autocomplete="off">
+                                        <div class="autocomplete-suggestions" id="suggestionsOrdenSit"></div>
+                                    </div>
                                 </td>
                                 <td data-column="po">
-                                    <input type="text" class="form-control form-control-sm" placeholder="Buscar">
+                                    <div class="autocomplete-wrapper">
+                                        <input type="text"
+                                            class="form-control form-control-sm predictive-filter"
+                                            placeholder="Buscar"
+                                            id="filterPO"
+                                            data-column="po"
+                                            autocomplete="off">
+                                        <div class="autocomplete-suggestions" id="suggestionsPO"></div>
+                                    </div>
                                 </td>
                                 <td data-column="oc">
-                                    <input type="text" class="form-control form-control-sm" placeholder="Buscar">
+                                    <div class="autocomplete-wrapper">
+                                        <input type="text"
+                                            class="form-control form-control-sm predictive-filter"
+                                            placeholder="Buscar"
+                                            id="filterOC"
+                                            data-column="oc"
+                                            autocomplete="off">
+                                        <div class="autocomplete-suggestions" id="suggestionsOC"></div>
+                                    </div>
                                 </td>
                                 <td data-column="descripcion">
-                                    <input type="text" class="form-control form-control-sm" placeholder="Buscar">
+                                    <div class="autocomplete-wrapper">
+                                        <input type="text"
+                                            class="form-control form-control-sm predictive-filter"
+                                            placeholder="Buscar"
+                                            id="filterDescripcion"
+                                            data-column="descripcion"
+                                            autocomplete="off">
+                                        <div class="autocomplete-suggestions" id="suggestionsDescripcion"></div>
+                                    </div>
                                 </td>
                                 <td data-column="tipo-fotografia">
                                     <div class="btn-group w-100">
@@ -702,10 +734,10 @@
                             <!-- Sección de gestión de archivo -->
                             <div class="mb-3">
                                 <label class="form-label fw-bold">Gestión de Archivo</label>
-                                <div class="row g-2">
+                                <div class="row g-2 mb-3">
                                     <!-- Subir nueva foto -->
                                     <div class="col-6">
-                                        <input type="file" class="form-control d-none" id="newPhotoInput" accept="image/*">
+                                        <input type="file" class="form-control d-none" id="newPhotoInput" accept="image/*" multiple>
                                         <button type="button" class="btn btn-outline-primary btn-sm w-100" id="uploadNewPhotoBtn">
                                             <i class="fas fa-upload me-1"></i>
                                             Subir Nueva Foto
@@ -720,7 +752,16 @@
                                         </button>
                                     </div>
                                 </div>
-                                <div id="newPhotoPreview" class="mt-2"></div>
+                                <!-- Contenedor para múltiples fotos -->
+                                <div id="multiplePhotosContainer" class="multiple-photos-container"></div>
+
+                                <!-- Informacion de seleccion multiple-->
+                                <div id="uploadInfo" class="upload-info d-none">
+                                    <div class="alert alert-info py-2 px-3">
+                                        <i class="fas fa-info-circle me-2"></i>
+                                        <span id="uploadInfoText">Fotos seleccionadas: 0</span>
+                                    </div>
+                                </div>
                             </div>
                         </form>
                     </div>
@@ -778,7 +819,7 @@
 
                             <!-- Step 2: Validación AC -->
                             <div class="text-center step-container">
-                                <div class="step-circle step-validacion pending" id="stepValidacion">
+                                <div class="step-circle step-validacion pending" id="stepValidacionAC">
                                     <i class="fas fa-search"></i>
                                 </div>
                                 <div class="step-number">2</div>
@@ -792,7 +833,7 @@
 
                             <!-- Step 3: Prenda Final -->
                             <div class="text-center step-container">
-                                <div class="step-circle step-final pending" id="stepFinal">
+                                <div class="step-circle step-final pending" id="stepPrendaFinal">
                                     <i class="fas fa-check"></i>
                                 </div>
                                 <div class="step-number">3</div>
@@ -1605,11 +1646,11 @@
         console.log('Actualizando pasos con datos REALES:', estados);
 
         const stepMuestra = document.getElementById('stepMuestra');
-        const stepValidacion = document.getElementById('stepValidacion');
-        const stepFinal = document.getElementById('stepFinal');
+        const stepValidacionAC = document.getElementById('stepValidacionAC');
+        const stepPrendaFinal = document.getElementById('stepPrendaFinal');
 
         // Reset classes
-        [stepMuestra, stepValidacion, stepFinal].forEach(step => {
+        [stepMuestra, stepValidacionAC, stepPrendaFinal].forEach(step => {
             if (step) {
                 step.classList.remove('completed', 'pending');
             }
@@ -1624,15 +1665,15 @@
         }, 100);
 
         setTimeout(() => {
-            if (stepValidacion) {
-                stepValidacion.classList.add(estados.validacion ? 'completed' : 'pending');
-                console.log(`VALIDACIÓN: ${estados.validacion ? 'COMPLETADO (tiene imágenes reales)' : 'PENDIENTE (sin imágenes)'}`);
+            if (stepValidacionAC) {
+                stepValidacionAC.classList.add(estados.validacionAC ? 'completed' : 'pending');
+                console.log(`VALIDACIÓN: ${estados.validacionAC ? 'COMPLETADO (tiene imágenes reales)' : 'PENDIENTE (sin imágenes)'}`);
             }
         }, 200);
 
         setTimeout(() => {
-            if (stepFinal) {
-                stepFinal.classList.add(estados.final ? 'completed' : 'pending');
+            if (stepPrendaFinal) {
+                stepPrendaFinal.classList.add(estados.Prendafinal ? 'completed' : 'pending');
                 console.log(`FINAL: ${estados.final ? 'COMPLETADO (tiene imágenes reales)' : 'PENDIENTE (sin imágenes)'}`);
             }
         }, 300);

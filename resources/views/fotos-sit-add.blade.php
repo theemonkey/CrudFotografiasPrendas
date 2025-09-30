@@ -497,9 +497,9 @@
     function determineImageCategory(tipoFotografia) {
         const tipo = tipoFotografia.toUpperCase();
 
-        if (tipo.includes('MUESTRA')) return 'muestra';
-        if (tipo.includes('VALIDACION') || tipo.includes('VALIDACIÓN')) return 'validacion';
-        if (tipo.includes('FINAL') || tipo.includes('PRENDA FINAL')) return 'final';
+        if (tipo.includes('MUESTRA')) return 'Muestra';
+        if (tipo.includes('VALIDACION AC') || tipo.includes('VALIDACION AC')) return 'Validación AC';
+        if (tipo.includes('PRENDA FINAL') || tipo.includes('PRENDA FINAL')) return 'Prenda Final';
 
         return 'general'; // Categoría por defecto
     }
@@ -624,6 +624,888 @@
             });
         }
     });
+</script>
+
+<!--/=/=/=/=/=/=/=//=/=/=/=/=/=/=//=/=/=/=/=/=/=//=/=/=/=/=/=/=//=/=/=/=/=/=/=//=/=/=/=/=/=/=/ -->
+<script>
+// ================================================================================================
+// FUNCIONALIDAD BOTÓN CANCELAR - fotos-sit-add (VERSIÓN COMPLETA)
+// ================================================================================================
+
+// Variables globales para control de cancelación
+let uploadInProgress = false;
+let currentOrderData = null;
+let uploadedFiles = [];
+
+// ===== FUNCIONALIDAD DEL BOTÓN CANCELAR =====
+function setupCancelButton() {
+    console.log('🔍 Buscando botón Cancelar...');
+
+    // Método 1: Buscar por ID específicos
+    let cancelButton = document.getElementById('cancelBtn') ||
+                      document.getElementById('btnCancelar') ||
+                      document.getElementById('cancelButton');
+
+    // Método 2: Buscar por clases comunes
+    if (!cancelButton) {
+        const possibleButtons = document.querySelectorAll('.btn-secondary, .btn-outline-secondary, .btn[data-action="cancel"]');
+        cancelButton = Array.from(possibleButtons).find(btn =>
+            btn.textContent.includes('Cancelar') ||
+            btn.innerText.includes('Cancelar') ||
+            btn.getAttribute('data-action') === 'cancel'
+        );
+    }
+
+    // Método 3: Buscar todos los botones y filtrar por texto
+    if (!cancelButton) {
+        const allButtons = document.querySelectorAll('button, .btn');
+        cancelButton = Array.from(allButtons).find(btn => {
+            const text = btn.textContent.toLowerCase().trim();
+            const innerText = btn.innerText.toLowerCase().trim();
+            return text.includes('cancelar') || innerText.includes('cancelar');
+        });
+    }
+
+    // Método 4: Buscar en el área específica (footer, etc.)
+    if (!cancelButton) {
+        const footerArea = document.querySelector('.modal-footer, .card-footer, .action-buttons, .button-group');
+        if (footerArea) {
+            const footerButtons = footerArea.querySelectorAll('button, .btn');
+            cancelButton = Array.from(footerButtons).find(btn =>
+                btn.textContent.includes('Cancelar') || btn.innerText.includes('Cancelar')
+            );
+        }
+    }
+
+    if (cancelButton) {
+        console.log('✅ Botón Cancelar encontrado:', cancelButton);
+
+        // Remover event listeners existentes para evitar duplicados
+        const newCancelButton = cancelButton.cloneNode(true);
+        cancelButton.parentNode.replaceChild(newCancelButton, cancelButton);
+
+        // Agregar nuevo event listener
+        newCancelButton.addEventListener('click', handleCancelUpload);
+
+        console.log('🔧 Event listener de cancelación configurado');
+        return newCancelButton;
+    } else {
+        console.warn('⚠️ Botón Cancelar no encontrado, configurando listener global...');
+
+        // Configurar listener global como fallback
+        setupGlobalCancelListener();
+        return null;
+    }
+}
+
+// ===== CONFIGURAR LISTENER GLOBAL COMO FALLBACK =====
+function setupGlobalCancelListener() {
+    document.addEventListener('click', function(e) {
+        const target = e.target;
+
+        // Verificar si es un botón de cancelar
+        if (target.tagName === 'BUTTON' || target.classList.contains('btn')) {
+            const text = target.textContent.toLowerCase().trim();
+            const innerText = target.innerText.toLowerCase().trim();
+            const dataAction = target.getAttribute('data-action');
+
+            if (text.includes('cancelar') ||
+                innerText.includes('cancelar') ||
+                dataAction === 'cancel' ||
+                target.id.toLowerCase().includes('cancel')) {
+
+                console.log('🎯 Botón Cancelar detectado via listener global');
+                handleCancelUpload(e);
+            }
+        }
+    });
+
+    console.log('🌐 Listener global de cancelación configurado');
+}
+
+// ===== MANEJAR CANCELACIÓN DE SUBIDA =====
+function handleCancelUpload(event) {
+    event.preventDefault();
+    event.stopPropagation();
+
+    console.log('🚫 Botón Cancelar presionado');
+
+    // Verificar si hay una subida en progreso o datos que perder
+    const hasData = uploadInProgress || uploadedFiles.length > 0 || currentOrderData || hasFormData();
+
+    if (hasData) {
+        showCancelConfirmation();
+    } else {
+        // Si no hay nada que cancelar, simplemente limpiar y cerrar
+        performCancelAction(false); // false = no mostrar confirmación de éxito
+    }
+}
+
+// ===== VERIFICAR SI HAY DATOS EN EL FORMULARIO =====
+function hasFormData() {
+    // Verificar campos de texto
+    const textInputs = document.querySelectorAll('input[type="text"], textarea, input[type="search"]');
+    const hasTextData = Array.from(textInputs).some(input => input.value.trim() !== '');
+
+    // Verificar selects
+    const selects = document.querySelectorAll('select');
+    const hasSelectData = Array.from(selects).some(select => select.value !== '' && select.value !== select.options[0].value);
+
+    // Verificar archivos
+    const fileInputs = document.querySelectorAll('input[type="file"]');
+    const hasFileData = Array.from(fileInputs).some(input => input.files.length > 0);
+
+    return hasTextData || hasSelectData || hasFileData;
+}
+
+// ===== MOSTRAR CONFIRMACIÓN DE CANCELACIÓN =====
+function showCancelConfirmation() {
+    const hasUploadedFiles = uploadedFiles.length > 0;
+    const hasOrderData = currentOrderData !== null;
+    const hasFormContent = hasFormData();
+
+    let message = '¿Estás seguro de que deseas cancelar?';
+    let details = [];
+
+    if (hasUploadedFiles) {
+        details.push(`• Se perderán ${uploadedFiles.length} imagen(es) subida(s)`);
+    }
+
+    if (hasOrderData && currentOrderData.ordenSit) {
+        details.push(`• Se perderán los datos de la orden SIT: ${currentOrderData.ordenSit}`);
+    }
+
+    if (hasFormContent) {
+        details.push('• Se perderá la información ingresada en el formulario');
+    }
+
+    if (uploadInProgress) {
+        details.push('• Se cancelará la subida en progreso');
+    }
+
+    if (details.length > 0) {
+        details.push('', 'Esta acción no se puede deshacer.');
+        message += '\n\n' + details.join('\n');
+    }
+
+    Swal.fire({
+        title: '¿Cancelar subida?',
+        text: message,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#dc3545',
+        cancelButtonColor: '#6c757d',
+        confirmButtonText: 'Sí, cancelar todo',
+        cancelButtonText: 'Continuar',
+        reverseButtons: true,
+        focusCancel: true
+    }).then((result) => {
+        if (result.isConfirmed) {
+            performCancelAction(true); // true = mostrar confirmación de éxito
+        } else {
+            console.log('📤 Usuario decidió continuar con la subida');
+        }
+    });
+}
+
+// ===== FUNCIÓN ESPECÍFICA PARA OCULTAR EL CARD DE ORDEN =====
+function hideOrderCard() {
+    console.log('🔍 Buscando card de orden para ocultar...');
+
+    // Método 1: Buscar por contenido específico de la orden
+    const orderElements = document.querySelectorAll('*');
+    let orderCard = null;
+
+    // Buscar elementos que contengan "Orden SIT:" o "Tipo:" o "Descripción:"
+    Array.from(orderElements).forEach(element => {
+        const text = element.textContent;
+        if (text.includes('Orden SIT:') && text.includes('Tipo:') && text.includes('Descripción:')) {
+            // Encontrar el contenedor padre más apropiado
+            let parent = element;
+            while (parent && parent !== document.body) {
+                if (parent.classList.contains('card') ||
+                    parent.classList.contains('card-body') ||
+                    parent.classList.contains('order-info') ||
+                    parent.classList.contains('order-card') ||
+                    parent.style.border ||
+                    parent.style.padding) {
+                    orderCard = parent;
+                    break;
+                }
+                parent = parent.parentElement;
+            }
+
+            // Si no encuentra un contenedor específico, usar el elemento padre directo
+            if (!orderCard && element.parentElement) {
+                orderCard = element.parentElement;
+            }
+        }
+    });
+
+    // Método 2: Buscar por estructura HTML específica
+    if (!orderCard) {
+        // Buscar div que contenga la imagen y la información de la orden
+        const possibleCards = document.querySelectorAll('div');
+        orderCard = Array.from(possibleCards).find(div => {
+            const children = div.children;
+            let hasImage = false;
+            let hasOrderInfo = false;
+
+            Array.from(children).forEach(child => {
+                if (child.tagName === 'IMG' || child.querySelector('img')) {
+                    hasImage = true;
+                }
+                if (child.textContent.includes('Orden SIT:') ||
+                    child.textContent.includes('Tipo:')) {
+                    hasOrderInfo = true;
+                }
+            });
+
+            return hasImage && hasOrderInfo;
+        });
+    }
+
+    // Método 3: Buscar el contenedor que tenga los elementos característicos
+    if (!orderCard) {
+        const containers = document.querySelectorAll('div, section, article');
+        orderCard = Array.from(containers).find(container => {
+            const hasOrderSit = container.textContent.includes('Orden SIT:');
+            const hasUploadButtons = container.textContent.includes('Cámara') && container.textContent.includes('Archivo');
+            return hasOrderSit && hasUploadButtons;
+        });
+    }
+
+    if (orderCard) {
+        console.log('✅ Card de orden encontrado:', orderCard);
+
+        // Aplicar animación de salida
+        orderCard.style.transition = 'all 0.5s ease';
+        orderCard.style.opacity = '0';
+        orderCard.style.transform = 'translateY(-20px)';
+
+        setTimeout(() => {
+            orderCard.style.display = 'none';
+            console.log('📦 Card de orden ocultado');
+        }, 500);
+
+        return true;
+    } else {
+        console.warn('⚠️ No se pudo encontrar el card de orden específico');
+        return false;
+    }
+}
+
+// ===== FUNCIÓN ALTERNATIVA PARA OCULTAR TODA LA SECCIÓN =====
+function hideOrderSection() {
+    console.log('🔍 Intentando ocultar sección completa de orden...');
+
+    // Buscar elementos que contengan la información de la orden
+    const textToSearch = ['Orden SIT:', 'Tipo:', 'Descripción:', 'Subir Imágenes'];
+    let sectionToHide = null;
+
+    // Buscar desde el elemento más específico hacia arriba
+    textToSearch.forEach(searchText => {
+        if (!sectionToHide) {
+            const elements = document.querySelectorAll('*');
+            Array.from(elements).forEach(element => {
+                if (element.textContent.includes(searchText) && !sectionToHide) {
+                    // Subir en el DOM hasta encontrar un contenedor apropiado
+                    let current = element;
+                    let attempts = 0;
+
+                    while (current && current.parentElement && attempts < 10) {
+                        current = current.parentElement;
+                        attempts++;
+
+                        // Verificar si este elemento es un buen candidato para ocultar
+                        const hasMultipleOrderElements = textToSearch.filter(text =>
+                            current.textContent.includes(text)
+                        ).length >= 3;
+
+                        if (hasMultipleOrderElements &&
+                            current.children.length > 1 &&
+                            current !== document.body) {
+                            sectionToHide = current;
+                            break;
+                        }
+                    }
+                }
+            });
+        }
+    });
+
+    if (sectionToHide) {
+        console.log('✅ Sección de orden encontrada:', sectionToHide);
+
+        // Animación de ocultamiento
+        sectionToHide.style.transition = 'all 0.6s ease';
+        sectionToHide.style.opacity = '0';
+        sectionToHide.style.transform = 'scale(0.95)';
+        sectionToHide.style.maxHeight = sectionToHide.offsetHeight + 'px';
+
+        setTimeout(() => {
+            sectionToHide.style.maxHeight = '0';
+            sectionToHide.style.padding = '0';
+            sectionToHide.style.margin = '0';
+        }, 200);
+
+        setTimeout(() => {
+            sectionToHide.style.display = 'none';
+            console.log('📦 Sección de orden completamente ocultada');
+        }, 600);
+
+        return true;
+    }
+
+    return false;
+}
+
+// ===== FUNCIÓN PARA RESETEAR LA VISTA COMPLETAMENTE =====
+function resetToInitialState() {
+    console.log('🔄 Reseteando a estado inicial...');
+
+    // Limpiar el campo de búsqueda
+    const searchInput = document.querySelector('input[placeholder*="orden"], input[placeholder*="SIT"]');
+    if (searchInput) {
+        searchInput.value = '';
+        searchInput.placeholder = 'Buscar orden SIT';
+    }
+
+    // Asegurar que solo el campo de búsqueda sea visible
+    const searchContainer = searchInput ? searchInput.closest('div, form, section') : null;
+
+    if (searchContainer) {
+        // Mantener visible solo el contenedor de búsqueda
+        const allMainContainers = document.querySelectorAll('main > div, .container > div, .content > div');
+        allMainContainers.forEach(container => {
+            if (container !== searchContainer &&
+                !container.contains(searchContainer) &&
+                container.textContent.includes('Orden SIT:')) {
+                container.style.display = 'none';
+            }
+        });
+    }
+
+    console.log('✅ Vista reseteada a estado inicial');
+}
+
+// ===== FUNCIÓN PARA MOSTRAR NUEVAMENTE EL FORMULARIO DE BÚSQUEDA =====
+function showSearchForm() {
+    console.log('🔍 Asegurando que el formulario de búsqueda esté visible...');
+
+    const searchElements = [
+        document.querySelector('input[placeholder*="orden"]'),
+        document.querySelector('input[placeholder*="SIT"]'),
+        document.querySelector('#searchInput'),
+        document.querySelector('[name="orden_sit"]')
+    ];
+
+    searchElements.forEach(element => {
+        if (element) {
+            // Asegurar que el elemento y sus padres sean visibles
+            let current = element;
+            while (current && current !== document.body) {
+                if (current.style.display === 'none') {
+                    current.style.display = '';
+                }
+                if (current.style.visibility === 'hidden') {
+                    current.style.visibility = 'visible';
+                }
+                current = current.parentElement;
+            }
+
+            // Enfocar el campo de búsqueda
+            setTimeout(() => {
+                element.focus();
+            }, 100);
+        }
+    });
+}
+
+// ===== CERRAR/OCULTAR CARD (VERSIÓN MEJORADA) =====
+function closeUploadCard() {
+    console.log('📦 Intentando cerrar card de subida...');
+
+    // Intentar múltiples métodos para ocultar el card
+    let success = false;
+
+    // Método 1: Ocultar card específico de orden
+    success = hideOrderCard();
+
+    // Método 2: Si el primero falla, intentar ocultar toda la sección
+    if (!success) {
+        success = hideOrderSection();
+    }
+
+    // Método 3: Si ambos fallan, resetear a estado inicial
+    if (!success) {
+        resetToInitialState();
+        success = true;
+    }
+
+    // Método 4: Fallback - buscar y ocultar cualquier contenedor con información de orden
+    if (!success) {
+        const fallbackContainers = document.querySelectorAll('div');
+        Array.from(fallbackContainers).forEach(container => {
+            const text = container.textContent;
+            if (text.includes('Orden SIT:') &&
+                text.includes('Subir Imágenes') &&
+                container.offsetHeight > 100) {
+
+                container.style.transition = 'opacity 0.5s ease';
+                container.style.opacity = '0';
+
+                setTimeout(() => {
+                    container.style.display = 'none';
+                }, 500);
+
+                success = true;
+            }
+        });
+    }
+
+    if (success) {
+        console.log('✅ Card cerrado exitosamente');
+    } else {
+        console.warn('⚠️ No se pudo cerrar el card automáticamente');
+    }
+
+    return success;
+}
+
+// ===== REALIZAR ACCIÓN DE CANCELACIÓN (ACTUALIZADA) =====
+function performCancelAction(showSuccess = true) {
+    console.log('🧹 Ejecutando cancelación completa...');
+
+    // 1. Detener cualquier subida en progreso
+    stopCurrentUploads();
+
+    // 2. Limpiar archivos subidos
+    clearUploadedFiles();
+
+    // 3. Limpiar datos de la orden
+    clearOrderData();
+
+    // 4. Resetear interfaz
+    resetInterface();
+
+    // 5. MEJORADO: Cerrar/ocultar card específicamente
+    const cardClosed = closeUploadCard();
+
+    // 6. Mostrar formulario de búsqueda
+    setTimeout(() => {
+        showSearchForm();
+    }, cardClosed ? 600 : 100);
+
+    // 7. Mostrar mensaje de confirmación si se solicita
+    if (showSuccess) {
+        setTimeout(() => {
+            showCancellationSuccess();
+        }, 300);
+    }
+
+    // 8. Permitir empezar de nuevo
+    setTimeout(() => {
+        enableNewUpload();
+    }, 700);
+}
+
+// ===== DETENER SUBIDAS EN PROGRESO =====
+function stopCurrentUploads() {
+    uploadInProgress = false;
+
+    // Cancelar requests AJAX en progreso
+    if (window.currentUploadRequests && Array.isArray(window.currentUploadRequests)) {
+        window.currentUploadRequests.forEach(request => {
+            if (request && typeof request.abort === 'function') {
+                try {
+                    request.abort();
+                } catch (error) {
+                    console.warn('Error cancelando request:', error);
+                }
+            }
+        });
+        window.currentUploadRequests = [];
+    }
+
+    // Limpiar timeouts/intervals de upload
+    if (window.uploadTimeouts && Array.isArray(window.uploadTimeouts)) {
+        window.uploadTimeouts.forEach(timeout => clearTimeout(timeout));
+        window.uploadTimeouts = [];
+    }
+
+    console.log('⏹️ Subidas en progreso detenidas');
+}
+
+// ===== LIMPIAR ARCHIVOS SUBIDOS =====
+function clearUploadedFiles() {
+    uploadedFiles = [];
+
+    // Limpiar input de archivos
+    const fileInputs = document.querySelectorAll('input[type="file"]');
+    fileInputs.forEach(input => {
+        try {
+            input.value = '';
+        } catch (error) {
+            console.warn('Error limpiando input de archivo:', error);
+        }
+    });
+
+    // Limpiar previews de imágenes
+    const imagePreviewSelectors = [
+        '#imagePreview',
+        '#uploadedImages',
+        '.uploaded-images-container',
+        '.image-preview-container',
+        '.preview-container',
+        '[data-preview]'
+    ];
+
+    imagePreviewSelectors.forEach(selector => {
+        const container = document.querySelector(selector);
+        if (container) {
+            container.innerHTML = '';
+            container.style.display = 'none';
+        }
+    });
+
+    // Limpiar localStorage relacionado con imágenes
+    const storageKeys = [
+        'uploadedImages',
+        'currentUploadSession',
+        'newUploadedImages',
+        'pendingImages',
+        'tempImages'
+    ];
+
+    storageKeys.forEach(key => {
+        try {
+            localStorage.removeItem(key);
+        } catch (error) {
+            console.warn(`Error limpiando localStorage key ${key}:`, error);
+        }
+    });
+
+    console.log('🗑️ Archivos subidos limpiados');
+}
+
+// ===== LIMPIAR DATOS DE LA ORDEN =====
+function clearOrderData() {
+    currentOrderData = null;
+
+    // Limpiar campos del formulario por selector específico
+    const fieldSelectors = [
+        'input[name="orden_sit"]',
+        'input[placeholder*="orden"]',
+        'input[placeholder*="SIT"]',
+        'select[name="tipo_fotografia"]',
+        'textarea[name="descripcion"]',
+        '#ordenSitInput',
+        '#tipoFotografiaSelect',
+        '#descripcionInput',
+        '#searchInput'
+    ];
+
+    fieldSelectors.forEach(selector => {
+        const field = document.querySelector(selector);
+        if (field) {
+            if (field.type === 'checkbox' || field.type === 'radio') {
+                field.checked = false;
+            } else {
+                field.value = '';
+            }
+        }
+    });
+
+    // Limpiar displays de información de orden
+    const displaySelectors = [
+        '#orderInfo',
+        '#orderDisplay',
+        '.order-info-display',
+        '.order-card',
+        '[data-order-info]'
+    ];
+
+    displaySelectors.forEach(selector => {
+        const display = document.querySelector(selector);
+        if (display) {
+            display.style.display = 'none';
+            display.innerHTML = '';
+        }
+    });
+
+    console.log('📋 Datos de orden limpiados');
+}
+
+// ===== RESETEAR INTERFAZ =====
+function resetInterface() {
+    // Resetear estado de botones comunes
+    const buttonSelectors = [
+        '.btn-primary',
+        '.btn-success',
+        '#guardarBtn',
+        '#subirBtn',
+        'button[type="submit"]',
+        '[data-action="save"]',
+        '[data-action="upload"]'
+    ];
+
+    buttonSelectors.forEach(selector => {
+        const buttons = document.querySelectorAll(selector);
+        buttons.forEach(btn => {
+            if (btn) {
+                btn.disabled = false;
+                btn.classList.remove('loading', 'disabled', 'uploading');
+
+                // Resetear texto de botones que puedan haber sido modificados
+                if (btn.innerHTML.includes('fa-spin') || btn.textContent.includes('...')) {
+                    const originalTexts = {
+                        'Guardar': '<i class="fas fa-save me-1"></i>Guardar',
+                        'Subir': '<i class="fas fa-upload me-1"></i>Subir',
+                        'Procesar': '<i class="fas fa-cog me-1"></i>Procesar'
+                    };
+
+                    Object.entries(originalTexts).forEach(([text, html]) => {
+                        if (btn.textContent.includes(text)) {
+                            btn.innerHTML = html;
+                        }
+                    });
+                }
+            }
+        });
+    });
+
+    // Resetear progress bars
+    const progressElements = document.querySelectorAll('.progress-bar, .upload-progress, [data-progress]');
+    progressElements.forEach(element => {
+        element.style.width = '0%';
+        element.textContent = '';
+        element.setAttribute('aria-valuenow', '0');
+
+        const parentProgress = element.closest('.progress');
+        if (parentProgress) {
+            parentProgress.style.display = 'none';
+        }
+    });
+
+    // Remover mensajes de estado temporales
+    const statusSelectors = [
+        '.upload-status',
+        '.status-message',
+        '.alert-info',
+        '.alert-warning',
+        '.alert-success',
+        '[data-status]'
+    ];
+
+    statusSelectors.forEach(selector => {
+        const elements = document.querySelectorAll(selector);
+        elements.forEach(element => {
+            if (element.classList.contains('temporary') ||
+                element.textContent.includes('Subiendo') ||
+                element.textContent.includes('Procesando')) {
+                element.remove();
+            }
+        });
+    });
+
+    console.log('🔄 Interfaz reseteada');
+}
+
+// ===== MOSTRAR ÉXITO DE CANCELACIÓN =====
+function showCancellationSuccess() {
+    if (typeof Swal !== 'undefined') {
+        Swal.fire({
+            title: '✅ Cancelado',
+            text: 'La subida ha sido cancelada correctamente. Puedes empezar de nuevo.',
+            icon: 'success',
+            timer: 2000,
+            showConfirmButton: false,
+            toast: true,
+            position: 'top-end'
+        });
+    } else {
+        // Fallback si SweetAlert no está disponible
+        console.log('✅ Cancelación completada exitosamente');
+
+        // Crear notificación simple
+        const notification = document.createElement('div');
+        notification.innerHTML = `
+            <div class="alert alert-success alert-dismissible fade show" role="alert" style="position: fixed; top: 20px; right: 20px; z-index: 9999;">
+                ✅ Cancelado correctamente. Puedes empezar de nuevo.
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        `;
+        document.body.appendChild(notification);
+
+        setTimeout(() => {
+            if (notification.parentNode) {
+                notification.parentNode.removeChild(notification);
+            }
+        }, 3000);
+    }
+}
+
+// ===== HABILITAR NUEVA SUBIDA =====
+function enableNewUpload() {
+    // Resetear flags globales
+    uploadInProgress = false;
+    currentOrderData = null;
+    uploadedFiles = [];
+
+    // Habilitar inputs de subida
+    const uploadInputs = document.querySelectorAll('input[type="file"]');
+    uploadInputs.forEach(input => {
+        input.disabled = false;
+    });
+
+    // Habilitar botones de subida
+    const uploadButtonSelectors = [
+        '#cameraUpload',
+        '#fileUpload',
+        '.upload-btn',
+        '[data-upload]'
+    ];
+
+    uploadButtonSelectors.forEach(selector => {
+        const btn = document.querySelector(selector);
+        if (btn) {
+            btn.disabled = false;
+            btn.classList.remove('disabled');
+        }
+    });
+
+    // Enfocar el primer campo relevante
+    const firstFieldSelectors = [
+        'input[placeholder*="orden"]',
+        'input[placeholder*="SIT"]',
+        '#searchOrderInput',
+        'input[name="orden_sit"]',
+        'input[type="search"]'
+    ];
+
+    for (const selector of firstFieldSelectors) {
+        const field = document.querySelector(selector);
+        if (field) {
+            setTimeout(() => {
+                field.focus();
+            }, 500);
+            break;
+        }
+    }
+
+    console.log('🆕 Sistema listo para nueva subida');
+}
+
+// ===== FUNCIÓN PARA DETECTAR ESTADO DE SUBIDA =====
+function updateUploadState(files = [], orderData = null, inProgress = false) {
+    uploadedFiles = files || [];
+    currentOrderData = orderData;
+    uploadInProgress = inProgress;
+
+    console.log('📊 Estado actualizado:', {
+        files: uploadedFiles.length,
+        hasOrder: !!currentOrderData,
+        inProgress: uploadInProgress
+    });
+}
+
+// ===== FUNCIÓN DE DEBUG PARA IDENTIFICAR EL CARD =====
+function debugFindOrderCard() {
+    console.log('🐛 DEBUG: Buscando card de orden...');
+
+    const allDivs = document.querySelectorAll('div');
+    console.log(`Total de divs encontrados: ${allDivs.length}`);
+
+    const candidateCards = [];
+
+    Array.from(allDivs).forEach((div, index) => {
+        const text = div.textContent;
+        const hasOrderSit = text.includes('Orden SIT:');
+        const hasTipo = text.includes('Tipo:');
+        const hasDescripcion = text.includes('Descripción:');
+        const hasSubirImagenes = text.includes('Subir Imágenes');
+
+        if (hasOrderSit && hasTipo && hasDescripcion) {
+            candidateCards.push({
+                element: div,
+                index: index,
+                height: div.offsetHeight,
+                width: div.offsetWidth,
+                classList: Array.from(div.classList),
+                hasUploadSection: hasSubirImagenes
+            });
+        }
+    });
+
+    console.log('Candidatos encontrados:', candidateCards);
+
+    // Resaltar visualmente los candidatos (temporal para debug)
+    candidateCards.forEach((candidate, i) => {
+        candidate.element.style.outline = `3px solid ${i === 0 ? 'red' : 'blue'}`;
+        candidate.element.title = `Candidato ${i + 1}`;
+    });
+
+    return candidateCards;
+}
+
+// ===== DETECTAR CAMBIOS DE ESTADO =====
+function setupStateDetection() {
+    // Detectar cuando se seleccionan archivos
+    document.addEventListener('change', function(e) {
+        if (e.target.type === 'file' && e.target.files.length > 0) {
+            updateUploadState(Array.from(e.target.files), currentOrderData, false);
+        }
+    });
+
+    // Detectar cuando se llenan campos importantes
+    document.addEventListener('input', function(e) {
+        const relevantFields = ['orden_sit', 'ordenSit'];
+        const isRelevantField = relevantFields.some(field =>
+            e.target.name === field ||
+            e.target.id === field ||
+            e.target.placeholder?.toLowerCase().includes('orden')
+        );
+
+        if (isRelevantField && e.target.value.trim()) {
+            const orderData = { ordenSit: e.target.value.trim() };
+            updateUploadState(uploadedFiles, orderData, uploadInProgress);
+        }
+    });
+}
+
+// ===== INICIALIZACIÓN =====
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('🚫 Inicializando funcionalidad de cancelación completa...');
+
+    // Usar setTimeout para asegurar que el DOM esté completamente cargado
+    setTimeout(() => {
+        setupCancelButton();
+        setupStateDetection();
+    }, 100);
+
+    console.log('✅ Funcionalidad de cancelación completa inicializada');
+});
+
+// ===== FUNCIONES GLOBALES =====
+window.handleCancelUpload = handleCancelUpload;
+window.performCancelAction = performCancelAction;
+window.updateUploadState = updateUploadState;
+window.debugFindOrderCard = debugFindOrderCard;
+window.hideOrderCard = hideOrderCard;
+window.hideOrderSection = hideOrderSection;
+window.resetToInitialState = resetToInitialState;
+
+// ===== ATAJO DE TECLADO =====
+document.addEventListener('keydown', function(e) {
+    // Ctrl+Esc para cancelar rápidamente
+    if (e.ctrlKey && e.key === 'Escape') {
+        e.preventDefault();
+        handleCancelUpload(e);
+    }
+});
+
+console.log('🚫 Módulo de cancelación completo cargado');
 </script>
 
 @endsection

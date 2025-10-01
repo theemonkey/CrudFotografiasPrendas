@@ -101,35 +101,72 @@ function updateUserInterface(user) {
 // INICIALIZACIÓN PRINCIPAL - CONSOLIDADA
 // ================================================================================================
 
+// MEJORAR la verificación de inicialización
 document.addEventListener("DOMContentLoaded", function () {
     console.log('DOM cargado, iniciando sistema...');
 
-    if (window.fotografiasSystemInitialized) {
-        console.warn('Sistema ya inicializado');
+    // Verificación más estricta
+    if (window.fotografiasSystemInitialized === true) {
+        console.warn('Sistema ya inicializado, ABORTANDO completamente');
         return;
     }
 
+    // Prevenir múltiples inicializaciones con flag inmediato
+    if (window.fotografiasSystemInitializing === true) {
+        console.warn('Sistema en proceso de inicialización, ABORTANDO');
+        return;
+    }
+
+    //  Marcar como "inicializando"
+    window.fotografiasSystemInitializing = true;
+
     waitForBootstrap()
         .then(() => {
+            // Verificar nuevamente antes de continuar
+            if (window.fotografiasSystemInitialized === true) {
+                console.warn('Sistema ya fue inicializado mientras esperábamos Bootstrap');
+                return;
+            }
+
             console.log('Bootstrap confirmado, iniciando sistema...');
+            window.fotografiasSystemInitialized = true;
+            window.fotografiasSystemInitializing = false;
             initializeCompleteSystem();
         })
         .catch((error) => {
             console.error('Error esperando Bootstrap:', error);
-            bootstrapReady = false;
-            initializeCompleteSystem();
+            window.fotografiasSystemInitializing = false;
+            //  Aún así continuar sin Bootstrap
+            if (!window.fotografiasSystemInitialized) {
+                bootstrapReady = false;
+                window.fotografiasSystemInitialized = true;
+                initializeCompleteSystem();
+            }
         });
 });
 
 function initializeCompleteSystem() {
-    if (window.fotografiasSystemInitialized) {
+    // Verificación de estado antes de continuar
+    if (window.fotografiasSystemInitialized !== true) {
+        console.error('Sistema no marcado como inicializado correctamente');
         return;
     }
 
-    window.fotografiasSystemInitialized = true;
-
     try {
         console.log('Iniciando todos los sistemas...');
+
+        // Verificar que los elementos DOM existen
+        const requiredElements = [
+            'imagesTableBody',
+            'notificationContainer'
+        ];
+
+        const missingElements = requiredElements.filter(id => !document.getElementById(id));
+
+        if (missingElements.length > 0) {
+            console.warn('Elementos faltantes:', missingElements);
+            // Crear elementos faltantes o abortar
+        }
 
         // Sistemas principales
         initializeUserSystem();
@@ -156,25 +193,34 @@ function waitForBootstrap() {
     return new Promise((resolve, reject) => {
         let attempts = 0;
         const maxAttempts = 50;
+        const startTime = Date.now();
+        const maxTime = 5000; // REDUCIR a 5 segundos
 
         function checkBootstrap() {
             attempts++;
-            console.log(`Verificando Bootstrap - Intento ${attempts}/${maxAttempts}`);
+            const currentTime = Date.now();
 
-            if (typeof bootstrap !== 'undefined' && bootstrap.Modal) {
-                console.log('Bootstrap encontrado y funcional');
+            //  AGREGAR logs para debugging
+            console.log(`Bootstrap check attempt ${attempts}, elapsed: ${currentTime - startTime}ms`);
+
+            if (currentTime - startTime > maxTime) {
+                console.warn('Bootstrap timeout alcanzado, continuando sin él');
+                bootstrapReady = false;
+                resolve(); // SIEMPRE resolver, nunca rechazar
+                return;
+            }
+
+            if (window.bootstrap && bootstrap.Modal) {
+                console.log('Bootstrap detectado correctamente');
                 bootstrapReady = true;
-                resolve(true);
-                return;
+                resolve();
+            } else if (attempts < maxAttempts) {
+                setTimeout(checkBootstrap, 100);
+            } else {
+                console.warn('Bootstrap no disponible después de máximos intentos');
+                bootstrapReady = false;
+                resolve(); //  Resolver, no rechazar
             }
-
-            if (attempts >= maxAttempts) {
-                console.error('Bootstrap no se cargó después de múltiples intentos');
-                reject(new Error('Bootstrap no disponible'));
-                return;
-            }
-
-            setTimeout(checkBootstrap, 100);
         }
 
         checkBootstrap();
@@ -849,8 +895,10 @@ function initializeTipoFotografiaFilter() {
     console.log('Filtro de tipo fotografía inicializado');
 }
 
+
+
 // ================================================================================================
-// FUNCIONES DE UTILIDAD
+// FUNCIONES DE UTILIDAD (COMENTARIOS)
 // ================================================================================================
 
 function getTypeDisplayName(type) {
@@ -1059,22 +1107,327 @@ function searchRecords() {
 }
 
 // ================================================================================================
-// ACCIONES
+// ACCIONES ADICIONALES (ELIMINAR IMAGEN REGISTRO TABLA)
 // ================================================================================================
-
+// ======PASO 1: Función principal para eliminar imagen con confirmación visual
 function deleteImage(button) {
-    if (confirm('¿Eliminar esta imagen?')) {
-        const row = button.closest('tr');
-        if (row) {
-            const imageId = row.dataset.imageId;
-            if (imageId && commentsData.has(imageId)) {
-                commentsData.delete(imageId);
-            }
-            row.remove();
-            showNotification('Imagen eliminada', 'success');
-        }
+    console.log('Iniciando proceso de eliminación...');
+
+    const row = button.closest('tr');
+    if (!row) {
+        showNotification('Error: No se encontró la fila', 'error');
+        return;
+    }
+
+    // Extraer datos de la fila
+    const imageData = extractImageDataFromRow(row);
+    if (!imageData) {
+        showNotification('Error: No se pudieron extraer los datos de la imagen', 'error');
+        return;
+    }
+
+    console.log('Datos de imagen extraídos:', imageData);
+
+    // Mostrar confirmación visual
+    showDeleteConfirmation(imageData, row);
+}
+
+// Función para extraer datos de la fila
+function extractImageDataFromRow(row) {
+    try {
+        const img = row.querySelector('img');
+        const ordenSitCell = row.querySelector('[data-column="orden-sit"]');
+        const poCell = row.querySelector('[data-column="po"]');
+        const ocCell = row.querySelector('[data-column="oc"]');
+        const descripcionCell = row.querySelector('[data-column="descripcion"]');
+        const tipoCell = row.querySelector('[data-column="tipo-fotografia"]');
+
+        return {
+            id: row.dataset.imageId || 'unknown',
+            imageUrl: img ? img.src : '',
+            imageAlt: img ? img.alt : 'Sin descripción',
+            ordenSit: ordenSitCell ? ordenSitCell.textContent.trim() : 'N/A',
+            po: poCell ? poCell.textContent.trim() : 'N/A',
+            oc: ocCell ? ocCell.textContent.trim() : 'N/A',
+            descripcion: descripcionCell ? descripcionCell.textContent.trim() : 'Sin descripción',
+            tipo: tipoCell ? tipoCell.textContent.trim() : 'N/A'
+        };
+    } catch (error) {
+        console.error('Error extrayendo datos:', error);
+        return null;
     }
 }
+//======PASO 2: Función para mostrar confirmación de eliminación usando SweetAlert===========
+function showDeleteConfirmation(imageData, row) {
+    console.log('Mostrando confirmación visual de eliminación');
+
+    // HTML personalizado para el modal
+    const htmlContent = `
+        <div class="delete-confirmation-container">
+            <div class="row">
+                <!-- Columna izquierda - Imagen -->
+                <div class="col-md-5">
+                    <div class="image-preview-container">
+                        <div class="image-frame">
+                            <img src="${imageData.imageUrl}"
+                                 alt="${imageData.imageAlt}"
+                                 class="preview-image"
+                                 style="width: 100%; height: auto; max-height: 200px; object-fit: cover; border-radius: 8px; border: 2px solid #e9ecef;"
+                                 onerror="this.src='https://picsum.photos/id/535/200/300';">
+                        </div>
+                        <div class="image-info mt-2">
+                            <small class="text-muted">
+                                <i class="fas fa-info-circle me-1"></i>
+                                Se borrará la imagen y la información asociada.
+                            </small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Columna derecha - Datos -->
+                <div class="col-md-7">
+                    <div class="image-details">
+                        <h6 class="mb-3 text-danger">
+                            Detalles de la Fotografía
+                        </h6>
+
+                        <div class="detail-row mb-2">
+                            <strong class="detail-label">Orden SIT:</strong>
+                            <span class="detail-value">${imageData.ordenSit}</span>
+                        </div>
+
+                        <div class="detail-row mb-2">
+                            <strong class="detail-label">Tipo:</strong>
+                            <span class="detail-value">
+                                <span class="badge bg-secondary">${imageData.tipo}</span>
+                            </span>
+                        </div>
+
+                        <div class="detail-row mb-2">
+                            <strong class="detail-label">P.O:</strong>
+                            <span class="detail-value">${imageData.po}</span>
+                        </div>
+
+                        <div class="detail-row mb-2">
+                            <strong class="detail-label">O.C:</strong>
+                            <span class="detail-value">${imageData.oc}</span>
+                        </div>
+
+                        <div class="detail-row mb-3">
+                            <strong class="detail-label">Descripción:</strong>
+                            <span class="detail-value text-muted">${imageData.descripcion}</span>
+                        </div>
+
+                        <div class="alert alert-warning p-2 mb-0">
+                            <small>
+                                <i class="fas fa-warning me-1"></i>
+                                <strong>¡Atención!</strong> Esta acción no se puede deshacer.
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <style>
+            .delete-confirmation-container {
+                text-align: left;
+                padding: 15px 0;
+            }
+
+            .image-frame {
+                border: 1px solid #dc3545;
+                border-radius: 12px;
+                padding: 5px;
+                background: white;
+                box-shadow: 0 4px 12px rgba(220, 53, 69, 0.15);
+            }
+
+            .detail-row {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                padding: 4px 0;
+                border-bottom: 1px solid #f8f9fa;
+            }
+
+            .detail-label {
+                color: #495057;
+                font-size: 0.9rem;
+                min-width: 80px;
+            }
+
+            .detail-value {
+                font-size: 0.9rem;
+                color: #212529;
+                text-align: right;
+                max-width: 150px;
+                word-wrap: break-word;
+            }
+
+            .image-details {
+                background: #f8f9fa;
+                padding: 15px;
+                border-radius: 8px;
+                border-left: 1px solid #dc3545;
+            }
+
+            @media (max-width: 768px) {
+                .delete-confirmation-container .col-md-5,
+                .delete-confirmation-container .col-md-7 {
+                    margin-bottom: 15px;
+                }
+            }
+        </style>
+    `;
+
+    // Mostrar SweetAlert con contenido personalizado
+    Swal.fire({
+        title: '¿Eliminar esta fotografía?',
+        html: htmlContent,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#dc3545',
+        cancelButtonColor: '#6c757d',
+        confirmButtonText: '<i class="fas fa-trash me-2"></i>Sí, eliminar foto',
+        cancelButtonText: '<i class="fas fa-times me-2"></i>Cancelar',
+        reverseButtons: true,
+        focusCancel: true,
+        width: '600px',
+        customClass: {
+            popup: 'delete-confirmation-popup',
+            title: 'delete-confirmation-title',
+            htmlContainer: 'delete-confirmation-content'
+        },
+        showClass: {
+            popup: 'animate__animated animate__zoomIn animate__faster'
+        },
+        hideClass: {
+            popup: 'animate__animated animate__zoomOut animate__faster'
+        }
+    }).then((result) => {
+        if (result.isConfirmed) {
+            console.log('Usuario confirmó eliminación');
+            performImageDeletion(imageData, row);
+        } else {
+            console.log('Usuario canceló eliminación');
+            showNotification('Eliminación cancelada', 'info');
+        }
+    });
+}
+//======PASO 3: Función para ejecutar la eliminación de la imagen===========
+// Función para ejecutar la eliminación real
+function performImageDeletion(imageData, row) {
+    console.log('Ejecutando eliminación de imagen:', imageData.id);
+
+    // Mostrar loading
+    Swal.fire({
+        title: 'Eliminando fotografía...',
+        html: `
+            <div class="text-center">
+                <div class="spinner-border text-danger mb-3" role="status">
+                    <span class="visually-hidden">Eliminando...</span>
+                </div>
+                <p class="text-muted">Procesando eliminación de la imagen</p>
+                <small class="text-muted">Orden SIT: ${imageData.ordenSit}</small>
+            </div>
+        `,
+        allowOutsideClick: false,
+        allowEscapeKey: false,
+        showConfirmButton: false,
+        customClass: {
+            popup: 'loading-popup'
+        }
+    });
+
+    // Simular proceso de eliminación (reemplazar con tu lógica real)
+    setTimeout(() => {
+        try {
+            // Aquí iría la lógica de eliminación real (AJAX, fetch, etc.)
+            // Por ejemplo:
+            // await deleteImageFromServer(imageData.id);
+
+            // Eliminar fila de la tabla
+            if (row && row.parentNode) {
+                // Animación de salida
+                row.style.transition = 'all 0.5s ease';
+                row.style.opacity = '0';
+                row.style.transform = 'translateX(-100%)';
+                row.style.backgroundColor = '#f8d7da';
+
+                setTimeout(() => {
+                    row.remove();
+                    console.log('Fila eliminada del DOM');
+
+                    // Actualizar cards móviles si existen
+                    if (window.responsiveSystem) {
+                        window.responsiveSystem.refresh();
+                    }
+
+                    // Actualizar contadores de filtros
+                    if (typeof updateFilterStatusIndicator === 'function') {
+                        updateFilterStatusIndicator();
+                    }
+                }, 500);
+            }
+
+            // Limpiar de localStorage si existe
+            try {
+                const savedImages = localStorage.getItem('newUploadedImages');
+                if (savedImages) {
+                    const imagesData = JSON.parse(savedImages);
+                    if (imagesData.images) {
+                        imagesData.images = imagesData.images.filter(img => img.id !== imageData.id);
+                        localStorage.setItem('newUploadedImages', JSON.stringify(imagesData));
+                    }
+                }
+            } catch (error) {
+                console.warn('Error limpiando localStorage:', error);
+            }
+
+            // Mostrar confirmación de éxito
+            Swal.fire({
+                title: '¡Eliminada correctamente!',
+                html: `
+                    <div class="text-center">
+                        <p>La fotografía ha sido eliminada exitosamente</p>
+                        <small class="text-muted">Orden SIT: ${imageData.ordenSit} | Tipo: ${imageData.tipo}</small>
+                    </div>
+                `,
+                icon: 'success',
+                timer: 3000,
+                timerProgressBar: true,
+                showConfirmButton: false,
+                toast: false,
+                customClass: {
+                    popup: 'success-popup'
+                }
+            });
+
+            console.log('Imagen eliminada exitosamente');
+
+        } catch (error) {
+            console.error('Error eliminando imagen:', error);
+
+            Swal.fire({
+                title: 'Error al eliminar',
+                html: `
+                    <div class="text-center">
+                        <i class="fas fa-exclamation-triangle text-warning fa-3x mb-3"></i>
+                        <p>No se pudo eliminar la fotografía</p>
+                        <small class="text-muted">Error: ${error.message || 'Error desconocido'}</small>
+                    </div>
+                `,
+                icon: 'error',
+                confirmButtonText: 'Entendido',
+                confirmButtonColor: '#dc3545'
+            });
+        }
+    }, 2000); // Simular delay de 2 segundos
+}
+
+
+//=========================================================
 
 function exportAll() {
     showNotification('Exportando todos los registros...', 'info');
@@ -2013,36 +2366,84 @@ function initializePredictiveFilters() {
 }
 
 // ===== OBSERVADOR DE CAMBIOS EN LA TABLA =====
+// FUNCIÓN para limpiar observers globalmente
+function cleanupAllObservers() {
+    console.log('Limpiando todos los observers...');
+
+    // Limpiar filter observer
+    if (window.filterObserver) {
+        window.filterObserver.disconnect();
+        window.filterObserver = null;
+        console.log('Filter observer limpiado');
+    }
+
+    // Limpiar otros observers que puedan existir
+    if (window.tipoFotografiaObserver) {
+        window.tipoFotografiaObserver.disconnect();
+        window.tipoFotografiaObserver = null;
+        console.log('Tipo fotografía observer limpiado');
+    }
+
+    // Limpiar timeouts pendientes
+    if (window.observerTimeout) {
+        clearTimeout(window.observerTimeout);
+        window.observerTimeout = null;
+        console.log('Observer timeouts limpiados');
+    }
+}
+
+// MEJORAR setupTableObserver
 function setupTableObserver() {
     const tableBody = document.getElementById('imagesTableBody');
-    if (!tableBody) return;
+    if (!tableBody) {
+        console.warn('No se encontró imagesTableBody para observer');
+        return;
+    }
 
-    filterObserver = new MutationObserver(function (mutations) {
+    // Limpiar observer anterior SIEMPRE
+    if (window.filterObserver) {
+        console.log('Limpiando observer anterior...');
+        window.filterObserver.disconnect();
+        window.filterObserver = null;
+    }
+
+    console.log('Creando nuevo observer...');
+    window.filterObserver = new MutationObserver(function (mutations) {
         let shouldRefresh = false;
 
         mutations.forEach(function (mutation) {
-            if (mutation.type === 'childList') {
-                // Se agregaron o eliminaron filas
-                if (mutation.addedNodes.length > 0 || mutation.removedNodes.length > 0) {
+            if (mutation.type === 'childList' && mutation.addedNodes.length > 0) {
+                // Solo procesar si se agregaron nodos reales
+                const hasValidNodes = Array.from(mutation.addedNodes).some(node =>
+                    node.nodeType === Node.ELEMENT_NODE && node.tagName === 'TR'
+                );
+                if (hasValidNodes) {
                     shouldRefresh = true;
                 }
             }
         });
 
         if (shouldRefresh) {
-            console.log('Cambios detectados en tabla, actualizando filtros...');
-            setTimeout(() => {
+            // Debounce MÁS LARGO para evitar spam
+            clearTimeout(window.observerTimeout);
+            window.observerTimeout = setTimeout(() => {
+                console.log('Observer: Actualizando datos de tabla...');
                 extractTableData();
                 applyAllFilters();
-            }, 100);
+            }, 500); // Aumentar a 500ms
         }
     });
 
-    filterObserver.observe(tableBody, {
+    window.filterObserver.observe(tableBody, {
         childList: true,
-        subtree: true
+        subtree: false // Reducir scope del observer
     });
+
+    console.log('Observer configurado correctamente');
 }
+
+
+
 
 // ===== EXTRAER DATOS DE LA TABLA (MEJORADO) =====
 function extractTableData() {
@@ -2567,10 +2968,39 @@ window.addEventListener('storage', function (e) {
     }
 });
 
-// Limpiar observador al salir de la página
+// AGREGAR cleanup global
 window.addEventListener('beforeunload', function () {
-    if (filterObserver) {
-        filterObserver.disconnect();
+    console.log('Limpiando sistema antes de salir...');
+    cleanupAllObservers();
+
+    // Limpiar cropper si existe
+    if (window.editCropper) {
+        window.editCropper.destroy();
+        window.editCropper = null;
+    }
+
+    // Reset flags
+    window.fotografiasSystemInitialized = false;
+    window.fotografiasSystemInitializing = false;
+
+    console.log('Sistema limpiado completamente');
+});
+
+// AGREGAR cleanup cuando se oculta la página
+document.addEventListener('visibilitychange', function () {
+    if (document.hidden) {
+        console.log('Página oculta, pausando observers...');
+        if (window.filterObserver) {
+            window.filterObserver.disconnect();
+        }
+    } else {
+        console.log('Página visible, reactivando observers...');
+        // Reinicializar observer si es necesario
+        setTimeout(() => {
+            if (!window.filterObserver && window.fotografiasSystemInitialized) {
+                setupTableObserver();
+            }
+        }, 1000);
     }
 });
 

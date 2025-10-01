@@ -133,7 +133,7 @@
                                 </th>
                                 <th data-column="tipo-fotografia">
                                     <i class="fas fa-camera me-1"></i>
-                                    TIPO FOTOGRAFÍA
+                                    TIPO
                                 </th>
                                 <th data-column="acciones">
                                     <i class="fas fa-cogs me-1"></i>
@@ -189,63 +189,55 @@
                                     </div>
                                 </td>
                                 <td data-column="tipo-fotografia">
-                                    <div class="btn-group w-100">
-                                        <button class="btn btn-buscar dropdown-toggle"
+                                    <div class="btn-group w-100 dropdown-container">
+                                        <button class="btn btn-buscar dropdown-toggle w-100"
                                                 type="button"
                                                 id="tipoFotografiaDropdown"
                                                 data-bs-toggle="dropdown"
+                                                data-bs-auto-close="outside"
                                                 aria-expanded="false"
-                                                style="background-color: white; border: 1px solid #ced4da;">
+                                                style="background-color: white; border: 1px solid #ced4da; text-align: left;">
                                             <i class="fas me-1"></i>
                                             <span id="tipoFotografiaLabel">Buscar</span>
                                         </button>
-                                        <ul class="dropdown-menu w-100" aria-labelledby="tipoFotografiaDropdown" id="tipoFotografiaMenu">
+                                        <ul class="dropdown-menu" aria-labelledby="tipoFotografiaDropdown" id="tipoFotografiaMenu">
                                             <!-- Header del filtro -->
-                                            <li class="dropdown-header">
-                                                <i class="fas fa-filter me-1"></i>
+                                            <li class="dropdown-header d-flex align-items-center">
+                                                <i class="fas fa-filter me-2"></i>
                                                 Filtrar por Tipo
                                             </li>
 
                                             <!-- Opciones con checkboxes -->
                                             <li>
-                                                <label class="dropdown-item d-flex align-items-center justify-content-between" for="filtroMuestra">
-                                                    <div class="d-flex align-items-center">
+                                                <label class="dropdown-item d-flex align-items-center" for="filtroMuestra">
                                                         <input type="checkbox"
                                                             class="form-check-input me-2"
                                                             id="filtroMuestra"
                                                             value="MUESTRA"
                                                             onchange="filterByTipoFotografia()">
-                                                        <span>Muestra</span>
-                                                    </div>
-
-                                                </label>
+                                                        <span class="flex-grow-1">Muestra</span>
+                                            </label>
                                             </li>
 
                                             <li>
-                                                <label class="dropdown-item d-flex align-items-center justify-content-between" for="filtroPrendaFinal">
-                                                    <div class="d-flex align-items-center">
+                                                <label class="dropdown-item d-flex align-items-center" for="filtroPrendaFinal">
                                                         <input type="checkbox"
                                                             class="form-check-input me-2"
                                                             id="filtroPrendaFinal"
                                                             value="PRENDA FINAL"
                                                             onchange="filterByTipoFotografia()">
-                                                        <span>Prenda Final</span>
-                                                    </div>
-
+                                                        <span class="flex-grow-1">Prenda Final</span>
                                                 </label>
                                             </li>
 
                                             <li>
-                                                <label class="dropdown-item d-flex align-items-center justify-content-between" for="filtroValidacionAC">
-                                                    <div class="d-flex align-items-center">
+                                                <label class="dropdown-item d-flex align-items-center" for="filtroValidacionAC">
                                                         <input type="checkbox"
                                                             class="form-check-input me-2"
                                                             id="filtroValidacionAC"
                                                             value="VALIDACION AC"
                                                             onchange="filterByTipoFotografia()">
-                                                        <span>Validación AC</span>
-                                                    </div>
-
+                                                        <span class="flex-grow-1">Validación AC</span>
                                                 </label>
                                             </li>
 
@@ -253,19 +245,19 @@
                                             <li><hr class="dropdown-divider"></li>
 
                                             <!-- NUEVO: Controles del filtro -->
-                                            <li class="dropdown-item-text">
-                                                <div class="d-flex gap-2">
+                                            <li class="dropdown-item-text p-2">
+                                                <div class="d-flex gap-1">
                                                     <button class="btn btn-sm btn-outline-primary flex-grow-1"
                                                             onclick="selectAllTipoFotografia()"
-                                                            title="Seleccionar todos los tipos">
-                                                        <i class="fas fa-check-double me-1"></i>
-                                                        Todos
+                                                            title="Seleccionar todos">
+                                                        <i class="fas fa-check-double"></i>
+                                                        <span class="d-none d-sm-inline ms-1">Todos</span>
                                                     </button>
                                                     <button class="btn btn-sm btn-outline-danger flex-grow-1"
                                                             onclick="clearTipoFotografiaFilter()"
-                                                            title="Limpiar filtro aplicado">
-                                                        <i class="fas fa-times me-1"></i>
-                                                        Limpiar
+                                                            title="Limpiar filtro">
+                                                        <i class="fas fa-times"></i>
+                                                        <span class="d-none d-sm-inline ms-1">Limpiar</span>
                                                     </button>
                                                 </div>
                                             </li>
@@ -1235,15 +1227,15 @@
 
     function getDefaultImageByType(tipo) {
         const defaultImages = {
-            'MUESTRA': 'https://picsum.photos/200/300',
-            'PRENDA FINAL': 'https://picsum.photos/200/300',
-            'VALIDACION AC': 'https://picsum.photos/200/300',
-            'Muestra': 'https://picsum.photos/200/300',
-            'Prenda Final': 'https://picsum.photos/200/300',
-            'Validación AC': 'https://picsum.photos/200/300'
+            'MUESTRA': 'https://picsum.photos/id/535/200/300',
+            'PRENDA FINAL': 'https://picsum.photos/id/535/200/300',
+            'VALIDACION AC': 'https://picsum.photos/id/535/200/300',
+            'Muestra': 'https://picsum.photos/id/535/200/300',
+            'Prenda Final': 'https://picsum.photos/id/535/200/300',
+            'Validación AC': 'https://picsum.photos/id/535/200/300'
         };
 
-        return defaultImages[tipo] || 'https://picsum.photos/200/300';
+        return defaultImages[tipo] || 'https://picsum.photos/id/535/200/300';
     }
 
     // Agregar función para refrescar cards cuando se agregue nueva imagen

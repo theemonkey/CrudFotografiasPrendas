@@ -278,9 +278,9 @@
                         </thead>
                         <tbody id="imagesTableBody">
                             <!-- Fila de ejemplo 1 - CORREGIDA -->
-                            <tr data-image-id="img_example_1">
+                            <tr data-image-id="img_example_1" data-fecha-creacion="2025-10-02">
                                 <td data-column="imagen">
-                                    <img src="images/shirt-blue.jpg"
+                                    <img src="https://picsum.photos/id/535/200/300"
                                          alt="Camisa azul"
                                          class="img-thumbnail preview-image"
                                          style="width: 60px; height: 60px; cursor: pointer;"
@@ -309,9 +309,9 @@
                             </tr>
 
                             <!-- Fila de ejemplo 2 -->
-                            <tr data-image-id="img_example_2">
+                            <tr data-image-id="img_example_2" data-fecha-creacion="2025-09-29">
                                 <td data-column="imagen">
-                                    <img src="images/shirt-green.jpg"
+                                    <img src="https://picsum.photos/id/535/200/300"
                                          alt="Camisa verde"
                                          class="img-thumbnail preview-image"
                                          style="width: 60px; height: 60px; cursor: pointer;"
@@ -337,9 +337,9 @@
                             </tr>
 
                             <!-- Fila de ejemplo 3 -->
-                            <tr data-image-id="img_example_3">
+                            <tr data-image-id="img_example_3" data-fecha-creacion="2025-09-27">
                                 <td data-column="imagen">
-                                    <img src="images/shirt-white.jpg"
+                                    <img src="https://picsum.photos/id/535/200/300"
                                          alt="Camisa Blanca"
                                          class="img-thumbnail preview-image"
                                          style="width: 60px; height: 60px; cursor: pointer;"
@@ -905,10 +905,6 @@
 {{-- ARCHIVO Javascript para manejo de la logica de fotos-index.blade --}}
 <script src="{{ asset('js/fotos-index.js') }}"></script>
 
-<!-- Archivo JS para responsive en dispositivos moviles -->
-<script src="{{ asset('js/mobile-cards.js') }}"></script>
-
-
 <script>
     // ===== FUNCIONES DE LIGHTBOX CORREGIDAS =====
     function openImageLightbox(imageUrl, alt, description, type) {
@@ -1086,6 +1082,8 @@
             });
     }
 
+    let currentUploadSession = null;
+
     function uploadSingleImage(file) {
     return new Promise((resolve, reject) => {
         const formData = new FormData();
@@ -1095,17 +1093,33 @@
         setTimeout(() => {
             const imageUrl = URL.createObjectURL(file);
 
-            // Datos base de la imagen
+            // === Generar datos compartidos por sesión ====
+            if (!currentUploadSession) {
+                currentUploadSession = {
+                    ordenSit: generateOrderNumber(),
+                    po: generatePONumber(),
+                    oc: generateOCNumber(),
+                    sessionId: Date.now(),
+                    timestamp: new Date().toISOString()
+                };
+                console.log('Nueva sesión de carga creada:', currentUploadSession);
+            }
+
+            // Datos base de la imagen con datos compartidos
             const tempData = {
                 id: Date.now() + Math.random(),
                 url: imageUrl,
                 name: file.name,
                 size: file.size,
                 uploadDate: new Date().toISOString(),
-                ordenSit: generateOrderNumber(),
-                po: generatePONumber(),
-                oc: generateOCNumber()
+                // ==== Se usan datos de la sesión actual====
+                ordenSit: currentUploadSession.ordenSit,
+                po: currentUploadSession.po,
+                oc: currentUploadSession.oc,
+                sessionId: currentUploadSession.sessionId
             };
+
+            console.log('Imagen con datos compartidos:', tempData);
 
             // Abrir modal y esperar datos del usuario
             const modalEl = document.getElementById('imageDataModal');
@@ -1250,10 +1264,13 @@
 
         // Generar ID único si no existe
         const imageId = imageData.id || 'img_' + Date.now() + '_' + Math.random().toString(36).substring(2, 9);
+        const fechaCreacion = new Date().toISOString();
         console.log('ID de imagen:', imageId);
+        console.log('Fecha de creación:', fechaCreacion);
 
         const row = document.createElement('tr');
         row.setAttribute('data-image-id', imageId);
+        row.setAttribute('data-fecha-creacion', fechaCreacion);
 
         // Normalizar tipos para compatibilidad con filtros
         let normalizedType = imageData.tipoFotografia;
@@ -1279,12 +1296,10 @@
         row.innerHTML = `
             <td data-column="imagen">
                 <img src="${imageData.url}"
-                    alt="${imgAlt}"
+                    alt="${imageData.name || imageData.descripcion || 'Imagen'}"
                     class="img-thumbnail preview-image"
                     style="width: 60px; height: 60px; cursor: pointer; object-fit: cover; background-color: #f8f9fa;"
-                    onclick="openImageLightbox('${imageData.url}', '${imgAlt}', '${imgDesc}', '${normalizedType}')"
-                    onerror="console.error('Error cargando imagen:', this.src); this.src='${getDefaultImageByType(normalizedType)}'; this.style.backgroundColor='#ffebee';"
-                    onload="console.log('Imagen cargada correctamente:', this.src);">
+                    onclick="openImageLightbox('${imageData.url}', '${imageData.name || imageData.descripcion}', '${imageData.descripcion}', '${normalizedType}')">
             </td>
             <td data-column="orden-sit">${imageData.ordenSit || 'N/A'}</td>
             <td data-column="po">${imageData.po || 'N/A'}</td>
@@ -1693,7 +1708,7 @@
             photosContainer.innerHTML = `
                 <div class="empty-state">
                     <i class="fas fa-image"></i>
-                    <span>No hay fotografías reales en esta etapa</span>
+                    <span>No hay fotografías en esta etapa</span>
                 </div>
             `;
             console.log(` ${categoria}: Sin fotos reales`);
@@ -1746,59 +1761,6 @@
   <script src="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.min.js"></script>
 
 <!-- SCRIPTS para manejo de selector del rango de fechas -->
-<script>
-
-   // let fecha1 = null;
-   // let fecha2 = null;
-
-    // Inicializacion del rango de fechas
-    $(document).ready(function () {
-        setRangeDates({
-            element: '#rangoFechasComm',
-            startDate: moment().startOf('year'),
-            endDate: new Date(),
-            ranges: {
-                "Último mes": [moment().subtract(1, 'month').startOf('month'), moment().subtract(1, 'month').endOf('month')],
-                "Últimos 3 meses": [moment().subtract(3, 'month').startOf('month'), moment().subtract(1, 'month').endOf('month')],
-                "Últimos 6 meses": [moment().subtract(6, 'month').startOf('month'), moment().subtract(1, 'month').endOf('month')],
-                "Últimos 12 meses": [moment().subtract(12, 'month').startOf('month'), moment().subtract(1, 'month').endOf('month')],
-                "Este año": [moment().startOf('year'), moment().subtract(1, 'month').endOf('month')],
-                "Año pasado": [moment().subtract(1, 'year').startOf('year'), moment().subtract(1, 'year').endOf('year')],
-                "Todo": [moment('2000-01-01'), moment()],
-            },
-            eventDateRange: function (start, end) {
-                let fecha1 = start.format("YYYY-MM-DD");
-                let fecha2 = end.format("YYYY-MM-DD");
-
-                // Filtro para DataTable
-                const dateFilter = function (settings, data, dataIndex) {
-                    const cellDate = data[0]; // <- ajusta el índice según la columna de fechas
-                    if (!cellDate) return false;
-
-                    if (
-                        (!fecha1 || cellDate >= fecha1) &&
-                        (!fecha2 || cellDate <= fecha2)
-                    ) {
-                        return true;
-                    }
-
-                    return false;
-                };
-
-                // Evita duplicados en los filtros
-                const index = $.fn.dataTable.ext.search.indexOf(dateFilter);
-                if (index !== -1) {
-                    $.fn.dataTable.ext.search.splice(index, 1);
-                }
-                $.fn.dataTable.ext.search.push(dateFilter);
-
-                // Redibujar tabla
-                $(".divTblresultados").DataTable().draw();
-            }
-        });
-    });
-</script>
-
 <!--Si se requiere usar en otro lugar (export const setRangeDates...) -->
 <script>
     const setRangeDates = (options) => {
@@ -1862,5 +1824,172 @@
         endDate: moment(),
       });
     });
+</script>
+
+<script>
+// Función para aplicar filtro automático basado en la selección del daterangepicker
+function setupAutomaticFiltering() {
+    // Interceptar cuando se selecciona una opción del menú
+    $(document).on('click', '.ranges li', function() {
+        const rangeText = $(this).text().trim();
+        console.log('Opción seleccionada:', rangeText);
+
+        // Pequeño delay para que el daterangepicker procese la selección
+        setTimeout(() => {
+            const fechaInicio = $('#rangoFechasComm').data('daterangepicker').startDate.format('YYYY-MM-DD');
+            const fechaFin = $('#rangoFechasComm').data('daterangepicker').endDate.format('YYYY-MM-DD');
+
+            console.log('Aplicando filtro automático:', fechaInicio, 'a', fechaFin);
+
+            // Aplicar filtro inmediatamente
+            applyDateFilter(fechaInicio, fechaFin, rangeText);
+        }, 100);
+    });
+
+    // También interceptar cuando se aplica un rango personalizado
+    $('#rangoFechasComm').on('apply.daterangepicker', function(ev, picker) {
+        const fechaInicio = picker.startDate.format('YYYY-MM-DD');
+        const fechaFin = picker.endDate.format('YYYY-MM-DD');
+
+        console.log('Rango personalizado aplicado:', fechaInicio, 'a', fechaFin);
+        applyDateFilter(fechaInicio, fechaFin, 'Personalizado');
+    });
+}
+
+// Función principal para aplicar el filtro
+function applyDateFilter(fechaInicio, fechaFin, rangeType) {
+    console.log(`Filtrando por ${rangeType}:`, fechaInicio, 'a', fechaFin);
+
+    const tableBody = document.getElementById('imagesTableBody');
+    if (!tableBody) {
+        console.warn('Tabla no encontrada');
+        return;
+    }
+
+    const rows = tableBody.querySelectorAll('tr[data-image-id]');
+    let visibleCount = 0;
+    let hiddenCount = 0;
+
+    rows.forEach(row => {
+        const fechaCreacion = getFechaCreacionFromRow(row);
+
+        if (fechaCreacion) {
+            const fechaRow = moment(fechaCreacion).format('YYYY-MM-DD');
+            const inRange = moment(fechaRow).isBetween(fechaInicio, fechaFin, 'day', '[]');
+
+            if (inRange) {
+                // Mostrar fila con animación suave
+                row.style.display = '';
+                row.style.opacity = '0.3';
+                setTimeout(() => {
+                    row.style.transition = 'opacity 0.3s ease';
+                    row.style.opacity = '1';
+                }, 50);
+                visibleCount++;
+            } else {
+                // Ocultar fila con animación
+                row.style.transition = 'opacity 0.2s ease';
+                row.style.opacity = '0';
+                setTimeout(() => {
+                    row.style.display = 'none';
+                }, 200);
+                hiddenCount++;
+            }
+        } else {
+            // Si no tiene fecha, mostrar por defecto
+            row.style.display = '';
+            row.style.opacity = '1';
+            visibleCount++;
+        }
+    });
+
+    // Mostrar notificación del resultado
+    showFilterNotification(visibleCount, hiddenCount, rangeType, fechaInicio, fechaFin);
+}
+
+// Función para obtener fecha de creación de una fila
+function getFechaCreacionFromRow(row) {
+    // Opción 1: Si tienes un atributo data-fecha-creacion
+    if (row.dataset.fechaCreacion) {
+        return row.dataset.fechaCreacion;
+    }
+
+    // Opción 2: Extraer del ID de la imagen si tiene timestamp
+    const imageId = row.dataset.imageId;
+    if (imageId && imageId.includes('_')) {
+        const parts = imageId.split('_');
+        const timestamp = parts[1];
+        if (timestamp && !isNaN(timestamp) && timestamp.length >= 10) {
+            return new Date(parseInt(timestamp));
+        }
+    }
+
+    // Opción 3: Para imágenes de ejemplo o existentes, usar fechas simuladas
+    // Puedes ajustar estas fechas según tus datos reales
+    const ordenSit = row.querySelector('[data-column="orden-sit"]')?.textContent.trim();
+    if (ordenSit) {
+        // Simular fechas basadas en el número de orden (esto es temporal)
+        // En producción, estas fechas deben venir de la base de datos
+        const simulatedDates = {
+            '10060482': '2025-10-02',
+            '10001600': '2025-09-29',
+            '10047396': '2025-09-27'
+        };
+
+        if (simulatedDates[ordenSit]) {
+            return simulatedDates[ordenSit];
+        }
+    }
+
+    // Opción 4: Fecha actual para nuevas imágenes sin fecha específica
+    return new Date();
+}
+
+// Función para mostrar notificación del resultado del filtro
+function showFilterNotification(visible, hidden, rangeType, fechaInicio, fechaFin) {
+    const message = `
+        <strong>${rangeType}</strong><br>
+            ${fechaInicio} a ${fechaFin}<br>
+            ${visible} foto(s) mostrada(s)<br>
+            ${hidden} foto(s) oculta(s)
+    `;
+
+    // Usar tu función de notificación existente si la tienes
+    if (typeof showNotification === 'function') {
+        const tipo = visible > 0 ? 'success' : 'warning';
+        showNotification(message, tipo);
+    } else {
+        // Crear notificación temporal
+        createTemporaryNotification(message, visible > 0 ? 'success' : 'warning');
+    }
+}
+
+// Función para limpiar filtros
+function clearDateFilter() {
+    const tableBody = document.getElementById('imagesTableBody');
+    if (tableBody) {
+        const rows = tableBody.querySelectorAll('tr[data-image-id]');
+        rows.forEach(row => {
+            row.style.display = '';
+            row.style.opacity = '1';
+            row.style.transition = '';
+        });
+    }
+
+    // Limpiar selector de fechas
+    $('#rangoFechasComm').val('');
+
+    showFilterNotification(rows.length, 0, 'Filtro Limpiado', '', '');
+}
+
+// Inicialización cuando el DOM esté listo
+$(document).ready(function() {
+    // inicialización existente del daterangepicker...
+
+    // Agregar el filtrado automático
+    setupAutomaticFiltering();
+
+    console.log('Filtrado automático por fechas inicializado');
+});
 </script>
 @endsection

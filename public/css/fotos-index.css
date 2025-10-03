@@ -183,27 +183,12 @@
 }
 
 /* ================================================================
-   TABLA - MÓVIL CARD LAYOUT
+   TABLA - MÓVIL (hasta 300px) Responsive moviles
    ================================================================ */
-
-.table-container {
-    width: 100%;
-    overflow: hidden;
-}
-
-/* Ocultar tabla tradicional en móvil */
 .images-table {
     display: none !important;
 }
 
-/* Solo mostrar tabla en tablets/desktop */
-@media screen and (min-width: 768px) {
-    .images-table {
-        display: table !important;
-    }
-}
-
-/* Layout de cards para móvil */
 .mobile-cards-container.mobile-only {
     display: block !important;
     width: 100% !important;
@@ -211,19 +196,12 @@
     background: transparent !important;
 }
 
-/* En tablets/desktop, ocultar cards */
-@media screen and (min-width: 767px) {
-    .table-responsive.tablet-up {
-        display: none !important;
+/* ===== TABLET/DESKTOP - limite pantalla ===== */
+@media screen and (min-width: 300px) {
+    .images-table {
+        display: table !important;
     }
 
-    .mobile-cards-container.mobile-only {
-        display: block !important;
-    }
-}
-
-/*  MOSTRAR tabla en desktop */
-@media screen and (min-width: 768px) {
     .table-responsive.tablet-up {
         display: block !important;
     }
@@ -233,135 +211,6 @@
     }
 }
 
-.mobile-card {
-    background: white;
-    border: 1px solid #e9ecef;
-    border-radius: 12px;
-    margin-bottom: 16px;
-    overflow: hidden;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-    transition: box-shadow 0.3s ease;
-}
-
-.mobile-card:hover {
-    box-shadow: 0 4px 12px rgba(0,0,0,0.12);
-}
-
-.mobile-card-header {
-    display: flex;
-    align-items: center;
-    padding: 16px;
-    border-bottom: 1px solid #f8f9fa;
-    background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
-}
-
-.mobile-card-image {
-    width: 64px;
-    height: 64px;
-    border-radius: 8px;
-    object-fit: cover;
-    cursor: pointer;
-    flex-shrink: 0;
-    border: 2px solid #e9ecef;
-    transition: all 0.3s ease;
-}
-
-.mobile-card-image:hover {
-    border-color: #007bff;
-    transform: scale(1.05);
-}
-
-.mobile-card-info {
-    flex: 1;
-    margin-left: 12px;
-    min-width: 0;
-}
-
-.mobile-card-title {
-    font-weight: 600;
-    font-size: 16px;
-    color: #343a40;
-    margin-bottom: 6px;
-    display: flex;
-    align-items: center;
-}
-
-.mobile-card-title i {
-    color: #007bff;
-    font-size: 14px;
-}
-
-.mobile-card-subtitle {
-    margin: 0;
-}
-
-.mobile-card-body {
-    padding: 16px;
-    background: white;
-}
-
-.mobile-card-field {
-    display: flex;
-    align-items: flex-start;
-    margin-bottom: 12px;
-    padding: 8px 0;
-}
-
-.mobile-card-field:last-child {
-    margin-bottom: 0;
-}
-
-.mobile-card-label {
-    font-weight: 500;
-    color: #6c757d;
-    font-size: 13px;
-    min-width: 80px;
-    flex-shrink: 0;
-    display: flex;
-    align-items: center;
-}
-
-.mobile-card-label i {
-    width: 14px;
-    font-size: 12px;
-}
-
-.mobile-card-value {
-    color: #343a40;
-    font-size: 14px;
-    word-break: break-word;
-    margin-left: 8px;
-    flex: 1;
-}
-
-.mobile-card-actions {
-    display: flex;
-    justify-content: space-around;
-    padding: 12px 16px;
-    background: #f8f9fa;
-    border-top: 1px solid #e9ecef;
-    gap: 8px;
-}
-
-.mobile-card-actions .btn {
-    flex: 1;
-    padding: 8px 12px;
-    font-size: 13px;
-    border-radius: 6px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    min-height: 36px;
-    transition: all 0.3s ease;
-}
-
-.mobile-card-actions .btn i {
-    font-size: 14px;
-}
-
-.mobile-card-actions .btn:hover {
-    transform: translateY(-1px);
-}
 
 /* ================================================================
    TABLA RESPONSIVE MEJORADA

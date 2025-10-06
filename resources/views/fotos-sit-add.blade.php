@@ -333,42 +333,214 @@
             return;
         }
 
-        // Mostrar estado de carga
-        const uploadBtn = source === 'camera'
-            ? document.getElementById('cameraUpload')
-            : document.getElementById('fileUpload');
+        processMultipleImageAtOnce(validFiles, source);
 
-        setUploadState(uploadBtn, 'uploading');
+    }
+        function processMultipleImageAtOnce(files, source) {
+            console.log(`Procesando ${files.length} imágenes en lote...`);
 
-        // Procesar archivos
-        const uploadPromises = validFiles.map(file => uploadSingleImage(file));
+            // Mostrar estado de carga
+            const uploadBtn = source === 'camera'
+                ? document.getElementById('cameraUpload')
+                : document.getElementById('fileUpload');
 
-        Promise.all(uploadPromises)
-            .then(results => {
-                console.log(' Todas las imágenes subidas correctamente');
-                showNotification(`${results.length} imagen(es) subida(s) correctamente`, 'success');
+            setUploadState(uploadBtn, 'uploading');
 
-                // Agregar imágenes al array
-                results.forEach(imageData => {
-                    uploadedImages.push(imageData);
-                    // Actualizar imagen de vista previa en el card
-                    updateCardPreview(imageData);
+            // Convertir todas las imagenes a base64 primero
+            const filePromises = Array.from(files).map(file => {
+                return new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        resolve({
+                            file: file,
+                            base64: e.target.result,
+                            name: file.name,
+                            size: file.size
+                        });
+                    };
+                    reader.onerror = () => reject(new Error(`Error leyendo ${file.name}`));
+                    reader.readAsDataURL(file);
                 });
-
-                setUploadState(uploadBtn, 'success');
-
-                // Reset después de 2 segundos
-                setTimeout(() => {
-                    setUploadState(uploadBtn, 'normal');
-                }, 2000);
-            })
-            .catch(error => {
-                console.error(' Error subiendo imágenes:', error);
-                showNotification('Error al subir las imágenes', 'error');
-                setUploadState(uploadBtn, 'normal');
             });
+
+            // Cuando todas las imágenes estén convertidas, abrir UN SOLO modal
+            Promise.all(filePromises)
+                .then(imageDataArray => {
+                    console.log('Todas las imágenes convertidas a Base64');
+                    // Abrir modal para configurar datos para todas las imagenes
+                    showBatchImageModal(imageDataArray, uploadBtn);
+                })
+                .catch(error => {
+                    console.error('Error convirtiendo imágenes a Base64:', error);
+                    showNotification('Error al convertir imágenes a Base64', 'error');
+                    setUploadState(uploadBtn, 'normal');
+                });
+        }
+
+        // ================= FUNCIÓN: Modal para lote de imágenes ===================
+        function showBatchImageModal(imageDataArray, uploadBtn) {
+            console.log(`Abriendo modal para ${imageDataArray.length} imágenes`);
+
+            const modalEl = document.getElementById('imageDataModal');
+            const modal = new bootstrap.Modal(modalEl);
+
+            // Mostrar titulo simple
+            const modalTitle = document.getElementById('imageDataModalLabel');
+            if (modalTitle) {
+                modalTitle.textContent = `Detalles para ${imageDataArray.length} imagen(es)`;
+            }
+
+            // Limpiar formulario
+            const descripcionInput = document.getElementById('descripcionInput');
+            const tipoSelect = document.getElementById('tipoFotografiaSelect');
+
+            if (descripcionInput) descripcionInput.value = '';
+            if (tipoSelect) tipoSelect.selectedIndex = 0;
+
+            // Solo mostrar cantidad
+            addSimpleInfo(imageDataArray.length);
+
+
+            // Configurar modal para no cerrarse
+            modalEl.setAttribute('data-bs-backdrop', 'static');
+            modalEl.setAttribute('data-bs-keyboard', 'false');
+
+            // Manejar guardado para TODAS las imágenes
+            const saveBtn = document.getElementById('saveImageData');
+
+            const handleBatchSave = () => {
+                const descripcionVal = descripcionInput ? descripcionInput.value.trim() : '';
+                const tipoFotografia = tipoSelect ? tipoSelect.value : '';
+
+                if (!descripcionVal || !tipoFotografia) {
+                    alert("Por favor ingrese todos los campos para todas las imágenes.");
+                    return;
+                }
+
+                console.log(`Procesando ${imageDataArray.length} imágenes...`);
+
+                // Desactivar botón mientras se procesa
+                saveBtn.disabled = true;
+                saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Procesando...';
+
+                // ====== Procesamiento Automatico ========
+                try {
+                    const completedImages = imageDataArray.map((imageData, index) => {
+                        const ordenSitValue = document.getElementById('ordenSitValue').textContent || 'N/A';
+
+                        return {
+                            id: Date.now() + index + Math.random(),
+                            url: imageData.base64,
+                            name: imageData.name,
+                            size: imageData.size,
+                            uploadDate: new Date().toISOString(),
+                            uploadTimestamp: Date.now() + index, // Timestamps únicos
+                            ordenSit: ordenSitValue,
+                            po: generatePONumber(),
+                            oc: generateOCNumber(),
+                            descripcion: descripcionVal,
+                            tipoFotografia: tipoFotografia,
+                            categoria: determineImageCategory(tipoFotografia),
+                            completionTimestamp: Date.now(),
+                            status: 'completed',
+                            source: 'fotos-sit-add',
+                            fileType: imageData.file.type,
+                            batchId: Date.now(), // ID del lote
+                            batchIndex: index + 1 // Posición en el lote
+                        };
+                    });
+
+                    // Agregar TODAS las imágenes al array
+                    uploadedImages.push(...completedImages);
+
+                    // Actualizar vista previa con la primera imagen
+                    if (completedImages.length > 0) {
+                        updateCardPreview(completedImages[0]);
+                    }
+
+                    console.log(` ${completedImages.length}Procesamiento de imágenes completado.`);
+
+                    // Cerrar modal inmediatamente
+                    modal.hide();
+
+                    // == Guardado y redireccion automatica ==
+                    setTimeout(() => {
+                        console.log('Guardado automatico iniciado...');
+                        guardarFoto(); // Redireccion automatica
+                    }, 300);
+                } catch (error) {
+                    console.error('Error durante el procesamiento automático:', error);
+                } finally {
+                    // Cleanup
+                    saveBtn.disabled = false;
+                    saveBtn.innerHTML = 'Continuar';
+                    setUploadState(uploadBtn, 'normal');
+                }
+            };
+
+            // Agregar event listener
+            saveBtn.addEventListener('click', handleBatchSave);
+
+            // Cambiar texto del botón
+            saveBtn.innerHTML = 'Continuar';
+
+            // Mostrar modal
+            modal.show();
+            console.log('Modal mostrado - Listo para continuar');
+        }
+
+        //////////////////////////////////////////////////////////////////////
+        // ===== FUNCIÓN AUXILIAR: Mostrar información basica =====
+        function addSimpleInfo(imageCount) {
+            // Buscar si ya existe info container
+            let infoContainer = document.getElementById('modalSimpleInfo');
+            if (!infoContainer) {
+                // Crear contenedor simple
+                infoContainer = document.createElement('div');
+                infoContainer.id = 'modalSimpleInfo';
+                infoContainer.className = 'mb-3';
+
+                // Insertar al inicio del modal -body
+                const modalBody = document.querySelector('#imageDataModal .modal-body');
+                if (modalBody) {
+                    modalBody.insertAdjacentElement('afterbegin', infoContainer);
+                    console.log('Info container creado');
+                }
+            }
+
+            // HTML simple
+            const infoHTML = `
+                <div class="alert alert-primary p-3 text-center">
+                    <h5 class="mb-2">
+                        <i class="fas fa-images me-2"></i>
+                        ${imageCount} imagen(es) seleccionada(s)
+                    </h5>
+                    <p class="mb-0 text-muted">
+                        Los datos que ingreses se aplicarán a todas las imágenes.
+                    </p>
+            </div>
+        `;
+
+        infoContainer.innerHTML = infoHTML;
+        console.log(`Info mostrada para ${imageCount} imágenes`);
     }
 
+    // Agregar cleanup automático cuando se cierre el modal:
+    document.addEventListener('DOMContentLoaded', function() {
+        const modal = document.getElementById('imageDataModal');
+        if (modal) {
+            modal.addEventListener('hidden.bs.modal', function() {
+                // Limpiar info container cuando se cierre el modal
+                const infoContainer = document.getElementById('modalSimpleInfo');
+                if (infoContainer) {
+                    infoContainer.remove();
+                    console.log('Info container limpiado');
+                }
+            });
+        }
+    });
+
+/*=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>*/
     function uploadSingleImage(file) {
         return new Promise((resolve, reject) => {
             console.log('Procesando archivo:', file.name);

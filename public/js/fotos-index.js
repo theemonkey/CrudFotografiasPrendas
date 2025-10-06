@@ -9,7 +9,7 @@
 // VARIABLES GLOBALES Y CONFIGURACIÓN - CONSOLIDADAS
 // ================================================================================================
 
-let currentUser = null;
+//let currentUser = null;
 let currentImageData = null;
 let commentsData = new Map();
 let bootstrapReady = false;
@@ -55,7 +55,7 @@ function debugSystem() {
 // SISTEMA DE DETECCIÓN DE USUARIOS
 // ================================================================================================
 
-function initializeUserSystem() {
+/*function initializeUserSystem() {
     console.log('Inicializando sistema de usuarios...');
 
     const metaUser = document.querySelector('meta[name="current-user"]');
@@ -76,7 +76,7 @@ function initializeUserSystem() {
     }
 
     updateUserInterface(currentUser);
-}
+}*/
 
 function generateUsernameFromDisplayName(displayName) {
     if (!displayName) return 'usuario';
@@ -169,11 +169,11 @@ function initializeCompleteSystem() {
         }
 
         // Sistemas principales
-        initializeUserSystem();
+        //initializeUserSystem(); //Registra que usuario hizo cierto comentario
         initializeLightbox();
         initializeNotifications();
         initializeSearch();
-        initializeCommentsSystem();
+        //initializeCommentsSystem(); //Sistema comentarios alterno
         initializeCommentCounterSystem();
         initializeTipoFotografiaFilter();
 
@@ -231,7 +231,7 @@ function waitForBootstrap() {
 // SISTEMA DE COMENTARIOS CON VERIFICACIÓN
 // ================================================================================================
 
-function initializeCommentsSystem() {
+/*function initializeCommentsSystem() {
     console.log('Inicializando sistema de comentarios...');
 
     const commentForm = document.getElementById('commentForm');
@@ -250,7 +250,7 @@ function initializeCommentsSystem() {
     }
 
     console.log('Sistema de comentarios inicializado');
-}
+}*/
 
 function initializeCommentCounterSystem() {
     console.log('Inicializando sistema de contador de comentarios...');
@@ -395,7 +395,7 @@ function updateCommentsModalInfo(imageData) {
     console.log('Información del modal actualizada');
 }
 
-function handleCommentSubmit(e) {
+/*function handleCommentSubmit(e) {
     e.preventDefault();
     console.log('handleCommentSubmit llamado');
 
@@ -442,7 +442,7 @@ function handleCommentSubmit(e) {
     clearCommentForm();
 
     showNotification(`Comentario agregado por ${currentUser.displayName}`, 'success');
-}
+}*/
 
 function addCommentToStorage(comment) {
     if (!commentsData.has(comment.imageId)) {
@@ -1757,9 +1757,48 @@ function initializeCropTool() {
                 imageSmoothingQuality: 'high'
             });
 
-            // Actualizar imagen con la versión recortada
-            const croppedImageUrl = canvas.toDataURL('image/jpeg', 0.9);
-            document.getElementById('editModalImage').src = croppedImageUrl;
+            // Convertir recorte a base64 permanente
+            const croppedBase64 = canvas.toDataURL('image/jpeg', 0.9);
+            document.getElementById('editModalImage').src = croppedBase64;
+
+            // ===== Actualizar Imagen en tabla inmediatamente =====
+            if (currentEditingRow) {
+                const tableImage = currentEditingRow.querySelector('img');
+                if (tableImage) {
+                    const descripcionActual = document.getElementById('editDescripcion').value.trim() ||
+                        currentEditingRow.querySelector('[data-column="descripcion"]')?.textContent.trim() ||
+                        'Imagen recortada';
+                    const nuevoTipo = document.getElementById('editTipoFotografia').value || 'MUESTRA';
+
+                    // Crear nueva imagen con base64
+                    const newTableImage = tableImage.cloneNode(true);
+                    newTableImage.src = croppedBase64; //  BASE64 del recorte
+                    newTableImage.alt = 'Imagen recortada';
+                    newTableImage.title = 'Imagen recortada';
+
+                    newTableImage.classList.remove('default-image');
+                    newTableImage.style.opacity = '1';
+                    newTableImage.removeAttribute('onclick');
+
+                    // Event listener con base64 del recorte
+                    newTableImage.addEventListener('click', function (e) {
+                        e.preventDefault();
+                        e.stopImmediatePropagation();
+                        console.log('Click en imagen recortada');
+                        openImageLightbox(croppedBase64, 'Imagen recortada', descripcionActual, nuevoTipo);
+                    });
+
+                    // Reemplazar imagen
+                    tableImage.parentNode.replaceChild(newTableImage, tableImage);
+                    console.log('Imagen recortada aplicada a tabla con base64');
+                }
+            }
+
+            // Actualizar datos globales
+            if (currentImageData) {
+                currentImageData.url = croppedBase64;
+                currentImageData.nombre = 'imagen_recortada.jpg';
+            }
 
             // Marcar que la imagen ha sido recortada
             hasImageBeenCropped = true;
@@ -1922,14 +1961,40 @@ function deleteCurrentPhotoOnly() {
             const img = currentEditingRow.querySelector('img');
             if (img) {
                 const defaultImage = getDefaultImageByType(currentImageData.tipo);
-                img.src = defaultImage;
-                img.alt = 'Imagen eliminada';
-                img.setAttribute('onclick', `openImageLightbox(this)`);
+                const descripcionCell = currentEditingRow.querySelector('[data-column="descripcion"]');
+                const tipoCell = currentEditingRow.querySelector('[data-column="tipo-fotografia"]');
+
+                const descripcion = descripcionCell ? descripcionCell.textContent.trim() : 'Imagen eliminada';
+                const tipo = tipoCell ? tipoCell.textContent.trim() : currentImageData.tipo;
+
+                // ===== CREAR IMAGEN COMPLETAMENTE NUEVA =====
+                const newDefaultImage = document.createElement('img');
+                newDefaultImage.src = defaultImage;
+                newDefaultImage.alt = 'Imagen eliminada';
+                newDefaultImage.title = 'Imagen eliminada - Mostrando imagen por defecto';
+                newDefaultImage.className = img.className; // Copiar clases CSS
+                newDefaultImage.classList.add('default-image');
+                newDefaultImage.style.opacity = '0.7';
+
+                // ===== SOLO event listener para imagen por defecto =====
+                newDefaultImage.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    e.stopImmediatePropagation();
+                    console.log('Click en imagen por defecto:', defaultImage);
+                    openImageLightbox(defaultImage, 'Imagen eliminada', descripcion, tipo);
+                });
+
+                // Reemplazar imagen anterior
+                img.parentNode.replaceChild(newDefaultImage, img);
+
+                console.log('Imagen por defecto configurada correctamente');
             }
 
             // Cerrar modal
             const modal = bootstrap.Modal.getInstance(document.getElementById('editImageModal'));
-            modal.hide();
+            if (modal) {
+                modal.hide();
+            }
 
             showNotification('Fotografía eliminada correctamente (fila mantenida)', 'success');
 
@@ -3248,7 +3313,7 @@ function clearAllFiltersIncludingGlobal() {
         clearAllFilters();
     }
 
-    console.log('🧹 Todos los filtros limpiados (global + columnas)');
+    console.log('Todos los filtros limpiados (global + columnas)');
 }
 
 // ===== FUNCIÓN PARA REFRESCAR BÚSQUEDA GLOBAL =====
@@ -3303,6 +3368,174 @@ document.addEventListener('DOMContentLoaded', function () {
     }, 800);
 });
 
+// ================================================================================================
+// FUNCIONES ACTUALIZACION LIGHTBOX LUEGO DE ELIMINAR UNA IMAGEN Y ACTUALIZARLA
+// ================================================================================================
+
+function handleFileUpload(files) {
+    if (!files || files.length === 0) return;
+
+    console.log('Procesando nueva imagen subida...');
+
+    const file = files[0]; // Tomar solo la primera imagen
+    const reader = new FileReader();
+    reader.onload = function (e) {
+        const base64Image = e.target.result;  // Url de base64 permanente
+
+        // Actualizar imagen en el modal
+        const modalImage = document.getElementById('editModalImage');
+        if (modalImage) {
+            modalImage.src = base64Image;
+            console.log('Imagen del modal actualizada con base64');
+        }
+
+        // ===== Limpiar eventos anteriores y crear nuevos =====
+        if (currentEditingRow) {
+            const tableImage = currentEditingRow.querySelector('img');
+            if (tableImage) {
+                // Obtener datos actuales del formulario para el nuevo onclick
+                const nuevaDescripcion = document.getElementById('editDescripcion').value.trim();
+                const nuevoTipo = document.getElementById('editTipoFotografia').value;
+
+                // Si no hay descripción en el formulario, usar la actual de la tabla
+                const descripcionActual = nuevaDescripcion ||
+                    currentEditingRow.querySelector('[data-column="descripcion"]')?.textContent.trim() ||
+                    'Imagen actualizada';
+
+                // Clonar imagen para limpiar eventos completamente - Usar base64
+                const newTableImage = tableImage.cloneNode(true);
+                newTableImage.src = base64Image; // ← BASE64 en lugar de URL temporal
+                newTableImage.alt = file.name || descripcionActual;
+                newTableImage.title = 'Imagen subida - ' + (file.name || descripcionActual);
+
+                // Limpiar clases de imagen por defecto
+                newTableImage.classList.remove('default-image');
+                newTableImage.style.opacity = '1';
+                newTableImage.removeAttribute('onclick');
+
+                // ===== EVENT LISTENER CON BASE64 =====
+                newTableImage.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    e.stopImmediatePropagation();
+                    console.log('Click en imagen con base64:', base64Image.substring(0, 50) + '...');
+                    openImageLightbox(base64Image, file.name || descripcionActual, descripcionActual, nuevoTipo);
+                });
+
+                // Reemplazar imagen anterior
+                tableImage.parentNode.replaceChild(newTableImage, tableImage);
+
+                console.log('Imagen de tabla reemplazada con base64 permanente');
+            }
+        }
+
+        // Actualizar datos de imagen actuales para otras operaciones
+        if (currentImageData) {
+            currentImageData.url = base64Image;
+            currentImageData.nombre = file.name;
+            currentImageData.size = file.size;
+            console.log('currentImageData actualizado con base64');
+        }
+
+        // Mostrar notificación
+        showNotification('Nueva imagen cargada correctamente', 'success');
+        hasImageBeenCropped = true;
+        updateResetButtonState();
+    };
+
+    // Leer archivo como base64
+    reader.readAsDataURL(file);
+}
+
+/* >>>>>>>>>>====================>>>>>>>>>>> */
+// Asegurar que al guardar cambios también se actualice el onclick
+function saveEditChanges() {
+    if (!currentEditingRow || !currentImageData) {
+        showNotification('Error: No hay datos para guardar', 'error');
+        return;
+    }
+
+    console.log('Guardando cambios de edición...');
+
+    // Obtener datos del formulario
+    const nuevoTipo = document.getElementById('editTipoFotografia').value;
+    const nuevaDescripcion = document.getElementById('editDescripcion').value.trim();
+
+    if (!nuevoTipo || !nuevaDescripcion) {
+        alert('Por favor complete todos los campos requeridos');
+        return;
+    }
+
+    // Actualizar celdas de texto
+    const tipoCell = currentEditingRow.querySelector('[data-column="tipo-fotografia"]');
+    const descripcionCell = currentEditingRow.querySelector('[data-column="descripcion"]');
+
+    if (tipoCell) {
+        tipoCell.textContent = nuevoTipo;
+    }
+
+    if (descripcionCell) {
+        descripcionCell.textContent = nuevaDescripcion;
+    }
+
+    const tableImage = currentEditingRow.querySelector('img');
+
+    if (tableImage) {
+        console.log('Imagen actual en tabla:', tableImage.src.substring(0, 50) + '...');
+
+        // Solo actualizar el event listener con datos finales
+        const finalImageUrl = tableImage.src; // Ya es base64
+
+        // Recrear event listener con datos finales
+        const newImage = tableImage.cloneNode(true);
+        newImage.removeAttribute('onclick');
+
+        newImage.addEventListener('click', function (e) {
+            e.preventDefault();
+            e.stopPropagation();
+            openImageLightbox(finalImageUrl, nuevaDescripcion, nuevaDescripcion, nuevoTipo);
+        });
+
+        tableImage.parentNode.replaceChild(newImage, tableImage);
+        console.log('Event listener final actualizado');
+    }
+
+    // Cerrar modal y limpiar campos
+    const modal = bootstrap.Modal.getInstance(document.getElementById('editImageModal'));
+    if (modal) {
+        modal.hide();
+    }
+
+    // Mostrar notificación
+    showNotification('Cambios guardados correctamente', 'success');
+
+    // Limpiar variables
+    resetEditVariables();
+
+    console.log('Edición completada exitosamente');
+}
+
+// =====>>>>>>>>>>> EVENT LISTENERS PARA FUNCIONES NUEVAS(handleFileUpload - SavedEditChanges) =====>>>>>>>>>
+document.addEventListener('DOMContentLoaded', function () {
+    // Event listener para subida de archivos en modal de edición
+    const newPhotoInput = document.getElementById('newPhotoInput');
+    if (newPhotoInput) {
+        newPhotoInput.addEventListener('change', function (e) {
+            handleFileUpload(e.target.files);
+        });
+    }
+
+    // Event listener para botón de guardar cambios (si no existe)
+    const saveChangesBtn = document.getElementById('saveChangesBtn');
+    if (saveChangesBtn && !saveChangesBtn.onclick) {
+        saveChangesBtn.addEventListener('click', saveEditChanges);
+    }
+});
+
+// ===== HACER FUNCIONES GLOBALES =====
+window.handleFileUpload = handleFileUpload;
+window.saveEditChanges = saveEditChanges;
+
+/* ===================== */
 
 // ================================================================================================
 // FUNCIONES GLOBALES - CONSOLIDADAS

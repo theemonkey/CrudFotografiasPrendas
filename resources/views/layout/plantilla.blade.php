@@ -13,7 +13,8 @@
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/themes/material_blue.css">
 
         <!-- Font Awesome version reciente-->
-        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+
 
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.css">
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.css">
@@ -31,7 +32,7 @@
         <link rel="stylesheet" href="{{ asset('css/fotos-index.css') }}">
 
         <!-- Meta para usuario actual -->
-        <meta name="current-user" content="{{ auth()->user()->name ?? 'Usuario Sistema' }}">
+
         @stack('styles')
 
     </head>
@@ -68,9 +69,6 @@
 
         <!-- JS principales de pagina -->
         <script src="{{ asset('js/fotos-index.js') }}"></script>
-
-        <!-- Archivo JS para responsive en dispositivos moviles -->
-        <script src="{{ asset('js/mobile-cards.js') }}"></script>
 
 
         @stack('scripts')

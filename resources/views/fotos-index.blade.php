@@ -1249,7 +1249,9 @@
             'Validación AC': 'https://picsum.photos/id/535/200/300'
         };
 
-        return defaultImages[tipo] || 'https://picsum.photos/id/535/200/300';
+        const defaultUrl = defaultImages[tipo] || 'https://picsum.photos/id/535/200/300';
+        console.log(`Imagen por defecto para "${tipo}": ${defaultUrl}`);
+        return defaultUrl;
     }
 
     // Agregar función para refrescar cards cuando se agregue nueva imagen
@@ -1626,7 +1628,9 @@
                 estados.final = true;
                 console.log('PRENDA FINAL real agregada');
             } else {
-                console.log(`Tipo no reconocido: "${tipo}"`);
+                console.log(`Tipo no reconocido: "${tipo}" - Clasificando como general`);
+                imagesByType.muestra.push(imageForHistory);
+                estados.muestra = true;
             }
         });
 
@@ -1667,21 +1671,21 @@
         setTimeout(() => {
             if (stepMuestra) {
                 stepMuestra.classList.add(estados.muestra ? 'completed' : 'pending');
-                console.log(`MUESTRA: ${estados.muestra ? 'COMPLETADO (tiene imágenes reales)' : 'PENDIENTE (sin imágenes)'}`);
+                console.log(`MUESTRA: ${estados.muestra ? 'COMPLETADO (tiene imágenes )' : 'PENDIENTE (sin imágenes)'}`);
             }
         }, 100);
 
         setTimeout(() => {
             if (stepValidacionAC) {
-                stepValidacionAC.classList.add(estados.validacionAC ? 'completed' : 'pending');
-                console.log(`VALIDACIÓN: ${estados.validacionAC ? 'COMPLETADO (tiene imágenes reales)' : 'PENDIENTE (sin imágenes)'}`);
+                stepValidacionAC.classList.add(estados.validacion ? 'completed' : 'pending');
+                console.log(`VALIDACIÓN: ${estados.validacion ? 'COMPLETADO (tiene imágenes )' : 'PENDIENTE (sin imágenes)'}`);
             }
         }, 200);
 
         setTimeout(() => {
             if (stepPrendaFinal) {
-                stepPrendaFinal.classList.add(estados.Prendafinal ? 'completed' : 'pending');
-                console.log(`FINAL: ${estados.final ? 'COMPLETADO (tiene imágenes reales)' : 'PENDIENTE (sin imágenes)'}`);
+                stepPrendaFinal.classList.add(estados.final ? 'completed' : 'pending');
+                console.log(`FINAL: ${estados.final ? 'COMPLETADO (tiene imágenes )' : 'PENDIENTE (sin imágenes)'}`);
             }
         }, 300);
     }

@@ -727,12 +727,21 @@
                             <div class="mb-3">
                                 <label class="form-label fw-bold">Gestión de Archivo</label>
                                 <div class="row g-2 mb-3">
-                                    <!-- Subir nueva foto -->
+                                    <!-- Subir nueva foto desde archivo -->
                                     <div class="col-6">
-                                        <input type="file" class="form-control d-none" id="newPhotoInput" accept="image/*" multiple>
+                                        <input type="file" class="form-control d-none" id="newPhotoInput" accept="image/*">
                                         <button type="button" class="btn btn-outline-primary btn-sm w-100" id="uploadNewPhotoBtn">
-                                            <i class="fas fa-upload me-1"></i>
-                                            Subir Nueva Foto
+                                            <i class="fas fa-folder me-1"></i>
+                                            Subir Foto
+                                        </button>
+                                    </div>
+
+                                    <!-- Tomar foto con cámara -->
+                                    <div class="col-md-4">
+                                        <input type="file" class="form-control d-none" id="newCameraInput" accept="image/*" capture="camera">
+                                        <button type="button" class="btn btn-outline-success btn-sm w-100" id="takeCameraPhotoBtn">
+                                            <i class="fas fa-camera me-1"></i>
+                                            Tomar Foto
                                         </button>
                                     </div>
 
@@ -746,14 +755,6 @@
                                 </div>
                                 <!-- Contenedor para múltiples fotos -->
                                 <div id="multiplePhotosContainer" class="multiple-photos-container"></div>
-
-                                <!-- Informacion de seleccion multiple-->
-                                <div id="uploadInfo" class="upload-info d-none">
-                                    <div class="alert alert-info py-2 px-3">
-                                        <i class="fas fa-info-circle me-2"></i>
-                                        <span id="uploadInfoText">Fotos seleccionadas: 0</span>
-                                    </div>
-                                </div>
                             </div>
                         </form>
                     </div>
@@ -899,6 +900,19 @@
     </div>
 </div>
 
+<!-- ======= Toast Container para notificaciones Toast ======= -->
+<div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 11000;">
+    <div id="notificationToast" class="toast align-items-center border-0" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="d-flex">
+            <div class="toast-body d-flex align-items-center">
+                <i id="toastIcon" class="me-2"></i>
+                <span id="toastMessage"></span>
+            </div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+    </div>
+</div>
+
 <!-- Meta tag para el usuario actual (para detección automática) -->
 <meta name="current-user" content="{{ auth()->user()->name ?? 'Usuario Sistema' }}">
 
@@ -972,14 +986,6 @@
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
-
-            if (typeof showNotification === 'function') {
-                showNotification('Descarga iniciada', 'success');
-            }
-        } else {
-            if (typeof showNotification === 'function') {
-                showNotification('No hay imagen para descargar', 'warning');
-            }
         }
     }
 
@@ -1138,7 +1144,7 @@
                 const tipoFotografia = document.getElementById('tipoFotografiaSelect').value;
 
                 if (!descripcion || !tipoFotografia) {
-                    alert("Por favor ingrese todos los campos.");
+                    showNotification("Por favor ingrese todos los campos.", 'warning');
                     return;
                 }
 
@@ -1324,14 +1330,31 @@
             </td>
         `;
 
-        // Agregar al inicio de la tabla
-        tableBody.insertBefore(row, tableBody.firstChild);
-        console.log('Fila agregada a la tabla');
+        // === INSERCION INTELIGENTE ===
+        if (imageData.isNew && imageData.source === 'edit-multiple') {
+            // Para imágenes nuevas desde edición: insertar después de la fila actual
+            if (currentEditingRow && currentEditingRow.nextSibling) {
+                tableBody.insertBefore(row, currentEditingRow.nextSibling);
+            } else {
+                tableBody.appendChild(row);
+            }
+            console.log('Fila agregada a la tabla después de la fila actual');
+        } else {
+            // Para otras imágenes: agregar al inicio de la tabla
+            tableBody.insertBefore(row, tableBody.firstChild);
+            console.log('Fila agregada al inicio de la tabla');
+        }
 
         // Añadir animación de entrada
         row.style.opacity = '0';
         row.style.transform = 'translateY(-10px)';
-        row.style.backgroundColor = '#d4edda'; // Verde claro para destacar
+
+        // Color de fondo según origen
+        if (imageData.isNew && imageData.source === 'edit-multiple') {
+            row.style.backgroundColor = '#e3f2fd'; // Azul claro para nuevas desde edición
+        } else {
+            row.style.backgroundColor = '#d4edda'; // Verde claro para otras
+        }
 
         setTimeout(() => {
             row.style.transition = 'all 0.5s ease';
@@ -1428,7 +1451,6 @@
             link.href = img.src;
             link.download = img.alt || 'imagen';
             link.click();
-            showNotification('Descarga iniciada', 'success');
         }
     }
 
@@ -1949,7 +1971,7 @@ function getFechaCreacionFromRow(row) {
     return new Date();
 }
 
-// Función para mostrar notificación del resultado del filtro
+// Función para mostrar notificación del resultado del filtro de fechas
 function showFilterNotification(visible, hidden, rangeType, fechaInicio, fechaFin) {
     const message = `
         <strong>${rangeType}</strong><br>
@@ -1958,10 +1980,10 @@ function showFilterNotification(visible, hidden, rangeType, fechaInicio, fechaFi
             ${hidden} foto(s) oculta(s)
     `;
 
-    // Usar tu función de notificación existente si la tienes
+    // Usar la función de notificación existente
     if (typeof showNotification === 'function') {
         const tipo = visible > 0 ? 'success' : 'warning';
-        showNotification(message, tipo);
+        //showNotification(message, tipo);
     } else {
         // Crear notificación temporal
         createTemporaryNotification(message, visible > 0 ? 'success' : 'warning');

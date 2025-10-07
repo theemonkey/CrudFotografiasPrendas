@@ -141,6 +141,20 @@
   </div>
 </div>
 
+
+<!-- ======= Toast Container para notificaciones Toast ======= -->
+<div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 11000;">
+    <div id="notificationToast" class="toast align-items-center border-0" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="d-flex">
+            <div class="toast-body d-flex align-items-center">
+                <i id="toastIcon" class="me-2"></i>
+                <span id="toastMessage"></span>
+            </div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+    </div>
+</div>
+
 <!-- Scripts utiles-->
 <!-- ==========Busqueda orden sit - Botones card agregar fotos prenda  ============0-->
 <script>
@@ -163,7 +177,7 @@
         const value = ordenSitInput.value.trim();
 
         if (value === "") {
-            alert("Ingrese un número de orden");
+            alert("Ingrese un número de orden", "warning");
             return;
         }
 
@@ -180,7 +194,7 @@
         uploadedImages = [];
 
         ordenSitCard.style.display = 'block';
-        alert(`Orden SIT ${value} encontrada`);
+       showNotification(`Orden SIT ${value} encontrada`, 'success',2000);
     }
 
     // Cambiar estado
@@ -199,7 +213,7 @@
     console.log('Imágenes a guardar:', uploadedImages);
 
     if (uploadedImages.length === 0) {
-        alert("Debe subir al menos una imagen antes de guardar");
+        showNotification("Debe subir al menos una imagen antes de guardar", 'warning');
         return;
     }
 
@@ -211,9 +225,11 @@
     console.log('Imágenes con datos completos:', imagenesCompletas);
 
     if (imagenesCompletas.length === 0) {
-        alert("No hay imágenes válidas para guardar");
+        showNotification("No hay imágenes válidas para guardar", 'error');
         return;
     }
+
+    //showNotification(`Guardando ${imagenesCompletas.length} imagen(es)...`, 'info', 1500);
 
     // PREPARAR datos con información adicional para historial
     const dataToTransfer = {
@@ -237,10 +253,8 @@
     localStorage.setItem('newUploadedImages', JSON.stringify(dataToTransfer));
     console.log('Datos guardados en localStorage con metadatos de historial');
 
-    alert(`Se guardaron ${imagenesCompletas.length} imagen(es) correctamente. Redirigiendo...`);
-
     // Redirigir a fotos-index
-    console.log('Redirigiendo a fotos-index...');
+    console.log('Redirigiendo automáticamente a fotos-index...');
     window.location.href = "{{ route('fotos-index') }}";
    }
 
@@ -413,7 +427,7 @@
                 const tipoFotografia = tipoSelect ? tipoSelect.value : '';
 
                 if (!descripcionVal || !tipoFotografia) {
-                    alert("Por favor ingrese todos los campos para todas las imágenes.");
+                    showNotification("Por favor ingrese todos los campos", 'warning');
                     return;
                 }
 
@@ -422,6 +436,8 @@
                 // Desactivar botón mientras se procesa
                 saveBtn.disabled = true;
                 saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Procesando...';
+
+                //showNotification(`Guardando ${imageDataArray.length} imagen(es)...`, 'info', 2000);
 
                 // ====== Procesamiento Automatico ========
                 try {
@@ -467,11 +483,12 @@
                     setTimeout(() => {
                         console.log('Guardado automatico iniciado...');
                         guardarFoto(); // Redireccion automatica
-                    }, 300);
+                    }, 500);
                 } catch (error) {
                     console.error('Error durante el procesamiento automático:', error);
                 } finally {
                     // Cleanup
+                    saveBtn.removeEventListener('click', handleBatchSave);
                     saveBtn.disabled = false;
                     saveBtn.innerHTML = 'Continuar';
                     setUploadState(uploadBtn, 'normal');
@@ -776,10 +793,61 @@
         return '4200' + Math.floor(Math.random() * 9000000 + 1000000);
     }
 
-    // Función para mostrar notificaciones
-    function showNotification(message, type) {
-        // Implementación básica con alert, puedes mejorar con toast notifications
-        alert(message);
+    // =====>>>>>> Función para mostrar notificaciones ======>>>>>
+    function showNotification(message, type = 'info', duration = 4000) {
+        console.log(`Notificación: ${message} (${type})`);
+
+        const toastEl = document.getElementById('notificationToast');
+        const toastMessage = document.getElementById('toastMessage');
+        const toastIcon = document.getElementById('toastIcon');
+
+        if (!toastEl || !toastMessage || !toastIcon) {
+            // Fallback a console si no hay elementos de toast
+            console.log(`NOTIFICACIÓN: ${message}`);
+            return;
+        }
+
+        // Limpiar clases anteriores
+        toastEl.className = 'toast align-items-center border-0';
+        toastIcon.className = '';
+
+        // Configurar según el tipo
+        switch (type) {
+            case 'success':
+                toastEl.classList.add('text-bg-success');
+                toastIcon.className = 'fas fa-check-circle text-white';
+                break;
+            case 'error':
+            case 'danger':
+                toastEl.classList.add('text-bg-danger');
+                toastIcon.className = 'fas fa-exclamation-triangle text-white';
+                break;
+            case 'warning':
+                toastEl.classList.add('text-bg-warning');
+                toastIcon.className = 'fas fa-exclamation-circle text-dark';
+                break;
+            case 'info':
+            default:
+                toastEl.classList.add('text-bg-primary');
+                toastIcon.className = 'fas fa-info-circle text-white';
+                break;
+        }
+
+        // Configurar mensaje
+        toastMessage.textContent = message;
+
+        // Mostrar toast
+        const toast = new bootstrap.Toast(toastEl, {
+            autohide: true,
+            delay: duration
+        });
+
+        toast.show();
+
+        // Auto-ocultar después del tiempo especificado
+        setTimeout(() => {
+            toast.hide();
+        }, duration);
     }
 
     // Inicialización principal

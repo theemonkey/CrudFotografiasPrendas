@@ -181,7 +181,7 @@ function initializeCompleteSystem() {
 
     } catch (error) {
         console.error('Error durante la inicialización:', error);
-        showNotification('Error durante la inicialización: ' + error.message, 'error');
+        //showNotification('Error durante la inicialización: ' + error.message, 'error');
     }
 }
 
@@ -341,7 +341,7 @@ function openCommentsModal(button) {
         console.log('Modal abierto correctamente');
     } catch (error) {
         console.error('Error abriendo modal:', error);
-        showNotification('Error abriendo modal', 'error');
+        //showNotification('Error abriendo modal', 'error');
     }
 }
 
@@ -619,7 +619,7 @@ function deleteComment(commentId) {
 
         updateCommentsCount();
         updateCommentButtonBadge();
-        showNotification('Comentario eliminado', 'success');
+        //showNotification('Comentario eliminado', 'success');
     }
 }
 
@@ -755,10 +755,10 @@ function applyTipoFotografiaFilter() {
 
     console.log(`Filtro aplicado: ${visibleCount} visibles, ${hiddenCount} ocultas`);
 
-    if (tipoFotografiaFilter.active) {
+    /*if (tipoFotografiaFilter.active) {
         const tipos = tipoFotografiaFilter.selectedTypes.join(', ');
         showNotification(`Filtro aplicado: ${tipos} (${visibleCount} registros)`, 'success');
-    }
+    }*/
 }
 
 function updateTipoFotografiaUI() {
@@ -819,7 +819,6 @@ function selectAllTipoFotografia() {
 
     filterByTipoFotografia();
 
-    showNotification('Todos los tipos seleccionados', 'success');
     console.log('Todos los tipos seleccionados');
 }
 
@@ -854,7 +853,6 @@ function clearTipoFotografiaFilter() {
         }, 100);
     }
 
-    showNotification('Filtro de tipo fotografía eliminado', 'info');
     console.log('Filtro limpiado');
 }
 
@@ -958,40 +956,60 @@ function initializeNotifications() {
     }
 }
 
-function showNotification(message, type = 'info', duration = 5000) {
-    console.log(`Notificación: [${type.toUpperCase()}] ${message}`);
+// =====>>>>>> Función para mostrar notificaciones ======>>>>>
+function showNotification(message, type = 'info', duration = 4000) {
+    console.log(`Notificación: ${message} (${type})`);
 
-    const container = document.getElementById('notificationContainer');
-    if (!container) return;
+    const toastEl = document.getElementById('notificationToast');
+    const toastMessage = document.getElementById('toastMessage');
+    const toastIcon = document.getElementById('toastIcon');
 
-    const alertTypes = {
-        'success': 'alert-success',
-        'error': 'alert-danger',
-        'warning': 'alert-warning',
-        'info': 'alert-info'
-    };
+    if (!toastEl || !toastMessage || !toastIcon) {
+        // Fallback a console si no hay elementos de toast
+        console.log(`NOTIFICACIÓN: ${message}`);
+        return;
+    }
 
-    const icons = {
-        'success': 'fas fa-check-circle',
-        'error': 'fas fa-exclamation-circle',
-        'warning': 'fas fa-exclamation-triangle',
-        'info': 'fas fa-info-circle'
-    };
+    // Limpiar clases anteriores
+    toastEl.className = 'toast align-items-center border-0';
+    toastIcon.className = '';
 
-    const notification = document.createElement('div');
-    notification.className = `alert ${alertTypes[type]} notification alert-dismissible fade show`;
-    notification.innerHTML = `
-        <i class="${icons[type]} me-2"></i>
-        ${message}
-        <button type="button" class="btn-close" onclick="this.parentElement.remove()"></button>
-    `;
+    // Configurar según el tipo
+    switch (type) {
+        case 'success':
+            toastEl.classList.add('text-bg-success');
+            toastIcon.className = 'fas fa-check-circle text-white';
+            break;
+        case 'error':
+        case 'danger':
+            toastEl.classList.add('text-bg-danger');
+            toastIcon.className = 'fas fa-exclamation-triangle text-white';
+            break;
+        case 'warning':
+            toastEl.classList.add('text-bg-warning');
+            toastIcon.className = 'fas fa-exclamation-circle text-dark';
+            break;
+        case 'info':
+        default:
+            toastEl.classList.add('text-bg-primary');
+            toastIcon.className = 'fas fa-info-circle text-white';
+            break;
+    }
 
-    container.appendChild(notification);
+    // Configurar mensaje
+    toastMessage.textContent = message;
 
+    // Mostrar toast
+    const toast = new bootstrap.Toast(toastEl, {
+        autohide: true,
+        delay: duration
+    });
+
+    toast.show();
+
+    // Auto-ocultar después del tiempo especificado
     setTimeout(() => {
-        if (notification.parentNode) {
-            notification.remove();
-        }
+        toast.hide();
     }, duration);
 }
 
@@ -1036,7 +1054,6 @@ function openImageLightbox(imageUrl, alt, description, type) {
         console.log('Lightbox abierto correctamente');
     } else {
         console.error('Error: No se encontraron los elementos del lightbox');
-        showNotification('Error al abrir la imagen', 'error');
     }
 }
 
@@ -1057,9 +1074,6 @@ function downloadImageFromLightbox() {
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
-        showNotification('Descarga iniciada', 'success');
-    } else {
-        showNotification('No hay imagen para descargar', 'warning');
     }
 }
 
@@ -1102,8 +1116,6 @@ function searchRecords() {
         row.style.display = isVisible ? '' : 'none';
         if (isVisible) visibleCount++;
     });
-
-    showNotification(`${visibleCount} resultado(s) encontrado(s)`, 'info');
 }
 
 // ================================================================================================
@@ -1311,7 +1323,6 @@ function showDeleteConfirmation(imageData, row) {
             performImageDeletion(imageData, row);
         } else {
             console.log('Usuario canceló eliminación');
-            showNotification('Eliminación cancelada', 'info');
         }
     });
 }
@@ -1429,7 +1440,7 @@ function performImageDeletion(imageData, row) {
 
 //=========================================================
 
-function exportAll() {
+/*function exportAll() {
     showNotification('Exportando todos los registros...', 'info');
 }
 
@@ -1439,7 +1450,7 @@ function exportSelected() {
 
 function showFilters() {
     showNotification('Mostrando filtros avanzados', 'info');
-}
+}*/
 
 // ================================================================================================
 // FUNCIONALIDAD BTN EDITAR INFORMACION - fotos-index
@@ -1486,8 +1497,6 @@ function editImage(button) {
     // Mostrar el modal
     const modal = new bootstrap.Modal(document.getElementById('editImageModal'));
     modal.show();
-
-    showNotification(`Editando imagen: ${imageData.ordenSit}`, 'info');
 }
 
 // ===== EXTRAER DATOS DE LA IMAGEN DESDE LA FILA =====
@@ -1645,8 +1654,6 @@ function selectPhotoForEdit(photoId) {
         if (selectedItem) {
             selectedItem.classList.add('selected');
         }
-
-        showNotification(`Editando: ${photo.name}`, 'info');
     }
 }
 
@@ -1811,8 +1818,6 @@ function initializeCropTool() {
             // Ocultar controles de recorte
             if (cropControls) cropControls.classList.add('d-none');
             if (imageTools) imageTools.classList.remove('d-none');
-
-            showNotification('Imagen recortada correctamente', 'success');
         }
     });
 
@@ -1851,11 +1856,8 @@ function initializeCropTool() {
                     clearMultiplePhotosContainer();
                     selectedPhotos = [];
 
-                    showNotification('Imagen restablecida correctamente', 'success');
                 }
             });
-        } else {
-            showNotification('No hay cambios que restablecer', 'info');
         }
     });
 }
@@ -1883,13 +1885,15 @@ function updateResetButtonState() {
 // Manejar subida de múltiples fotos
 function initializePhotoUpload() {
     const uploadBtn = document.getElementById('uploadNewPhotoBtn');
+    const cameraBtn = document.getElementById('takeCameraPhotoBtn');
     const fileInput = document.getElementById('newPhotoInput');
+    const cameraInput = document.getElementById('newCameraInput');
 
-    if (!uploadBtn || !fileInput) {
+    if (!uploadBtn || !cameraBtn || !fileInput || !cameraInput) {
         console.warn('Elementos de subida no encontrados');
         return;
     }
-
+    // ==== Boton subir desde archivo ====
     uploadBtn.addEventListener('click', function () {
         fileInput.click();
     });
@@ -1898,25 +1902,234 @@ function initializePhotoUpload() {
         const files = Array.from(e.target.files);
         if (files.length === 0) return;
 
-        // Validar archivos
-        const validFiles = files.filter(file => {
-            if (!file.type.startsWith('image/')) {
-                showNotification(`"${file.name}" no es una imagen válida`, 'error');
-                return false;
-            }
-            if (file.size > 10 * 1024 * 1024) {
-                showNotification(`"${file.name}" es demasiado grande (máx 10MB)`, 'error');
-                return false;
-            }
-            return true;
-        });
+        processUploadedFiles(files, 'file');
+    });
 
-        if (validFiles.length === 0) return;
+    // ==== Boton tomar foto con camara ====
+    cameraBtn.addEventListener('click', function () {
+        // Verificar si el dispositivo soporta cámara
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+            showNotification('Tu dispositivo no soporta acceso a la cámara', 'warning');
+            return;
+        }
+        cameraInput.click();
+    });
 
-        // Procesar archivos válidos
-        processMultipleFiles(validFiles);
+    cameraInput.addEventListener('change', function (e) {
+        const files = Array.from(e.target.files);
+        if (files.length === 0) return;
+
+        console.log(`${files.length} foto(s) tomada(s) con cámara`);
+        processUploadedFiles(files, 'camera');
     });
 }
+
+/* =========================================================================== */
+// ===== FUNCIÓN PARA PROCESAR ARCHIVOS SUBIDOS =====
+function processUploadedFiles(files, source) {
+    console.log(`Procesando ${files.length} archivo(s) desde ${source}`);
+
+    // Validar archivos
+    const validFiles = files.filter(file => {
+        if (!file.type.startsWith('image/')) {
+            showNotification(`"${file.name}" no es una imagen válida`, 'error');
+            return false;
+        }
+        if (file.size > 10 * 1024 * 1024) {
+            showNotification(`"${file.name}" es demasiado grande (máx 10MB)`, 'error');
+            return false;
+        }
+        return true;
+    });
+
+    if (validFiles.length === 0) {
+        console.log('No hay archivos válidos para procesar');
+        return;
+    }
+
+    // Validación: Solo una imagen en modal de edición
+    if (validFiles.length > 1) {
+        showNotification('Solo se permite subir una imagen a la vez en el modo de edición', 'warning');
+        return;
+    }
+
+    // Procesar imagen única
+    const file = validFiles[0];
+    console.log(`Procesando imagen desde ${source}:`, file.name);
+
+    // Mostrar información del método de captura
+    showCaptureMethodInfo(source, file);
+
+    // Leer archivo como base64
+    const reader = new FileReader();
+    reader.onload = function (e) {
+        const base64Image = e.target.result;
+
+        // Actualizar imagen en el modal
+        const modalImage = document.getElementById('editModalImage');
+        if (modalImage) {
+            modalImage.src = base64Image;
+            console.log('Imagen del modal actualizada');
+        }
+
+        // Actualizar imagen en la tabla si hay fila actual
+        updateCurrentRowImageFromUpload(base64Image, file, source);
+
+        // Actualizar datos globales
+        if (currentImageData) {
+            currentImageData.url = base64Image;
+            currentImageData.nombre = file.name;
+            currentImageData.size = file.size;
+            currentImageData.source = source;
+        }
+
+        hasImageBeenCropped = true;
+        updateResetButtonState();
+    };
+
+    reader.onerror = function () {
+        showNotification('Error al leer el archivo de imagen', 'error');
+    };
+
+    reader.readAsDataURL(file);
+}
+
+/* =========================================================================== */
+// ===== FUNCIÓN PARA MOSTRAR INFORMACIÓN DEL MÉTODO DE CAPTURA =====
+function showCaptureMethodInfo(source, file) {
+    const infoContainer = document.getElementById('captureMethodInfo');
+    const captureIcon = document.getElementById('captureIcon');
+    const captureText = document.getElementById('captureText');
+
+    if (!infoContainer || !captureIcon || !captureText) return;
+
+    // Configurar información según el método
+    if (source === 'camera') {
+        captureIcon.className = 'fas fa-camera text-success me-2';
+        captureText.textContent = `Foto tomada con cámara: ${file.name}`;
+        infoContainer.classList.remove('d-none');
+    } else if (source === 'file') {
+        captureIcon.className = 'fas fa-folder text-primary me-2';
+        captureText.textContent = `Archivo seleccionado: ${file.name}`;
+        infoContainer.classList.remove('d-none');
+    }
+
+    console.log(`Información de captura mostrada: ${source}`);
+}
+
+// ===== FUNCIÓN PARA ACTUALIZAR IMAGEN EN TABLA DESDE SUBIDA =====
+function updateCurrentRowImageFromUpload(base64Image, file, source) {
+    if (!currentEditingRow) return;
+
+    console.log(`Actualizando imagen en tabla desde ${source}...`);
+
+    const tableImage = currentEditingRow.querySelector('img');
+    if (!tableImage) return;
+
+    // Obtener datos actuales del formulario
+    const descripcionInput = document.getElementById('editDescripcion');
+    const tipoInput = document.getElementById('editTipoFotografia');
+
+    const descripcionActual = descripcionInput ? descripcionInput.value.trim() : '';
+    const tipoActual = tipoInput ? tipoInput.value : '';
+
+    // Usar descripción existente si no hay nueva
+    const finalDescripcion = descripcionActual ||
+        currentEditingRow.querySelector('[data-column="descripcion"]')?.textContent.trim() ||
+        'Imagen actualizada';
+
+    const finalTipo = tipoActual ||
+        currentEditingRow.querySelector('[data-column="tipo-fotografia"]')?.textContent.trim() ||
+        'MUESTRA';
+
+    // Crear nueva imagen completamente
+    const newTableImage = document.createElement('img');
+    newTableImage.src = base64Image;
+    newTableImage.alt = file.name || finalDescripcion;
+    newTableImage.title = `${source === 'camera' ? 'Foto tomada' : 'Archivo subido'} - ${file.name}`;
+    newTableImage.className = tableImage.className;
+    newTableImage.style.cssText = tableImage.style.cssText;
+
+    // Limpiar clases de imagen por defecto
+    newTableImage.classList.remove('default-image');
+    newTableImage.style.opacity = '1';
+
+    // Event listener con base64 y información de origen
+    newTableImage.addEventListener('click', function (e) {
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        console.log(`Click en imagen desde ${source}`);
+        openImageLightbox(base64Image, file.name || finalDescripcion, finalDescripcion, finalTipo);
+    });
+
+    // Reemplazar imagen en la tabla
+    tableImage.parentNode.replaceChild(newTableImage, tableImage);
+
+    // Animación visual para confirmar actualización
+    newTableImage.style.backgroundColor = source === 'camera' ? '#d1f2eb' : '#d4edda';
+    newTableImage.style.transition = 'background-color 0.5s ease';
+    setTimeout(() => {
+        newTableImage.style.backgroundColor = '';
+    }, 1500);
+
+    console.log(`Imagen en tabla actualizada desde ${source}`);
+}
+
+/* =========================================================================== */
+// ===== FUNCIÓN PARA LIMPIAR INFORMACIÓN DE CAPTURA =====
+function clearCaptureMethodInfo() {
+    const infoContainer = document.getElementById('captureMethodInfo');
+    if (infoContainer) {
+        infoContainer.classList.add('d-none');
+    }
+
+    // Limpiar inputs
+    const fileInput = document.getElementById('newPhotoInput');
+    const cameraInput = document.getElementById('newCameraInput');
+    if (fileInput) fileInput.value = '';
+    if (cameraInput) cameraInput.value = '';
+
+    console.log('Información de captura limpiada');
+}
+
+// ===== MEJORAR FUNCIÓN DE RESET =====
+function updateResetButtonState() {
+    const resetBtn = document.getElementById('resetImageBtn');
+    if (resetBtn) {
+        if (hasImageBeenCropped) {
+            resetBtn.disabled = false;
+            resetBtn.classList.remove('btn-outline-secondary');
+            resetBtn.classList.add('btn-outline-warning');
+            resetBtn.title = 'Restablecer imagen original';
+        } else {
+            resetBtn.disabled = true;
+            resetBtn.classList.remove('btn-outline-warning');
+            resetBtn.classList.add('btn-outline-secondary');
+            resetBtn.title = 'Sin cambios que restablecer';
+        }
+    }
+}
+
+// ===== MEJORAR FUNCIÓN DE RESET VARIABLES =====
+function resetEditVariables() {
+    currentEditingRow = null;
+    currentImageData = null;
+    hasImageBeenCropped = false;
+    originalImageSrc = null;
+    selectedPhotos = [];
+
+    // Limpiar información de captura
+    clearCaptureMethodInfo();
+
+    if (editCropper) {
+        editCropper.destroy();
+        editCropper = null;
+    }
+
+    console.log('Variables de edición reseteadas');
+}
+
+/* =========================================================================== */
 
 // ===== FUNCIONALIDAD DE ELIMINACIÓN =====
 
@@ -1996,8 +2209,6 @@ function deleteCurrentPhotoOnly() {
                 modal.hide();
             }
 
-            showNotification('Fotografía eliminada correctamente (fila mantenida)', 'success');
-
             // Reset variables
             resetEditVariables();
 
@@ -2052,12 +2263,10 @@ function saveImageChanges() {
         const modal = bootstrap.Modal.getInstance(document.getElementById('editImageModal'));
         modal.hide();
 
-        let message = 'Cambios guardados correctamente';
+        //let message = 'Cambios guardados correctamente';
         if (hasNewImages && selectedPhotos.length > 1) {
             message += ` (${selectedPhotos.length} fotos procesadas)`;
         }
-
-        showNotification(message, 'success');
 
         // Reset variables
         resetEditVariables();
@@ -3377,7 +3586,28 @@ function handleFileUpload(files) {
 
     console.log('Procesando nueva imagen subida...');
 
+    // ===== VALIDACIÓN: Solo permitir UNA imagen en modal de edición =====
+    if (files.length > 1) {
+        showNotification('Solo se permite subir una imagen a la vez en el modo de edición', 'warning');
+        return;
+    }
+
     const file = files[0]; // Tomar solo la primera imagen
+
+    console.log('Procesando imagen única para edición:', file.name);
+
+    // Validar tipo de archivo
+    if (!file.type.startsWith('image/')) {
+        showNotification('Por favor seleccione un archivo de imagen válido', 'error');
+        return;
+    }
+
+    // Validar tamaño (máximo 10MB)
+    if (file.size > 10 * 1024 * 1024) {
+        showNotification('La imagen es demasiado grande (máximo 10MB)', 'error');
+        return;
+    }
+
     const reader = new FileReader();
     reader.onload = function (e) {
         const base64Image = e.target.result;  // Url de base64 permanente
@@ -3436,8 +3666,6 @@ function handleFileUpload(files) {
             console.log('currentImageData actualizado con base64');
         }
 
-        // Mostrar notificación
-        showNotification('Nueva imagen cargada correctamente', 'success');
         hasImageBeenCropped = true;
         updateResetButtonState();
     };
@@ -3505,9 +3733,6 @@ function saveEditChanges() {
         modal.hide();
     }
 
-    // Mostrar notificación
-    showNotification('Cambios guardados correctamente', 'success');
-
     // Limpiar variables
     resetEditVariables();
 
@@ -3545,9 +3770,9 @@ window.openImageLightbox = openImageLightbox || function () { console.warn('open
 window.closeLightbox = closeLightbox || function () { console.warn('closeLightbox no definida'); };
 window.downloadImageFromLightbox = downloadImageFromLightbox || function () { console.warn('downloadImageFromLightbox no definida'); };
 window.searchRecords = searchRecords || function () { console.warn('searchRecords no definida'); };
-window.exportAll = exportAll || function () { console.warn('exportAll no definida'); };
-window.exportSelected = exportSelected || function () { console.warn('exportSelected no definida'); };
-window.showFilters = showFilters || function () { console.warn('showFilters no definida'); };
+//window.exportAll = exportAll || function () { console.warn('exportAll no definida'); };
+//window.exportSelected = exportSelected || function () { console.warn('exportSelected no definida'); };
+//window.showFilters = showFilters || function () { console.warn('showFilters no definida'); };
 window.deleteImage = deleteImage || function () { console.warn('deleteImage no definida'); };
 window.editImage = editImage || function () { console.warn('editImage no definida'); };
 window.openCommentsModal = openCommentsModal;

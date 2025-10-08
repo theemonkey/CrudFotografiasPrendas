@@ -277,7 +277,7 @@
                             </tr>
                         </thead>
                         <tbody id="imagesTableBody">
-                            <!-- Fila de ejemplo 1 - CORREGIDA -->
+                            <!-- Fila de ejemplo 1  ELIMINAR EN PRODUCCION -->
                             <tr data-image-id="img_example_1" data-fecha-creacion="2025-10-02">
                                 <td data-column="imagen">
                                     <img src="https://picsum.photos/id/535/200/300"
@@ -437,8 +437,8 @@
 <!-- =========>>>>>>>> Container de notificaciones <<<<<<<<<<========= -->
 <div id="notificationContainer" class="position-fixed top-0 end-0 p-3" style="z-index: 9999;"></div>
 
-<!-- MODAL DE COMENTARIOS -->
-<div class="modal fade" id="commentsModal" tabindex="-1" aria-labelledby="commentsModalLabel" aria-hidden="true">
+<!-- MODAL DE COMENTARIOS (ELIMINAR EN PRODUCCIÓN) -->
+<!-- <div class="modal fade" id="commentsModal" tabindex="-1" aria-labelledby="commentsModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
@@ -449,7 +449,6 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <!-- Información de la imagen -->
                 <div class="row mb-4">
                     <div class="col-md-3">
                         <img id="commentImagePreview" src="" alt="" class="img-fluid rounded border">
@@ -482,7 +481,6 @@
 
                 <hr>
 
-                <!-- Agregar nuevo comentario -->
                 <div class="card mb-4">
                     <div class="card-header bg-light">
                         <h6 class="mb-0">
@@ -537,7 +535,6 @@
                     </div>
                 </div>
 
-                <!-- =========>>>>>>> Lista de comentarios existentes <<<<<<<=========== -->
                 <div class="card">
                     <div class="card-header bg-light d-flex justify-content-between align-items-center">
                         <h6 class="mb-0">
@@ -559,7 +556,6 @@
                     </div>
                     <div class="card-body p-0">
                         <div id="commentsList" class="comments-list">
-                            <!-- Los comentarios se cargarán aquí dinámicamente -->
                             <div class="text-center text-muted p-4" id="noCommentsMessage">
                                 <i class="fas fa-comment-slash fa-2x mb-2"></i>
                                 <p>No hay comentarios para esta imagen</p>
@@ -580,7 +576,7 @@
             </div>
         </div>
     </div>
-</div>
+</div> -->
 
 <!-- ==========>>>>>>>> Modal para ingresar datos(Descripcion - Tipo fotografia) de la imagen <<<<<<<<<<<========== -->
 <div class="modal fade" id="imageDataModal" tabindex="-1" aria-labelledby="imageDataModalLabel" aria-hidden="true">
@@ -999,7 +995,7 @@
         // Camera upload click
         if (cameraUpload && cameraInput) {
             cameraUpload.addEventListener('click', function() {
-                console.log(' Activando cámara...');
+                console.log('Activando cámara...');
                 cameraInput.click();
             });
 
@@ -1011,7 +1007,7 @@
         // File upload click
         if (fileUpload && fileInput) {
             fileUpload.addEventListener('click', function() {
-                console.log(' Abriendo selector de archivos...');
+                console.log('Abriendo selector de archivos...');
                 fileInput.click();
             });
 
@@ -1023,7 +1019,7 @@
         // Drag and drop functionality
         initializeDragAndDrop();
 
-        console.log(' Sistema de subida inicializado');
+        console.log('Sistema de subida inicializado');
     }
 
     function handleImageUpload(files, source) {
@@ -1032,7 +1028,7 @@
             return;
         }
 
-        console.log(` Subiendo ${files.length} archivo(s) desde ${source}`);
+        console.log(`Subiendo ${files.length} archivo(s) desde ${source}`);
 
         // Validar archivos
         const validFiles = Array.from(files).filter(file => {
@@ -1066,7 +1062,7 @@
 
         Promise.all(uploadPromises)
             .then(results => {
-                console.log(' Todas las imágenes subidas correctamente');
+                console.log('Todas las imágenes subidas correctamente');
                 showNotification(`${results.length} imagen(es) subida(s) correctamente`, 'success');
 
                 // Agregar imágenes a la tabla
@@ -1082,7 +1078,7 @@
                 }, 2000);
             })
             .catch(error => {
-                console.error(' Error subiendo imágenes:', error);
+                console.error('Error subiendo imágenes:', error);
                 showNotification('Error al subir las imágenes', 'error');
                 setUploadState(uploadBtn, 'normal');
             });

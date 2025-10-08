@@ -483,41 +483,6 @@
 }
 
 /* ================================================================
-   COMMENT BUTTON EN MÓVIL
-   ================================================================ */
-
-.mobile-card-actions .comment-btn {
-    position: relative;
-}
-
-.mobile-card-actions .comment-btn::after {
-    content: attr(data-comment-count);
-    position: absolute;
-    top: -8px;
-    right: -6px;
-    background: var(--danger-color);
-    color: white;
-    border-radius: 50%;
-    padding: 2px 5px;
-    font-size: 10px;
-    font-weight: bold;
-    line-height: 1;
-    min-width: 16px;
-    height: 16px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border: 2px solid white;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
-}
-
-.mobile-card-actions .comment-btn[data-comment-count="0"]::after,
-.mobile-card-actions .comment-btn[data-comment-count=""]::after,
-.mobile-card-actions .comment-btn:not([data-comment-count])::after {
-    display: none;
-}
-
-/* ================================================================
    PAGINACIÓN - MÓVIL
    ================================================================ */
 
@@ -1211,162 +1176,6 @@
 }
 
 /* ================================================================
-   SISTEMA DE COMENTARIOS ---> VISUAL
-   ================================================================ */
-.comment-count {
-    display: none !important;
-}
-
-.comments-list {
-    max-height: 400px;
-    overflow-y: auto;
-}
-
-.comment-item {
-    border-bottom: 1px solid #eee;
-    padding: 15px 20px;
-    transition: background-color 0.3s ease;
-}
-
-.comment-item:hover {
-    background-color: #f8f9fa;
-}
-
-.comment-meta {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin-bottom: 8px;
-}
-
-.comment-author {
-    font-weight: 600;
-    color: #007bff;
-    font-size: 14px;
-}
-
-.comment-type-badge {
-    font-size: 11px;
-    padding: 2px 8px;
-    border-radius: 12px;
-    font-weight: 600;
-    text-transform: uppercase;
-}
-
-.comment-priority {
-    font-size: 11px;
-    padding: 2px 6px;
-    border-radius: 10px;
-    font-weight: 600;
-}
-
-/* ================================================================
-   CONTADOR DE COMENTARIOS
-   ================================================================ */
-.comment-btn {
-    position: relative !important;
-    display: inline-flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-}
-
-.comment-btn::after {
-    content: attr(data-comment-count) !important;
-    position: absolute !important;
-    top: -8px !important;
-    right: -6px !important;
-    background: #dc3545 !important;
-    color: white !important;
-    border-radius: 50% !important;
-    padding: 2px 5px !important;
-    font-size: 10px !important;
-    font-weight: bold !important;
-    line-height: 1 !important;
-    min-width: 16px !important;
-    height: 16px !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    border: 2px solid white !important;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.2) !important;
-    z-index: 10 !important;
-}
-
-.comment-btn[data-comment-count="0"]::after,
-.comment-btn[data-comment-count=""]::after,
-.comment-btn:not([data-comment-count])::after {
-    display: none !important;
-}
-
-.comment-btn[data-comment-count]:not([data-comment-count="0"])::after {
-    display: flex !important;
-}
-
-/* Animación cuando se agrega comentario */
-@keyframes commentPulse {
-    0% { transform: scale(1); }
-    50% { transform: scale(1.2); }
-    100% { transform: scale(1); }
-}
-
-.comment-btn.comment-added::after {
-    animation: commentPulse 0.6s ease !important;
-}
-
-/* ================================================================
-   PRIORIDAD Y COLORES TIPO COMENTARIO
-   ================================================================ */
-.priority-low {
-    background: #d4edda;
-    color: #155724;
-}
-
-.priority-medium {
-    background: #fff3cd;
-    color: #856404;
-}
-
-.priority-high {
-    background: #f8d7da;
-    color: #721c24;
-}
-
-.priority-critical {
-    background: #721c24;
-    color: white;
-}
-
-.type-quality {
-    background: #e7f3ff;
-    color: #0066cc;
-}
-
-.type-technical {
-    background: #fff2e7;
-    color: #cc6600;
-}
-
-.type-production {
-    background: #e7ffe7;
-    color: #006600;
-}
-
-.type-design {
-    background: #f3e7ff;
-    color: #6600cc;
-}
-
-.type-general {
-    background: #f0f0f0;
-    color: #666;
-}
-
-.type-urgent {
-    background: #ffe7e7;
-    color: #cc0000;
-}
-
-/* ================================================================
    ESTILOS EXTRAS - BOTONES Y BADGES
    ================================================================ */
 .btn-pink {
@@ -1430,104 +1239,6 @@
         opacity: 1;
         transform: scale(1);
     }
-}
-
-/* ================================================================
-   CHARACTER COUNT STYLES
-   ================================================================ */
-.form-text small {
-    color: #6c757d;
-}
-
-.form-text small.warning {
-    color: #ffc107 !important;
-}
-
-.form-text small.danger {
-    color: #dc3545 !important;
-}
-
-#charCount {
-    font-weight: 500;
-}
-
-#charCount.warning {
-    color: #ffc107 !important;
-    font-weight: 600;
-}
-
-#charCount.danger {
-    color: #dc3545 !important;
-    font-weight: bold;
-    animation: pulse 1s infinite;
-}
-
-@keyframes pulse {
-    0% { opacity: 1; }
-    50% { opacity: 0.7; }
-    100% { opacity: 1; }
-}
-
-/* ================================================================
-   NUEVOS COMENTARIOS - ANIMACIÓN
-   ================================================================ */
-.comment-item.new-comment {
-    background: linear-gradient(90deg, #d4edda, transparent);
-    border-left: 4px solid #28a745;
-    animation: newCommentGlow 2s ease-out;
-}
-
-@keyframes newCommentGlow {
-    0% {
-        background: linear-gradient(90deg, #d4edda, transparent);
-        transform: translateY(-5px);
-    }
-    100% {
-        background: white;
-        transform: translateY(0);
-    }
-}
-
-/* ================================================================
-   TIMESTAMP STYLES
-   ================================================================ */
-.comment-timestamp {
-    font-size: 12px;
-    color: #6c757d;
-    display: flex;
-    align-items: center;
-    gap: 4px;
-}
-
-.comment-timestamp i {
-    font-size: 10px;
-}
-
-/* ================================================================
-   COMMENT ACTIONS
-   ================================================================ */
-.comment-actions {
-    margin-top: 10px;
-    padding-top: 8px;
-    border-top: 1px solid #f0f0f0;
-}
-
-.comment-actions .btn {
-    padding: 4px 8px;
-    font-size: 11px;
-    border-radius: 4px;
-}
-
-/* ================================================================
-   COMMENT TEXT STYLES
-   ================================================================ */
-.comment-text {
-    color: #343a40;
-    font-size: 14px;
-    line-height: 1.4;
-    margin: 8px 0;
-    white-space: pre-wrap;
-    word-wrap: break-word;
 }
 
 /* ================================================================
@@ -1748,31 +1459,6 @@
     opacity: 0.6;
     cursor: not-allowed;
     transform: none !important;
-}
-
-/* Loading state mejorado */
-.loading {
-    position: relative;
-    pointer-events: none;
-}
-
-.loading::after {
-    content: '';
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    width: 16px;
-    height: 16px;
-    margin: -8px 0 0 -8px;
-    border: 2px solid #f3f3f3;
-    border-top: 2px solid #007bff;
-    border-radius: 50%;
-    animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
 }
 
 /* Responsive */
@@ -2080,7 +1766,6 @@
     animation: photoSlideIn 0.3s ease;
 }
 
-
 /* ================================================================
    ESTILOS PARA FILTROS PREDICTIVOS en fotos-index
    ================================================================ */
@@ -2294,7 +1979,6 @@
     box-shadow: 0 0 0 0.2rem rgba(40, 167, 69, 0.25);
 }
 
-
 /* ================================================================
    ESTILOS PARA BÚSQUEDA GLOBAL DINÁMICA
    ================================================================ */
@@ -2359,7 +2043,6 @@
         font-size: 16px; /* Evitar zoom en iOS */
     }
 }
-
 
 /* ================================================================
    ESTILOS PARA FUNCIONALIDAD DE BTN CANCELAR - Fotos-sit-add

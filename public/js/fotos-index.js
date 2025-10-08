@@ -1,20 +1,16 @@
 /*!
  * Fotografías de Prendas - Sistema Completo
- * Description: Sistema completo para gestión de fotografías de prendas con comentarios
+ * Description: Sistema completo para gestión de fotografías de prendas
  *
- * NOTA: todo el javascript funcional es este
+ * NOTA: la mayoria del javascript funcional aqui
  */
-
 // ================================================================================================
 // VARIABLES GLOBALES Y CONFIGURACIÓN - CONSOLIDADAS
 // ================================================================================================
 
-//let currentUser = null;
 let currentImageData = null;
 let commentsData = new Map();
-let bootstrapReady = false;
 let uploadCount = 0;
-let commentCounterInitialized = false;
 
 // Variables para historial - consolidadas aquí
 let tipoFotografiaFilter = {
@@ -32,70 +28,6 @@ const CONFIG = {
     MAX_COMMENT_LENGTH: 500,
     DEBUG_MODE: true
 };
-
-// ================================================================================================
-// FUNCIÓN DE DEBUG AGRESIVO
-// ================================================================================================
-
-function debugSystem() {
-    console.log('=== DEBUG SISTEMA ===');
-    console.log('Upload count:', uploadCount);
-    console.log('Bootstrap ready:', bootstrapReady);
-    console.log('Current image data:', currentImageData);
-    console.log('Comments data size:', commentsData.size);
-    console.log('Filtro tipo fotografía:', tipoFotografiaFilter);
-
-    const commentButtons = document.querySelectorAll('.btn-info');
-    console.log('Botones comentarios encontrados:', commentButtons.length);
-
-    console.log('=== FIN DEBUG ===');
-}
-
-// ================================================================================================
-// SISTEMA DE DETECCIÓN DE USUARIOS
-// ================================================================================================
-
-/*function initializeUserSystem() {
-    console.log('Inicializando sistema de usuarios...');
-
-    const metaUser = document.querySelector('meta[name="current-user"]');
-    if (metaUser && metaUser.content) {
-        currentUser = {
-            displayName: metaUser.content,
-            username: generateUsernameFromDisplayName(metaUser.content),
-            source: 'meta-tag'
-        };
-        console.log('Usuario detectado desde meta tag:', currentUser);
-    } else {
-        currentUser = {
-            displayName: 'Usuario Sistema',
-            username: 'usuario-sistema',
-            source: 'fallback-hardcoded'
-        };
-        console.log('Usuario fallback configurado:', currentUser);
-    }
-
-    updateUserInterface(currentUser);
-}*/
-
-function generateUsernameFromDisplayName(displayName) {
-    if (!displayName) return 'usuario';
-
-    return displayName
-        .toLowerCase()
-        .replace(/\s+/g, '-')
-        .replace(/[^a-z0-9-]/g, '')
-        .substring(0, 20);
-}
-
-function updateUserInterface(user) {
-    console.log(`Usuario activo: ${user.displayName} (${user.username})`);
-
-    const userDisplayElements = document.querySelectorAll('.current-user-display');
-    userDisplayElements.forEach(element => {
-        element.textContent = user.displayName;
-    });
-}
 
 // ================================================================================================
 // INICIALIZACIÓN PRINCIPAL - CONSOLIDADA
@@ -119,562 +51,33 @@ document.addEventListener("DOMContentLoaded", function () {
 
     //  Marcar como "inicializando"
     window.fotografiasSystemInitializing = true;
-
-    waitForBootstrap()
-        .then(() => {
-            // Verificar nuevamente antes de continuar
-            if (window.fotografiasSystemInitialized === true) {
-                console.warn('Sistema ya fue inicializado mientras esperábamos Bootstrap');
-                return;
-            }
-
-            console.log('Bootstrap confirmado, iniciando sistema...');
-            window.fotografiasSystemInitialized = true;
-            window.fotografiasSystemInitializing = false;
-            initializeCompleteSystem();
-        })
-        .catch((error) => {
-            console.error('Error esperando Bootstrap:', error);
-            window.fotografiasSystemInitializing = false;
-            //  Aún así continuar sin Bootstrap
-            if (!window.fotografiasSystemInitialized) {
-                bootstrapReady = false;
-                window.fotografiasSystemInitialized = true;
-                initializeCompleteSystem();
-            }
-        });
+    initializeCompleteSystem();
 });
 
 function initializeCompleteSystem() {
-    // Verificación de estado antes de continuar
-    if (window.fotografiasSystemInitialized !== true) {
-        console.error('Sistema no marcado como inicializado correctamente');
-        return;
-    }
-
     try {
         console.log('Iniciando todos los sistemas...');
 
-        // Verificar que los elementos DOM existen
-        const requiredElements = [
-            'imagesTableBody',
-            'notificationContainer'
-        ];
-
-        const missingElements = requiredElements.filter(id => !document.getElementById(id));
-
-        if (missingElements.length > 0) {
-            console.warn('Elementos faltantes:', missingElements);
-            // Crear elementos faltantes o abortar
-        }
-
         // Sistemas principales
-        //initializeUserSystem(); //Registra que usuario hizo cierto comentario
-        initializeLightbox();
-        initializeNotifications();
-        initializeSearch();
-        //initializeCommentsSystem(); //Sistema comentarios alterno
-        initializeCommentCounterSystem();
-        initializeTipoFotografiaFilter();
+        initializeLightbox();  // Visualizar imagenes
+        initializeNotifications(); // Toast notifications
+        initializeSearch();        // Búsqueda general
+        initializeTipoFotografiaFilter(); // Dropdown
 
         console.log('Sistema completo inicializado correctamente');
 
     } catch (error) {
         console.error('Error durante la inicialización:', error);
-        //showNotification('Error durante la inicialización: ' + error.message, 'error');
     }
 }
 
 // ================================================================================================
-// VERIFICACIÓN ROBUSTA DE BOOTSTRAP
+// FUNCION DE COMENTARIOS - Agregar Aqui -- >
 // ================================================================================================
+//- Agregar Aqui-- >
 
-function waitForBootstrap() {
-    return new Promise((resolve, reject) => {
-        let attempts = 0;
-        const maxAttempts = 50;
-        const startTime = Date.now();
-        const maxTime = 5000; // REDUCIR a 5 segundos
 
-        function checkBootstrap() {
-            attempts++;
-            const currentTime = Date.now();
-
-            //  AGREGAR logs para debugging
-            console.log(`Bootstrap check attempt ${attempts}, elapsed: ${currentTime - startTime}ms`);
-
-            if (currentTime - startTime > maxTime) {
-                console.warn('Bootstrap timeout alcanzado, continuando sin él');
-                bootstrapReady = false;
-                resolve(); // SIEMPRE resolver, nunca rechazar
-                return;
-            }
-
-            if (window.bootstrap && bootstrap.Modal) {
-                console.log('Bootstrap detectado correctamente');
-                bootstrapReady = true;
-                resolve();
-            } else if (attempts < maxAttempts) {
-                setTimeout(checkBootstrap, 100);
-            } else {
-                console.warn('Bootstrap no disponible después de máximos intentos');
-                bootstrapReady = false;
-                resolve(); //  Resolver, no rechazar
-            }
-        }
-
-        checkBootstrap();
-    });
-}
-
-// ================================================================================================
-// SISTEMA DE COMENTARIOS CON VERIFICACIÓN
-// ================================================================================================
-
-/*function initializeCommentsSystem() {
-    console.log('Inicializando sistema de comentarios...');
-
-    const commentForm = document.getElementById('commentForm');
-    if (commentForm) {
-        commentForm.onsubmit = null;
-        commentForm.onsubmit = function (e) {
-            e.preventDefault();
-            handleCommentSubmit(e);
-        };
-        console.log('Formulario de comentarios configurado');
-    }
-
-    const commentText = document.getElementById('commentText');
-    if (commentText) {
-        commentText.oninput = updateCharacterCount;
-    }
-
-    console.log('Sistema de comentarios inicializado');
-}*/
-
-function initializeCommentCounterSystem() {
-    console.log('Inicializando sistema de contador de comentarios...');
-
-    if (commentCounterInitialized) {
-        console.log('Sistema de contador ya inicializado');
-        return;
-    }
-
-    fixExistingCommentButtons();
-    commentCounterInitialized = true;
-    console.log('Sistema de contador inicializado');
-}
-
-function fixExistingCommentButtons() {
-    console.log('Corrigiendo botones existentes...');
-
-    const commentButtons = document.querySelectorAll('.comment-btn, .comment-btn-override, .comment-btn-fixed, button[onclick*="openCommentsModal"]');
-
-    commentButtons.forEach((button, index) => {
-        const oldBadge = button.querySelector('.comment-count');
-        let currentCount = 0;
-
-        if (oldBadge) {
-            currentCount = parseInt(oldBadge.getAttribute('data-count') || '0');
-            oldBadge.remove();
-        }
-
-        button.setAttribute('data-comment-count', currentCount);
-        button.style.position = 'relative';
-        button.innerHTML = '<i class="fas fa-comments"></i>';
-
-        console.log(`Botón ${index} corregido con contador: ${currentCount}`);
-    });
-}
-
-// ================================================================================================
-// FUNCIONES DE COMENTARIOS - CONSOLIDADAS
-// ================================================================================================
-
-function openCommentsModal(button) {
-    console.log('openCommentsModal llamado');
-
-    if (!bootstrapReady || typeof bootstrap === 'undefined' || !bootstrap.Modal) {
-        console.error('Bootstrap Modal no disponible');
-        setTimeout(() => {
-            if (typeof bootstrap !== 'undefined' && bootstrap.Modal) {
-                console.log('Bootstrap apareció, reintentando...');
-                bootstrapReady = true;
-                openCommentsModal(button);
-            } else {
-                showNotification('Error: Modal no disponible. Recarga la página.', 'error');
-            }
-        }, 500);
-        return;
-    }
-
-    const row = button.closest('tr');
-    if (!row) {
-        showNotification('Error: No se encontró la fila', 'error');
-        return;
-    }
-
-    const imageData = extractImageDataFromRow(row);
-    if (!imageData) {
-        showNotification('Error: No se pudieron extraer datos', 'error');
-        return;
-    }
-
-    currentImageData = imageData;
-    console.log('Datos extraídos:', imageData);
-
-    updateCommentsModalInfo(imageData);
-    loadCommentsForImage(imageData.id);
-
-    const modalElement = document.getElementById('commentsModal');
-    if (!modalElement) {
-        showNotification('Error: Modal no encontrado en el DOM', 'error');
-        return;
-    }
-
-    try {
-        const modal = new bootstrap.Modal(modalElement, {
-            backdrop: true,
-            keyboard: true
-        });
-        modal.show();
-        console.log('Modal abierto correctamente');
-    } catch (error) {
-        console.error('Error abriendo modal:', error);
-        //showNotification('Error abriendo modal', 'error');
-    }
-}
-
-function extractImageDataFromRow(row) {
-    const img = row.querySelector('img');
-    const ordenSitCell = row.querySelector('[data-column="orden-sit"]');
-    const poCell = row.querySelector('[data-column="po"]');
-    const ocCell = row.querySelector('[data-column="oc"]');
-    const descripcionCell = row.querySelector('[data-column="descripcion"]');
-    const tipoCell = row.querySelector('[data-column="tipo-fotografia"]');
-
-    let imageId = row.dataset.imageId;
-    if (!imageId) {
-        imageId = generateUniqueImageId();
-        row.dataset.imageId = imageId;
-    }
-
-    return {
-        id: imageId,
-        imageUrl: img ? img.src : '',
-        imageAlt: img ? img.alt : '',
-        ordenSit: ordenSitCell ? ordenSitCell.textContent.trim() : '',
-        po: poCell ? poCell.textContent.trim() : '',
-        oc: ocCell ? ocCell.textContent.trim() : '',
-        descripcion: descripcionCell ? descripcionCell.textContent.trim() : '',
-        tipo: tipoCell ? tipoCell.textContent.trim() : ''
-    };
-}
-
-function updateCommentsModalInfo(imageData) {
-    const elements = {
-        commentImagePreview: document.getElementById('commentImagePreview'),
-        commentOrdenSit: document.getElementById('commentOrdenSit'),
-        commentPO: document.getElementById('commentPO'),
-        commentOC: document.getElementById('commentOC'),
-        commentTipo: document.getElementById('commentTipo'),
-        commentDescripcion: document.getElementById('commentDescripcion')
-    };
-
-    if (elements.commentImagePreview) {
-        elements.commentImagePreview.src = imageData.imageUrl;
-        elements.commentImagePreview.alt = imageData.imageAlt;
-    }
-
-    if (elements.commentOrdenSit) elements.commentOrdenSit.textContent = imageData.ordenSit;
-    if (elements.commentPO) elements.commentPO.textContent = imageData.po;
-    if (elements.commentOC) elements.commentOC.textContent = imageData.oc;
-    if (elements.commentTipo) elements.commentTipo.textContent = imageData.tipo;
-    if (elements.commentDescripcion) elements.commentDescripcion.textContent = imageData.descripcion;
-
-    console.log('Información del modal actualizada');
-}
-
-/*function handleCommentSubmit(e) {
-    e.preventDefault();
-    console.log('handleCommentSubmit llamado');
-
-    if (!currentImageData) {
-        showNotification('Error: No hay imagen seleccionada', 'error');
-        return;
-    }
-
-    const typeElement = document.getElementById('commentType');
-    const priorityElement = document.getElementById('commentPriority');
-    const textElement = document.getElementById('commentText');
-
-    if (!typeElement || !priorityElement || !textElement) {
-        showNotification('Error: Elementos del formulario no encontrados', 'error');
-        return;
-    }
-
-    const formData = {
-        type: typeElement.value,
-        priority: priorityElement.value,
-        text: textElement.value.trim()
-    };
-
-    if (!formData.type || !formData.priority || !formData.text) {
-        showNotification('Por favor completa todos los campos', 'warning');
-        return;
-    }
-
-    const comment = {
-        id: generateCommentId(),
-        imageId: currentImageData.id,
-        type: formData.type,
-        priority: formData.priority,
-        text: formData.text,
-        author: currentUser.displayName,
-        authorUsername: currentUser.username,
-        timestamp: new Date().toISOString()
-    };
-
-    addCommentToStorage(comment);
-    renderComment(comment, true);
-    updateCommentsCount();
-    updateCommentButtonBadge();
-    clearCommentForm();
-
-    showNotification(`Comentario agregado por ${currentUser.displayName}`, 'success');
-}*/
-
-function addCommentToStorage(comment) {
-    if (!commentsData.has(comment.imageId)) {
-        commentsData.set(comment.imageId, []);
-    }
-    commentsData.get(comment.imageId).push(comment);
-    console.log('Comentario guardado:', comment);
-}
-
-function loadCommentsForImage(imageId) {
-    const comments = commentsData.get(imageId) || [];
-    const commentsList = document.getElementById('commentsList');
-
-    if (!commentsList) return;
-
-    commentsList.innerHTML = '';
-
-    if (comments.length === 0) {
-        commentsList.innerHTML = `
-            <div class="text-center text-muted p-4">
-                <i class="fas fa-comment-slash fa-2x mb-2"></i>
-                <p>No hay comentarios para esta imagen</p>
-            </div>
-        `;
-    } else {
-        comments.forEach(comment => renderComment(comment, false));
-    }
-
-    const totalCount = document.getElementById('totalCommentsCount');
-    if (totalCount) {
-        totalCount.textContent = comments.length;
-    }
-}
-
-function renderComment(comment, isNew = false) {
-    const commentsList = document.getElementById('commentsList');
-    if (!commentsList) return;
-
-    const noCommentsMsg = commentsList.querySelector('.text-center.text-muted');
-    if (noCommentsMsg) {
-        noCommentsMsg.remove();
-    }
-
-    const commentDiv = document.createElement('div');
-    commentDiv.className = `comment-item ${isNew ? 'new-comment' : ''}`;
-    commentDiv.innerHTML = `
-        <div class="comment-meta">
-            <span class="comment-author">${comment.author}</span>
-            <span class="comment-type-badge type-${comment.type}">${getTypeDisplayName(comment.type)}</span>
-            <span class="comment-priority priority-${comment.priority}">${getPriorityDisplayName(comment.priority)}</span>
-            <span class="comment-timestamp">
-                <i class="fas fa-clock"></i>
-                ${formatTimestamp(comment.timestamp)}
-            </span>
-        </div>
-        <div class="comment-text">${escapeHtml(comment.text)}</div>
-        <div class="comment-actions">
-            <button class="btn btn-sm btn-outline-danger" onclick="deleteComment('${comment.id}')">
-                <i class="fas fa-trash"></i> Eliminar
-            </button>
-        </div>
-    `;
-
-    commentsList.insertBefore(commentDiv, commentsList.firstChild);
-
-    if (isNew) {
-        setTimeout(() => {
-            commentDiv.classList.remove('new-comment');
-        }, 500);
-    }
-}
-
-function updateCharacterCount() {
-    const textElement = document.getElementById('commentText');
-    const countElement = document.getElementById('charCount');
-
-    if (!textElement || !countElement) return;
-
-    const length = textElement.value.length;
-    countElement.textContent = length;
-
-    countElement.className = '';
-    if (length > CONFIG.MAX_COMMENT_LENGTH * 0.8) {
-        countElement.classList.add('warning');
-    }
-    if (length > CONFIG.MAX_COMMENT_LENGTH * 0.9) {
-        countElement.classList.add('danger');
-    }
-}
-
-function clearCommentForm() {
-    const elements = ['commentType', 'commentPriority', 'commentText'];
-    elements.forEach(id => {
-        const element = document.getElementById(id);
-        if (element) {
-            if (id === 'commentPriority') {
-                element.value = 'medium';
-            } else {
-                element.value = '';
-            }
-        }
-    });
-    updateCharacterCount();
-}
-
-function updateCommentsCount() {
-    if (!currentImageData) return;
-
-    const comments = commentsData.get(currentImageData.id) || [];
-    const totalCount = document.getElementById('totalCommentsCount');
-    if (totalCount) {
-        totalCount.textContent = comments.length;
-    }
-}
-
-function updateCommentButtonBadge() {
-    if (!currentImageData) return;
-
-    const comments = commentsData.get(currentImageData.id) || [];
-    const commentCount = comments.length;
-
-    console.log(`Actualizando contador para imagen ${currentImageData.id}: ${commentCount} comentarios`);
-
-    // Buscar el botón de comentarios para esta imagen
-    const row = document.querySelector(`tr[data-image-id="${currentImageData.id}"]`);
-    if (!row) {
-        console.warn(`No se encontró la fila para imagen ${currentImageData.id}`);
-        return;
-    }
-
-    const commentButton = row.querySelector('.comment-btn, .comment-btn-override, .comment-btn-fixed, button[onclick*="openCommentsModal"]');
-    if (!commentButton) {
-        console.warn(`No se encontró el botón de comentarios en la fila`);
-        return;
-    }
-
-    // Usar data-comment-count
-    commentButton.setAttribute('data-comment-count', commentCount);
-
-    // Remover el span rojo viejo si existe
-    const oldBadge = commentButton.querySelector('.comment-count');
-    if (oldBadge) {
-        oldBadge.remove();
-    }
-
-    // Posición relativa para el contador
-    commentButton.style.position = 'relative';
-
-    //  ANIMACIÓN: Pulso cuando se actualiza
-    if (commentCount > 0) {
-        commentButton.classList.add('comment-added');
-        setTimeout(() => {
-            commentButton.classList.remove('comment-added');
-        }, 600);
-    }
-
-    console.log(`Contador actualizado: ${commentCount}`);
-}
-
-function deleteComment(commentId) {
-    if (confirm('¿Eliminar este comentario?')) {
-        for (let [imageId, comments] of commentsData) {
-            const index = comments.findIndex(c => c.id === commentId);
-            if (index !== -1) {
-                comments.splice(index, 1);
-                break;
-            }
-        }
-
-        const commentElement = document.querySelector(`[data-comment-id="${commentId}"]`);
-        if (commentElement) {
-            commentElement.remove();
-        }
-
-        updateCommentsCount();
-        updateCommentButtonBadge();
-        //showNotification('Comentario eliminado', 'success');
-    }
-}
-
-// ================================================================================================
-// FUNCIONES AUXILIARES
-// ================================================================================================
-
-function generateUniqueImageId() {
-    return 'img_' + Date.now() + '_' + Math.random().toString(36).substring(2, 9);
-}
-
-function generateCommentId() {
-    return 'comment_' + Date.now() + '_' + Math.random().toString(36).substring(2, 9);
-}
-
-// ================================================================================================
-// SISTEMAS DE COLUMNAS
-// ================================================================================================
-
-function toggleColumn(columnName, isVisible) {
-    const display = isVisible ? '' : 'none';
-    const table = document.querySelector('.images-table');
-
-    if (!table) return;
-
-    const headerCell = table.querySelector(`th[data-column="${columnName}"]`);
-    if (headerCell) {
-        headerCell.style.display = display;
-    }
-
-    const filterCell = table.querySelector(`tr.bg-light td[data-column="${columnName}"]`);
-    if (filterCell) {
-        filterCell.style.display = display;
-    }
-
-    const dataCells = table.querySelectorAll(`tbody td[data-column="${columnName}"]`);
-    dataCells.forEach(cell => {
-        cell.style.display = display;
-    });
-
-    console.log(`Columna ${columnName} ${isVisible ? 'mostrada' : 'ocultada'}`);
-}
-
-function getColumnDisplayName(columnKey) {
-    const names = {
-        'imagen': 'Imagen',
-        'orden-sit': 'Orden SIT',
-        'po': 'P.O',
-        'oc': 'O.C',
-        'descripcion': 'Descripción',
-        'tipo-fotografia': 'Tipo Fotografía',
-        'acciones': 'Acciones'
-    };
-    return names[columnKey] || columnKey;
-}
+/* =============================================================== */
 
 // ================================================================================================
 // FILTRO TIPO FOTOGRAFÍA - CONSOLIDADO
@@ -705,10 +108,11 @@ function filterByTipoFotografia() {
     applyTipoFotografiaFilter();
     updateTipoFotografiaUI();
 
-    // NUEVO: Actualizar indicador visual
+    // Actualizar indicador visual
     updateFilterStatusIndicator();
 }
 
+/* ======================================================================================= */
 function applyTipoFotografiaFilter() {
     const tableBody = document.getElementById('imagesTableBody');
     if (!tableBody) {
@@ -754,13 +158,9 @@ function applyTipoFotografiaFilter() {
     }
 
     console.log(`Filtro aplicado: ${visibleCount} visibles, ${hiddenCount} ocultas`);
-
-    /*if (tipoFotografiaFilter.active) {
-        const tipos = tipoFotografiaFilter.selectedTypes.join(', ');
-        showNotification(`Filtro aplicado: ${tipos} (${visibleCount} registros)`, 'success');
-    }*/
 }
 
+/* ======================================================================================= */
 function updateTipoFotografiaUI() {
     const label = document.getElementById('tipoFotografiaLabel');
     const button = document.getElementById('tipoFotografiaDropdown');
@@ -783,11 +183,10 @@ function updateTipoFotografiaUI() {
         button.style.borderColor = '#ced4da';
         button.style.color = '#212529';
     }
-
-    // updateTipoFotografiaCounts();
 }
 
-// NUEVA FUNCIÓN: Actualizar indicador de estado del filtro
+/* ======================================================================================= */
+// FUNCIÓN: Actualizar indicador de estado del filtro
 function updateFilterStatusIndicator() {
     const indicator = document.getElementById('filterStatusIndicator');
 
@@ -856,11 +255,11 @@ function clearTipoFotografiaFilter() {
     console.log('Filtro limpiado');
 }
 
-// MEJORAR: Inicialización del filtro con indicadores
+/* =========================================================================== */
+//  Inicialización del filtro con indicadores
 function initializeTipoFotografiaFilter() {
     console.log('Inicializando filtro de tipo fotografía...');
 
-    // updateTipoFotografiaCounts();
     updateFilterStatusIndicator();
 
     const dropdownMenu = document.getElementById('tipoFotografiaMenu');
@@ -876,7 +275,7 @@ function initializeTipoFotografiaFilter() {
     if (tableBody) {
         const observer = new MutationObserver(() => {
             setTimeout(() => {
-                //  updateTipoFotografiaCounts();
+
                 updateFilterStatusIndicator();
                 if (tipoFotografiaFilter.active) {
                     applyTipoFotografiaFilter();
@@ -891,55 +290,6 @@ function initializeTipoFotografiaFilter() {
     }
 
     console.log('Filtro de tipo fotografía inicializado');
-}
-
-
-
-// ================================================================================================
-// FUNCIONES DE UTILIDAD (COMENTARIOS)
-// ================================================================================================
-
-function getTypeDisplayName(type) {
-    const types = {
-        'quality': 'Calidad',
-        'technical': 'Técnico',
-        'production': 'Producción',
-        'design': 'Diseño',
-        'general': 'General',
-        'urgent': 'Urgente'
-    };
-    return types[type] || type;
-}
-
-function getPriorityDisplayName(priority) {
-    const priorities = {
-        'low': 'Baja',
-        'medium': 'Media',
-        'high': 'Alta',
-        'critical': 'Crítica'
-    };
-    return priorities[priority] || priority;
-}
-
-function formatTimestamp(timestamp) {
-    const date = new Date(timestamp);
-    const now = new Date();
-    const diffMs = now - date;
-    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-
-    if (diffDays === 0) {
-        return 'Hoy ' + date.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
-    } else if (diffDays === 1) {
-        return 'Ayer ' + date.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
-    } else {
-        return date.toLocaleDateString('es-ES');
-    }
-}
-
-function escapeHtml(text) {
-    const div = document.createElement('div');
-    div.textContent = text;
-    return div.innerHTML;
 }
 
 // ================================================================================================
@@ -1028,6 +378,8 @@ function initializeLightbox() {
     window.downloadImage = downloadImageFromLightbox;
 }
 
+/* ========================================================================================== */
+// ----->> Uso para visualizar fotografias
 function openImageLightbox(imageUrl, alt, description, type) {
     console.log('Abriendo lightbox:', { imageUrl, alt, description, type });
 
@@ -1351,7 +703,7 @@ function performImageDeletion(imageData, row) {
         }
     });
 
-    // Simular proceso de eliminación (reemplazar con tu lógica real)
+    // Simular proceso de eliminación (reemplazar con lógica real)
     setTimeout(() => {
         try {
             // Aquí iría la lógica de eliminación real (AJAX, fetch, etc.)
@@ -1437,7 +789,6 @@ function performImageDeletion(imageData, row) {
     }, 2000); // Simular delay de 2 segundos
 }
 
-
 //=========================================================
 
 /*function exportAll() {
@@ -1453,7 +804,7 @@ function showFilters() {
 }*/
 
 // ================================================================================================
-// FUNCIONALIDAD BTN EDITAR INFORMACION - fotos-index
+// FUNCIONALIDAD BTN EDITAR INFORMACION --> fotos-index
 // ================================================================================================
 
 // Variables globales para el editor
@@ -1461,7 +812,7 @@ let editCropper = null;
 let originalImageSrc = null;
 let currentEditingRow = null;
 let hasImageBeenCropped = false;
-let selectedPhotos = []; // Array para múltiples fotos
+let selectedPhotos = [];
 
 // ===== FUNCIÓN PRINCIPAL PARA EDITAR IMAGEN =====
 function editImage(button) {
@@ -1879,10 +1230,9 @@ function updateResetButtonState() {
         }
     }
 }
+/* ======================================================================= */
 
-// ===== FUNCIONALIDAD DE SUBIDA DE FOTOS =====
-
-// Manejar subida de múltiples fotos
+// =====>>> Manejar subida de fotos a traves de cámara en el BTN de modal editar información =====>>>
 function initializePhotoUpload() {
     const uploadBtn = document.getElementById('uploadNewPhotoBtn');
     const cameraBtn = document.getElementById('takeCameraPhotoBtn');
@@ -1905,13 +1255,7 @@ function initializePhotoUpload() {
         processUploadedFiles(files, 'file');
     });
 
-    // ==== Boton tomar foto con camara ====
     cameraBtn.addEventListener('click', function () {
-        // Verificar si el dispositivo soporta cámara
-        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-            showNotification('Tu dispositivo no soporta acceso a la cámara', 'warning');
-            return;
-        }
         cameraInput.click();
     });
 
@@ -2221,7 +1565,7 @@ function deleteCurrentPhotoOnly() {
 
 // ===== FUNCIONALIDAD DE GUARDADO =====
 
-// Guardar cambios (mejorado para múltiples fotos)
+// Guardar cambios (mejorado para fotos)
 function saveImageChanges() {
     const newTipo = document.getElementById('editTipoFotografia').value;
     const newDescripcion = document.getElementById('editDescripcion').value;
@@ -2379,8 +1723,6 @@ window.selectPhotoForEdit = selectPhotoForEdit;
 window.removePhotoPreview = removePhotoPreview;
 
 console.log('Módulo de edición de imágenes cargado');
-
-// ================================================================================================
 
 // ================================================================================================
 // SISTEMA DE HISTORIAL
@@ -2613,7 +1955,7 @@ function formatRealDate(dateString) {
 }
 
 // ================================================================================================
-// FUNCIONALIDAD DE FILTROS PREDICTIVOS - fotos-index
+// FUNCIONALIDAD DE FILTROS PREDICTIVOS ---> fotos-index
 // ================================================================================================
 // Variables globales para filtros predictivos
 let allTableData = [];
@@ -2716,10 +2058,7 @@ function setupTableObserver() {
     console.log('Observer configurado correctamente');
 }
 
-
-
-
-// ===== EXTRAER DATOS DE LA TABLA (MEJORADO) =====
+// ===== EXTRAER DATOS DE LA TABLA =====
 function extractTableData() {
     allTableData = [];
     const tableBody = document.getElementById('imagesTableBody');
@@ -3278,14 +2617,12 @@ document.addEventListener('visibilitychange', function () {
     }
 });
 
-// Hacer funciones globales
+// Funciones globales
 window.selectSuggestion = selectSuggestion;
 window.clearAllFilters = clearAllFilters;
 window.refreshFiltersData = refreshFiltersData;
 
 console.log('Sistema de filtros predictivos completo cargado');
-
-
 // ================================================================================================
 // FUNCIONALIDAD DE BÚSQUEDA GLOBAL DINÁMICA - Ord. SIT / P.O / O.C
 // ================================================================================================
@@ -3370,7 +2707,7 @@ function setupGlobalSearchListeners(searchInput, searchButton) {
         }
     });
 
-    // Click en botón de búsqueda (mantener funcionalidad existente)
+    // Click en botón de búsqueda
     if (searchButton) {
         searchButton.addEventListener('click', function (e) {
             e.preventDefault();
@@ -3489,9 +2826,6 @@ function clearGlobalSearch() {
 // ===== ACTUALIZAR ESTADO DE BÚSQUEDA GLOBAL =====
 function updateGlobalSearchStatus(query, visibleCount, totalCount) {
     console.log(`Búsqueda global: "${query}" - ${visibleCount}/${totalCount} resultados`);
-
-    // Aquí puedes agregar indicadores visuales adicionales si necesitas
-    // Por ejemplo, actualizar contadores o mensajes de estado
 }
 
 // ===== INTEGRACIÓN CON FILTROS EXISTENTES =====
@@ -3760,8 +3094,6 @@ document.addEventListener('DOMContentLoaded', function () {
 window.handleFileUpload = handleFileUpload;
 window.saveEditChanges = saveEditChanges;
 
-/* ===================== */
-
 // ================================================================================================
 // FUNCIONES GLOBALES - CONSOLIDADAS
 // ================================================================================================
@@ -3770,14 +3102,8 @@ window.openImageLightbox = openImageLightbox || function () { console.warn('open
 window.closeLightbox = closeLightbox || function () { console.warn('closeLightbox no definida'); };
 window.downloadImageFromLightbox = downloadImageFromLightbox || function () { console.warn('downloadImageFromLightbox no definida'); };
 window.searchRecords = searchRecords || function () { console.warn('searchRecords no definida'); };
-//window.exportAll = exportAll || function () { console.warn('exportAll no definida'); };
-//window.exportSelected = exportSelected || function () { console.warn('exportSelected no definida'); };
-//window.showFilters = showFilters || function () { console.warn('showFilters no definida'); };
 window.deleteImage = deleteImage || function () { console.warn('deleteImage no definida'); };
 window.editImage = editImage || function () { console.warn('editImage no definida'); };
-window.openCommentsModal = openCommentsModal;
-window.deleteComment = deleteComment || function () { console.warn('deleteComment no definida'); };
-window.debugSystem = debugSystem;
 window.openHistorialModal = openHistorialModal;
 window.filterByTipoFotografia = filterByTipoFotografia;
 window.selectAllTipoFotografia = selectAllTipoFotografia || function () { console.warn('selectAllTipoFotografia no definida'); };

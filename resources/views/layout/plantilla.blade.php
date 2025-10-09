@@ -68,8 +68,6 @@
         <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.min.js"></script>
 
         <!-- JS principales de pagina -->
-        <script src="{{ asset('js/fotos-index.js') }}"></script>
-
 
         @stack('scripts')
     </body>

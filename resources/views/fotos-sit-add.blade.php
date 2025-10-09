@@ -316,7 +316,7 @@
         // Drag and drop functionality
         initializeDragAndDrop();
 
-        console.log(' Sistema de subida inicializado');
+        console.log('Sistema de subida inicializado');
     }
 
     function handleImageUpload(files, source) {

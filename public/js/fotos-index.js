@@ -74,8 +74,12 @@ function initializeCompleteSystem() {
 // ================================================================================================
 // FUNCION DE COMENTARIOS - Agregar Aqui -- >
 // ================================================================================================
-//- Agregar Aqui-- >
+//- Agregar Aqui logica existente para comentarios del SIO -- >
 
+// Función temporal para validar botón de comentarios
+function openCommentsModal(button) {
+    console.log("Boton comentarios funciona");
+}
 
 /* =============================================================== */
 

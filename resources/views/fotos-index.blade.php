@@ -359,7 +359,6 @@
                                     </button>
                                     <button class="btn btn-info btn-sm comment-btn" onclick="openCommentsModal(this)" title="Ver/Agregar comentarios">
                                         <i class="fas fa-comments"></i>
-                                        <span class="comment-count" data-count="0"></span>
                                     </button>
                                 </td>
                             </tr>
@@ -368,27 +367,25 @@
                 </div>
 
                 <!-- =========>>>> Paginacion <<<<<<============= -->
-                <div class="d-flex justify-content-between align-items-center mt-3">
-                    <div>
-                        <span class="text-muted">Mostrando registros del 1 al 3 de un total de 3</span>
+                <div class="d-flex justify-content-between align-items-center mt-3" id="paginationContainer">
+                    <!-- Información de registros-->
+                    <div class="pagination-info">
+                        <span class="text-muted" id="paginationInfo">
+                            Mostrando registros del <span id="startRecord">1</span> al <span id="endRecord">0</span>
+                            de un total de <span id="totalRecords">0</span></span>
+
+                        <!-- Selector de registros por pagina-->
+                        <div class="d-inline-block ms-3">
+                            <select class="form-select form-select-sm d-inline-block w-auto" id="recordsPerPage">
+                                <option value="10">10 por página</option>
+                                <option value="25">25 por página</option>
+                                <option value="50">50 por página</option>
+                            </select>
+                        </div>
                     </div>
-                    <nav>
-                        <ul class="pagination mb-0">
-                            <li class="page-item disabled">
-                                <span class="page-link">Anterior</span>
-                            </li>
-                            <li class="page-item active">
-                                <span class="page-link">1</span>
-                            </li>
-                            <li class="page-item">
-                                <a class="page-link" href="#">2</a>
-                            </li>
-                            <li class="page-item">
-                                <a class="page-link" href="#">3</a>
-                            </li>
-                            <li class="page-item">
-                                <a class="page-link" href="#">Siguiente</a>
-                            </li>
+                    <nav id="paginationNav">
+                        <ul class="pagination mb-0" id="paginationList">
+                            <!-- Elementos generados dinámicamente-->
                         </ul>
                     </nav>
                 </div>
@@ -915,6 +912,8 @@
 {{-- ARCHIVO Javascript para manejo de la logica de fotos-index.blade --}}
 <script src="{{ asset('js/fotos-index.js') }}"></script>
 
+<script src="{{ asset('js/pagination.js') }}"></script>
+
 <script>
     // ===== FUNCIONES DE LIGHTBOX CORREGIDAS =====
     function openImageLightbox(imageUrl, alt, description, type) {
@@ -1166,6 +1165,14 @@
     document.addEventListener("DOMContentLoaded", function() {
         console.log('DOM cargado, verificando imágenes transferidas...');
 
+        // INICIALIZAR PAGINACIÓN
+        setTimeout(() => {
+            if (typeof initializePaginationSystem === 'function') {
+                initializePaginationSystem();
+                console.log('Paginación inicializada en fotos-index');
+            }
+        }, 1000);
+
         // Verificar si hay imágenes transferidas desde fotos-sit-add
         const transferredData = localStorage.getItem('newUploadedImages');
         if (transferredData) {
@@ -1369,6 +1376,19 @@
         if (imageData.isDefaultImage) {
             console.log('Se usó imagen por defecto para:', imageData.descripcion);
         }
+
+        // Al final, refrescar paginación
+        setTimeout(() => {
+            if (window.refreshPagination) {
+                window.refreshPagination();
+                // Opcional: ir a la última página para ver la imagen recién agregada
+                setTimeout(() => {
+                    if (window.goToLastPage) {
+                        window.goToLastPage();
+                    }
+                }, 200);
+            }
+        }, 300);
     }
 
     function setUploadState(button, state) {

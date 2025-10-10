@@ -1389,6 +1389,19 @@
                 }, 200);
             }
         }, 300);
+
+        // Al final de la función, después de agregar la fila
+        setTimeout(() => {
+            // Refrescar filtros predictivos
+            if (typeof refreshPredictiveFiltersData === 'function') {
+                refreshPredictiveFiltersData();
+            }
+
+            // Refrescar paginación
+            if (window.refreshPagination) {
+                window.refreshPagination();
+            }
+        }, 500);
     }
 
     function setUploadState(button, state) {

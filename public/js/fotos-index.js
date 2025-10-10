@@ -2,7 +2,7 @@
  * Fotografías de Prendas - Sistema Completo
  * Description: Sistema completo para gestión de fotografías de prendas
  *
- * NOTA: la mayoria del javascript funcional aqui
+ * NOTA: Todo javascript funcional
  */
 // ================================================================================================
 // VARIABLES GLOBALES Y CONFIGURACIÓN - CONSOLIDADAS
@@ -454,24 +454,76 @@ function initializeSearch() {
 }
 
 function searchRecords() {
-    const searchInput = document.getElementById('searchInput');
-    if (!searchInput) return;
+    console.log('Iniciando búsqueda global...');
 
-    const searchTerm = searchInput.value.trim();
-    if (!searchTerm) {
-        showNotification('Ingresa un término de búsqueda', 'warning');
+    const searchTerm = document.getElementById('searchInput').value.toLowerCase().trim();
+    const tableBody = document.getElementById('imagesTableBody');
+
+    if (!tableBody) {
+        console.warn('Tabla no encontrada');
         return;
     }
 
-    const tableRows = document.querySelectorAll('#imagesTableBody tr');
+    const allRows = tableBody.querySelectorAll('tr[data-image-id]');
     let visibleCount = 0;
+    let hiddenCount = 0;
 
-    tableRows.forEach(row => {
-        const searchableText = row.textContent.toLowerCase();
-        const isVisible = searchableText.includes(searchTerm.toLowerCase());
-        row.style.display = isVisible ? '' : 'none';
-        if (isVisible) visibleCount++;
-    });
+    if (searchTerm === '') {
+        // Sin búsqueda - remover SOLO clase de búsqueda global
+        allRows.forEach(row => {
+            row.classList.remove('search-hidden');
+            // NO cambiar display aquí - dejar que otros filtros manejen la visibilidad
+        });
+
+        // Reactivar filtros predictivos si están activos
+        if (typeof applyAllFilters === 'function') {
+            setTimeout(() => {
+                applyAllFilters();
+            }, 100);
+        }
+
+        console.log('Búsqueda global limpiada');
+    } else {
+        // Con búsqueda - aplicar solo a columnas específicas
+        allRows.forEach(row => {
+            // Buscar SOLO en Orden SIT, P.O y O.C (NO en descripción)
+            const ordenSitElement = row.querySelector('td[data-column="orden-sit"]');
+            const poElement = row.querySelector('td[data-column="po"]');
+            const ocElement = row.querySelector('td[data-column="oc"]');
+
+            const ordenSit = ordenSitElement ? ordenSitElement.textContent.toLowerCase().trim() : '';
+            const po = poElement ? poElement.textContent.toLowerCase().trim() : '';
+            const oc = ocElement ? ocElement.textContent.toLowerCase().trim() : '';
+
+            // Verificar coincidencias SOLO en estos campos
+            const matchesSearch = ordenSit.includes(searchTerm) ||
+                po.includes(searchTerm) ||
+                oc.includes(searchTerm);
+
+            if (matchesSearch) {
+                row.classList.remove('search-hidden');
+                // Solo contar como visible si no está oculta por otros filtros
+                if (!row.classList.contains('type-filtered-out') && !row.classList.contains('filtered-out')) {
+                    visibleCount++;
+                }
+            } else {
+                row.classList.add('search-hidden');
+                hiddenCount++;
+            }
+        });
+
+        console.log(`Búsqueda global aplicada: "${searchTerm}" - ${visibleCount} resultados encontrados`);
+    }
+    // Dejar que los filtros predictivos manejen su propia lógic
+    // Indicador visual simple en el input
+    const searchInput = document.getElementById('searchInput');
+    if (searchInput) {
+        if (searchTerm === '') {
+            searchInput.classList.remove('search-active');
+        } else {
+            searchInput.classList.add('search-active');
+        }
+    }
 }
 
 // ================================================================================================
@@ -792,20 +844,6 @@ function performImageDeletion(imageData, row) {
         }
     }, 2000); // Simular delay de 2 segundos
 }
-
-//=========================================================
-
-/*function exportAll() {
-    showNotification('Exportando todos los registros...', 'info');
-}
-
-function exportSelected() {
-    showNotification('Exportando registros seleccionados...', 'info');
-}
-
-function showFilters() {
-    showNotification('Mostrando filtros avanzados', 'info');
-}*/
 
 // ================================================================================================
 // FUNCIONALIDAD BTN EDITAR INFORMACION --> fotos-index
@@ -2350,15 +2388,20 @@ function highlightQuery(text, query) {
     return highlightedText;
 }
 
-// ===== APLICAR FILTROS (MEJORADO) =====
+// ===== APLICAR FILTROS =====
 function applyAllFilters() {
     const hasActiveFilters = Object.keys(activeFilters).length > 0;
 
-    if (!hasActiveFilters) {
+    // Verificar si hay búsqueda global activa
+    const searchInput = document.getElementById('search-input');
+    const hasGlobalSearch = searchInput && searchInput.value.trim() !== '';
+
+    if (!hasActiveFilters && !hasGlobalSearch) {
         // Mostrar todas las filas
         allTableData.forEach(item => {
             if (item.row.parentNode) {  // Verificar que la fila aún exista en el DOM
                 item.row.style.display = '';
+                item.row.classList.remove('filtered-out', 'search-hidden');
             }
         });
         filteredData = [...allTableData];
@@ -2366,9 +2409,9 @@ function applyAllFilters() {
         return;
     }
 
-    // Filtrar datos
+    // Filtrar datos considerando solo filtros predictivos
     filteredData = allTableData.filter(item => {
-        return Object.entries(activeFilters).every(([column, filterValue]) => {
+        const passesColumnFilters = Object.entries(activeFilters).every(([column, filterValue]) => {
             const columnMap = {
                 'orden-sit': 'ordenSit',
                 'po': 'po',
@@ -2384,13 +2427,32 @@ function applyAllFilters() {
             // Usar la función mejorada de coincidencias
             return matchesQuery(itemValue, filterValue);
         });
+
+        // Verificar si hay búsqueda global activa
+        let passesGlobalSearch = true;
+        if (hasGlobalSearch) {
+            const globalQuery = searchInput.value.trim().toLowerCase();
+            const searchableFields = ['item.ordenSit, item.po, item.oc'];
+            passesGlobalSearch = searchableFields.some(field => {
+                return field && field.toLowerCase().includes(globalQuery);
+            });
+        }
+
+        return passesColumnFilters && passesGlobalSearch;
     });
 
     // Mostrar/ocultar filas según filtros
     allTableData.forEach(item => {
         if (item.row.parentNode) {  // Verificar que la fila aún exista en el DOM
             const isVisible = filteredData.includes(item);
-            item.row.style.display = isVisible ? '' : 'none';
+
+            if (isVisible) {
+                item.row.style.display = '';
+                item.row.classList.remove('filtered-out');
+            } else {
+                item.row.style.display = 'none';
+                item.row.classList.add('filtered-out');
+            }
         }
     });
 
@@ -2398,6 +2460,33 @@ function applyAllFilters() {
     console.log(`Filtros aplicados: ${filteredData.length}/${allTableData.length} filas visibles`);
 }
 
+/* ================================================================================================= */
+// Limpiar búsqueda global
+function clearGlobalSearchOnly() {
+    const searchInput = document.getElementById('searchInput');
+    if (searchInput) {
+        searchInput.value = '';
+        searchInput.classList.remove('search-active');
+    }
+
+    // Remover SOLO las clases de búsqueda global
+    const allRows = document.querySelectorAll('#imagesTableBody tr[data-image-id]');
+    allRows.forEach(row => {
+        row.classList.remove('search-hidden');
+    });
+
+    // Reactivar filtros predictivos
+    if (typeof applyAllFilters === 'function') {
+        applyAllFilters();
+    }
+
+    console.log('Búsqueda global limpiada, filtros predictivos mantienen su estado');
+}
+
+// Hacer función global
+window.clearGlobalSearchOnly = clearGlobalSearchOnly;
+
+/* ================================================================================================= */
 // ===== INTEGRACIÓN CON FUNCIONES EXISTENTES =====
 
 // Sobrescribir la función original addImageToTable para incluir filtros
@@ -2661,10 +2750,10 @@ function setupGlobalSearchListeners(searchInput, searchButton) {
         const query = e.target.value.trim();
 
         if (query.length >= 1) {
-            // Aplicar búsqueda global
-            applyGlobalSearch(query);
-            globalSearchActive = true;
-            globalSearchQuery = query;
+            // Actualizar filtros combinados
+            if (typeof applyAllFilters === 'function') {
+                applyAllFilters();
+            }
 
             // Cambiar estilo del input para indicar filtro activo
             searchInput.classList.add('global-search-active');
@@ -2672,14 +2761,8 @@ function setupGlobalSearchListeners(searchInput, searchButton) {
             console.log(`Búsqueda global aplicada: "${query}"`);
         } else {
             // Limpiar búsqueda y restaurar tabla
-            clearGlobalSearch();
-            globalSearchActive = false;
-            globalSearchQuery = '';
-
-            // Remover estilo activo
-            searchInput.classList.remove('global-search-active');
-
-            console.log('Búsqueda global limpiada, tabla restaurada');
+            clearGlobalSearchOnly();
+            console.log('Búsqueda global limpiada');
         }
     });
 
@@ -2862,6 +2945,134 @@ function clearAllFiltersIncludingGlobal() {
 
     console.log('Todos los filtros limpiados (global + columnas)');
 }
+
+/* ====================================================================================================== */
+// Función para refrescar filtros predictivos después de cambios
+function refreshPredictiveFiltersData() {
+    console.log('Refrescando datos de filtros predictivos...');
+
+    // Limpiar datos anteriores
+    allTableData = [];
+
+    // Recolectar NUEVAMENTE todos los datos actualizados de la tabla
+    const tableBody = document.getElementById('imagesTableBody');
+    if (!tableBody) {
+        console.warn('Tabla no encontrada');
+        return;
+    }
+
+    const rows = tableBody.querySelectorAll('tr[data-image-id]');
+    console.log(`Recolectando datos de ${rows.length} filas...`);
+
+    rows.forEach((row, index) => {
+        const ordenSitCell = row.querySelector('[data-column="orden-sit"]');
+        const poCell = row.querySelector('[data-column="po"]');
+        const ocCell = row.querySelector('[data-column="oc"]');
+        const descripcionCell = row.querySelector('[data-column="descripcion"]');
+
+        const rowData = {
+            row: row,
+            ordenSit: ordenSitCell ? ordenSitCell.textContent.trim() : '',
+            po: poCell ? poCell.textContent.trim() : '',
+            oc: ocCell ? ocCell.textContent.trim() : '',
+            descripcion: descripcionCell ? descripcionCell.textContent.trim() : ''
+        };
+
+        allTableData.push(rowData);
+        console.log(`Fila ${index + 1}: ${JSON.stringify(rowData, null, 2)}`);
+    });
+
+    console.log(`${allTableData.length} registros actualizados en filtros predictivos`);
+
+    // Actualizar sugerencias para todos los campos
+    updateAllSuggestions();
+
+    // Limpiar filtros activos que ya no son válidos
+    validateActiveFilters();
+}
+
+// Función para actualizar todas las sugerencias
+function updateAllSuggestions() {
+    console.log('Actualizando sugerencias de autocompletado...');
+
+    // Obtener valores únicos para cada columna
+    const ordenSitValues = [...new Set(allTableData.map(item => item.ordenSit).filter(v => v))];
+    const poValues = [...new Set(allTableData.map(item => item.po).filter(v => v))];
+    const ocValues = [...new Set(allTableData.map(item => item.oc).filter(v => v))];
+    const descripcionValues = [...new Set(allTableData.map(item => item.descripcion).filter(v => v))];
+
+    console.log('Nuevas sugerencias:', {
+        ordenSit: ordenSitValues,
+        po: poValues,
+        oc: ocValues,
+        descripcion: descripcionValues
+    });
+
+    // Aquí puedes actualizar los arrays de sugerencias si los tienes
+    // Por ejemplo, si tienes variables globales para las sugerencias:
+    if (typeof window.ordenSitSuggestions !== 'undefined') {
+        window.ordenSitSuggestions = ordenSitValues;
+    }
+    if (typeof window.poSuggestions !== 'undefined') {
+        window.poSuggestions = poValues;
+    }
+    if (typeof window.ocSuggestions !== 'undefined') {
+        window.ocSuggestions = ocValues;
+    }
+    if (typeof window.descripcionSuggestions !== 'undefined') {
+        window.descripcionSuggestions = descripcionValues;
+    }
+}
+
+// Función para validar filtros activos
+function validateActiveFilters() {
+    console.log('Validando filtros activos...');
+
+    if (!activeFilters || Object.keys(activeFilters).length === 0) {
+        console.log('No hay filtros activos que validar');
+        return;
+    }
+
+    // Verificar cada filtro activo
+    Object.keys(activeFilters).forEach(column => {
+        const filterValue = activeFilters[column];
+        const hasMatchingData = allTableData.some(item => {
+            const fieldValue = item[column === 'orden-sit' ? 'ordenSit' : column];
+            return fieldValue && fieldValue.toLowerCase().includes(filterValue.toLowerCase());
+        });
+
+        if (!hasMatchingData) {
+            console.log(`Filtro "${column}: ${filterValue}" ya no tiene datos coincidentes`);
+            // Opcional: limpiar automáticamente el filtro
+            // delete activeFilters[column];
+            // clearSpecificFilter(column);
+        }
+    });
+}
+/* ====================================================================================================== */
+function clearSpecificFilter(column) {
+    console.log(`Limpiando filtro para columna: ${column}`);
+
+    // Limpiar del objeto activeFilters
+    if (activeFilters && activeFilters[column]) {
+        delete activeFilters[column];
+    }
+
+    // Limpiar el input visual
+    const input = document.getElementById(`filter${column.charAt(0).toUpperCase() + column.slice(1)}`);
+    if (input) {
+        input.value = '';
+    }
+
+    // Reaplicar filtros sin el filtro eliminado
+    if (typeof applyAllFilters === 'function') {
+        applyAllFilters();
+    }
+
+    console.log(`Filtro de ${column} limpiado`);
+}
+
+/* ======================================================================================================== */
 
 // ===== FUNCIÓN PARA REFRESCAR BÚSQUEDA GLOBAL =====
 function refreshGlobalSearch() {
@@ -3073,6 +3284,23 @@ function saveEditChanges() {
 
     // Limpiar variables
     resetEditVariables();
+
+    // Refrescar filtros después de edición exitosa
+    setTimeout(() => {
+        console.log('Actualizando filtros después de edición...');
+
+        // Refrescar datos de filtros predictivos
+        if (typeof refreshPredictiveFiltersData === 'function') {
+            refreshPredictiveFiltersData();
+        }
+
+        // Refrescar paginación
+        if (window.refreshPagination) {
+            window.refreshPagination();
+        }
+
+        console.log('Filtros actualizados después de edición');
+    }, 300);
 
     console.log('Edición completada exitosamente');
 }

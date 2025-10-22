@@ -5,6 +5,7 @@
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="csrf-token" content="{{ csrf_token() }}">
+        <meta name="app-url" content="{{ config('app.url') }}">
         <!-- Bootstrap CSS -->
         <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
 
@@ -26,9 +27,6 @@
         <title>@yield('tituloPagina')</title>
 
         <!-- Aquí se carga CSS específico de cada vista -->
-        <link rel="stylesheet" href="{{ asset('css/index.css') }}">
-        <link rel="stylesheet" href="{{ asset('css/create.css') }}">
-        <link rel="stylesheet" href="{{ asset('css/edit.css') }}">
         <link rel="stylesheet" href="{{ asset('css/fotos-index.css') }}">
 
         <!-- Meta para usuario actual -->

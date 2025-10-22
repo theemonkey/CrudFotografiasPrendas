@@ -1086,80 +1086,76 @@
     let currentUploadSession = null;
 
     function uploadSingleImage(file) {
-    return new Promise((resolve, reject) => {
-        const formData = new FormData();
-        formData.append('image', file);
-        formData.append('timestamp', new Date().toISOString());
+        return new Promise((resolve, reject) => {
+            console.log('Subiendo directamente al backend:', file.name);
 
-        setTimeout(() => {
-            const imageUrl = URL.createObjectURL(file);
+            const formData = new FormData();
+            formData.append('imagen', file);
+            formData.append('orden_sit', generateOrderNumber());
+            formData.append('po', generatePONumber());
+            formData.append('oc', generateOCNumber());
+            formData.append('timestamp', new Date().toISOString());
 
-            // === Generar datos compartidos por sesión ====
-            if (!currentUploadSession) {
-                currentUploadSession = {
-                    ordenSit: generateOrderNumber(),
-                    po: generatePONumber(),
-                    oc: generateOCNumber(),
-                    sessionId: Date.now(),
-                    timestamp: new Date().toISOString()
-                };
-                console.log('Nueva sesión de carga creada:', currentUploadSession);
-            }
-
-            // Datos base de la imagen con datos compartidos
-            const tempData = {
-                id: Date.now() + Math.random(),
-                url: imageUrl,
-                name: file.name,
-                size: file.size,
-                uploadDate: new Date().toISOString(),
-                // ==== Se usan datos de la sesión actual====
-                ordenSit: currentUploadSession.ordenSit,
-                po: currentUploadSession.po,
-                oc: currentUploadSession.oc,
-                sessionId: currentUploadSession.sessionId
-            };
-
-            console.log('Imagen con datos compartidos:', tempData);
-
-            // Abrir modal y esperar datos del usuario
+            // Modal para datos adicionales
             const modalEl = document.getElementById('imageDataModal');
             const modal = new bootstrap.Modal(modalEl);
             modal.show();
 
-            // Limpiar formulario
             document.getElementById('descripcionInput').value = '';
             document.getElementById('tipoFotografiaSelect').selectedIndex = 0;
 
-            // Evento al guardar
             const saveBtn = document.getElementById('saveImageData');
-
             const handleSave = () => {
                 const descripcion = document.getElementById('descripcionInput').value.trim();
                 const tipoFotografia = document.getElementById('tipoFotografiaSelect').value;
 
                 if (!descripcion || !tipoFotografia) {
-                    showNotification("Por favor ingrese todos los campos.", 'warning');
+                    showNotification("Por favor complete todos los campos.", 'warning');
                     return;
                 }
 
+                formData.append('descripcion', descripcion);
+                formData.append('tipo', tipoFotografia.toUpperCase());
+
                 modal.hide();
 
-                // Resolver con los datos completos
-                resolve({
-                    ...tempData,
-                    descripcion,
-                    tipoFotografia
+                // 🎯 SUBIR AL BACKEND DIRECTAMENTE
+                $.ajax({
+                    url: '/api/fotografias',
+                    type: 'POST',
+                    data: formData,
+                    processData: false,
+                    contentType: false,
+                    headers: {
+                        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                    },
+                    success: function(response) {
+                        if (response.success) {
+                            console.log('Imagen subida al backend:', response.data);
+
+                            // 🎯 AGREGAR DIRECTAMENTE A LA TABLA
+                            addBackendImageToTable(response.data);
+
+                            showNotification('Imagen subida correctamente', 'success');
+                            resolve(response.data);
+                        } else {
+                            showNotification('Error: ' + response.message, 'error');
+                            reject(new Error(response.message));
+                        }
+                    },
+                    error: function(xhr, status, error) {
+                        console.error('Error subiendo al backend:', error);
+                        showNotification('Error de conexión con el servidor', 'error');
+                        reject(new Error('Error de conexión'));
+                    }
                 });
 
-                // Eliminar listener para evitar duplicados
                 saveBtn.removeEventListener('click', handleSave);
             };
 
             saveBtn.addEventListener('click', handleSave);
-        }, 1000 + Math.random() * 2000);
-    });
-}
+        });
+    }
 
     // ====>>>> Al cargar la página, verificar si hay imágenes nuevas(agregadas) En fotos-sit-add
     document.addEventListener("DOMContentLoaded", function() {
@@ -1804,6 +1800,207 @@
     // Hacer función global
     window.openHistorialModal = openHistorialModal;
 </script>
+
+<script>
+    // 🎯 FUNCIÓN PARA CARGAR DATOS DEL BACKEND AL INICIAR
+    function loadPhotosFromBackend() {
+        console.log('Cargando fotografías desde el backend...');
+
+        $.ajax({
+            url: '/api/fotografias',
+            type: 'GET',
+            data: {
+                per_page: 100 // Cargar muchos registros inicialmente
+            },
+            headers: {
+                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+            },
+            success: function(response) {
+                if (response.success) {
+                    const fotografias = response.data || [];
+                    console.log(`${fotografias.length} fotografías cargadas desde backend`);
+
+                    // Limpiar tabla actual (mantener ejemplos si no hay datos)
+                    if (fotografias.length > 0) {
+                        clearExampleData();
+                    }
+
+                    // Agregar cada fotografía a la tabla
+                    fotografias.forEach((foto, index) => {
+                        setTimeout(() => {
+                            addBackendImageToTable(foto);
+                        }, index * 50); // Pequeño delay para animación
+                    });
+
+                    showNotification(`${fotografias.length} fotografías cargadas`, 'success');
+                } else {
+                    console.warn('No se pudieron cargar fotografías:', response.message);
+                }
+            },
+            error: function(xhr, status, error) {
+                console.error('Error cargando fotografías:', error);
+                showNotification('Error al cargar fotografías del servidor', 'warning');
+            }
+        });
+    }
+
+    // 🎯 FUNCIÓN PARA LIMPIAR DATOS DE EJEMPLO
+    function clearExampleData() {
+        const tableBody = document.getElementById('imagesTableBody');
+        if (tableBody) {
+            // Eliminar solo las filas de ejemplo (que tienen IDs específicos)
+            const exampleRows = tableBody.querySelectorAll('tr[data-image-id*="example"]');
+            exampleRows.forEach(row => row.remove());
+            console.log(`${exampleRows.length} filas de ejemplo eliminadas`);
+        }
+    }
+
+    // 🎯 FUNCIÓN PARA AGREGAR IMAGEN DEL BACKEND A LA TABLA
+    function addBackendImageToTable(fotografiaData) {
+        console.log('Agregando fotografía del backend:', fotografiaData);
+
+        const tableBody = document.getElementById('imagesTableBody');
+        if (!tableBody) {
+            console.error('No se encontró el tbody de la tabla');
+            return;
+        }
+
+        const row = document.createElement('tr');
+        row.setAttribute('data-image-id', `backend_${fotografiaData.id}`);
+        row.setAttribute('data-fecha-creacion', fotografiaData.fecha_subida);
+
+        row.innerHTML = `
+            <td data-column="imagen">
+                <img src="${fotografiaData.imagen_url}"
+                    alt="${fotografiaData.descripcion}"
+                    class="img-thumbnail preview-image"
+                    style="width: 60px; height: 60px; cursor: pointer; object-fit: cover;"
+                    onclick="openImageLightbox('${fotografiaData.imagen_url}', '${fotografiaData.descripcion}', '${fotografiaData.descripcion}', '${fotografiaData.tipo}')">
+            </td>
+            <td data-column="orden-sit">${fotografiaData.orden_sit}</td>
+            <td data-column="po">${fotografiaData.po}</td>
+            <td data-column="oc">${fotografiaData.oc || '-'}</td>
+            <td data-column="descripcion">${fotografiaData.descripcion}</td>
+            <td data-column="tipo-fotografia">${fotografiaData.tipo}</td>
+            <td data-column="acciones">
+                <button class="btn btn-danger btn-sm me-1 btn-delete" onclick="deleteBackendImage(${fotografiaData.id}, this)" title="Eliminar imagen">
+                    <i class="fas fa-trash"></i>
+                </button>
+                <button class="btn btn-warning btn-sm me-1 btn-edit" onclick="editBackendImage(${fotografiaData.id}, this)" title="Editar información">
+                    <i class="fas fa-edit"></i>
+                </button>
+                <button class="btn btn-info btn-sm comment-btn me-1" onclick="openCommentsModal(this)" title="Ver/Agregar comentarios">
+                    <i class="fas fa-comments"></i>
+                </button>
+                <button class="btn btn-success btn-sm btn-historial" onclick="openHistorialModal(this)" title="Historial de la Prenda">
+                    <i class="fas fa-history"></i>
+                </button>
+            </td>
+        `;
+
+        // Insertar al inicio de la tabla
+        tableBody.insertBefore(row, tableBody.firstChild);
+
+        // Animación de entrada
+        row.style.opacity = '0';
+        row.style.transform = 'translateY(-10px)';
+        setTimeout(() => {
+            row.style.transition = 'all 0.5s ease';
+            row.style.opacity = '1';
+            row.style.transform = 'translateY(0)';
+        }, 100);
+
+        // Refrescar filtros
+        setTimeout(() => {
+            if (window.refreshPagination) {
+                window.refreshPagination();
+            }
+        }, 200);
+    }
+
+    // 🎯 FUNCIÓN PARA ELIMINAR IMAGEN DEL BACKEND
+    function deleteBackendImage(fotografiaId, button) {
+        console.log('Eliminando fotografía del backend:', fotografiaId);
+
+        Swal.fire({
+            title: '¿Eliminar esta fotografía?',
+            text: 'Esta acción eliminará permanentemente la imagen del servidor',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#dc3545',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: 'Sí, eliminar',
+            cancelButtonText: 'Cancelar'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                // Mostrar loading
+                Swal.fire({
+                    title: 'Eliminando...',
+                    allowOutsideClick: false,
+                    showConfirmButton: false,
+                    didOpen: () => {
+                        Swal.showLoading();
+                    }
+                });
+
+                // Eliminar del backend
+                $.ajax({
+                    url: `/api/fotografias/${fotografiaId}`,
+                    type: 'DELETE',
+                    headers: {
+                        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                    },
+                    success: function(response) {
+                        if (response.success) {
+                            // Eliminar fila de la tabla
+                            const row = button.closest('tr');
+                            row.style.transition = 'all 0.5s ease';
+                            row.style.opacity = '0';
+                            row.style.transform = 'translateX(-100%)';
+
+                            setTimeout(() => {
+                                row.remove();
+                            }, 500);
+
+                            Swal.fire('¡Eliminada!', 'La fotografía ha sido eliminada.', 'success');
+                        } else {
+                            Swal.fire('Error', response.message || 'No se pudo eliminar', 'error');
+                        }
+                    },
+                    error: function(xhr, status, error) {
+                        console.error('Error eliminando:', error);
+                        Swal.fire('Error', 'Error de conexión con el servidor', 'error');
+                    }
+                });
+            }
+        });
+    }
+
+    // 🎯 FUNCIÓN PARA EDITAR IMAGEN DEL BACKEND
+    function editBackendImage(fotografiaId, button) {
+        console.log('Editando fotografía del backend:', fotografiaId);
+
+        // Reutilizar la función existente de edición
+        editImage(button);
+
+        // Guardar ID del backend para uso posterior
+        if (window.currentImageData) {
+            window.currentImageData.backendId = fotografiaId;
+        }
+    }
+
+    // 🎯 CARGAR DATOS AL INICIAR PÁGINA
+    document.addEventListener('DOMContentLoaded', function() {
+        // Esperar a que se inicialice todo
+        setTimeout(() => {
+            loadPhotosFromBackend();
+        }, 1000);
+    });
+</script>
+
+
+
+
 
 <!-- Adicionales para el uso del selector rango de fechas -->
 <!-- jQuery -->

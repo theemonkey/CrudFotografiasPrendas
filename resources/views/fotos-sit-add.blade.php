@@ -171,8 +171,107 @@
     const imageLightbox = document.getElementById('imageLightbox');
     const descripcion = document.getElementById('descripcion');
 
-    // Validar y buscar (Simulacion resultados)
+    // Validar y buscar (conectar con Backend)
     function buscarOrdenSit() {
+        const ordenSitInput = document.getElementById('ordenSitInput');
+        const value = ordenSitInput.value.trim();
+
+        if (value === "") {
+            showNotification("Ingrese un número de orden", "warning");
+            return;
+        }
+
+        // 🎯 BUSCAR EN EL BACKEND
+        $.ajax({
+            url: '/api/fotografias',
+            type: 'GET',
+            data: {
+                orden_sit: value
+            },
+            headers: {
+                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+            },
+            success: function(response) {
+                if (response.success) {
+                    const fotografias = response.data.data || [];
+
+                    if (fotografias.length > 0) {
+                        // 🎯 ORDEN EXISTE - Mostrar datos existentes
+                        const primeraFoto = fotografias[0];
+                        mostrarOrdenExistente(primeraFoto, fotografias.length);
+                    } else {
+                        // 🎯 ORDEN NO EXISTE - Permitir crear nueva
+                        mostrarOrdenNueva(value);
+                    }
+                } else {
+                    console.error('Error en respuesta:', response.message);
+                    mostrarOrdenNueva(value); // Fallback a nueva orden
+                }
+            },
+            error: function(xhr, status, error) {
+                console.error('Error buscando orden:', error);
+                // 🎯 FALLBACK: Permitir crear nueva orden
+                mostrarOrdenNueva(value);
+            }
+        });
+    }
+
+    // 🎯 NUEVA FUNCIÓN: Mostrar orden existente
+    function mostrarOrdenExistente(primeraFoto, totalFotos) {
+        const ordenSitValue = document.getElementById('ordenSitValue');
+        const tipoOrden = document.getElementById('tipoOrden');
+        const descripcion = document.getElementById('descripcion');
+        const prendaPreview = document.getElementById('prendaPreview');
+        const ordenSitCard = document.getElementById('ordenSitCard');
+
+        // Llenar datos existentes
+        ordenSitValue.textContent = primeraFoto.orden_sit;
+        tipoOrden.textContent = `${totalFotos} foto(s) existente(s)`;
+        tipoOrden.className = "badge bg-success";
+        descripcion.textContent = `Última: ${primeraFoto.descripcion}`;
+
+        // Mostrar imagen existente
+        prendaPreview.src = primeraFoto.imagen_url;
+        prendaPreview.onclick = () => openLightbox(
+            primeraFoto.imagen_url,
+            primeraFoto.descripcion,
+            primeraFoto.tipo
+        );
+
+        ordenSitCard.style.display = 'block';
+
+        showNotification(`Orden ${primeraFoto.orden_sit} encontrada con ${totalFotos} fotografía(s)`, 'success', 2000);
+    }
+
+    // 🎯 NUEVA FUNCIÓN: Mostrar orden nueva
+    function mostrarOrdenNueva(numeroOrden) {
+        const ordenSitValue = document.getElementById('ordenSitValue');
+        const tipoOrden = document.getElementById('tipoOrden');
+        const descripcion = document.getElementById('descripcion');
+        const prendaPreview = document.getElementById('prendaPreview');
+        const ordenSitCard = document.getElementById('ordenSitCard');
+
+        // Configurar para nueva orden
+        ordenSitValue.textContent = numeroOrden;
+        tipoOrden.textContent = "Nueva orden";
+        tipoOrden.className = "badge bg-primary";
+        descripcion.textContent = "Agregue fotografías para esta orden";
+
+        // Imagen por defecto
+        prendaPreview.src = "https://picsum.photos/id/535/400/600";
+        prendaPreview.onclick = () => openLightbox(
+            "https://picsum.photos/id/535/400/600",
+            "Nueva orden",
+            "NUEVA"
+        );
+
+        ordenSitCard.style.display = 'block';
+
+        showNotification(`Nueva orden ${numeroOrden} lista para fotografías`, 'info', 2000);
+    }
+
+
+    /*function buscarOrdenSit() {
         const ordenSitInput = document.getElementById('ordenSitInput');
         const value = ordenSitInput.value.trim();
 
@@ -195,7 +294,7 @@
 
         ordenSitCard.style.display = 'block';
        showNotification(`Orden SIT ${value} encontrada`, 'success',2000);
-    }
+    }*/
 
     // Cambiar estado
     function setTipoFoto(tipo) {
@@ -208,55 +307,43 @@
     }
 
    // Guardar y redirigir a fotos-index
-   function guardarFoto() {
-    console.log('Iniciando guardado de fotos...');
-    console.log('Imágenes a guardar:', uploadedImages);
+    function guardarFoto() {
+        console.log('Iniciando guardado automático...');
 
-    if (uploadedImages.length === 0) {
-        showNotification("Debe subir al menos una imagen antes de guardar", 'warning');
-        return;
-    }
-
-    // Verificar que todas las imágenes tengan datos completos
-    const imagenesCompletas = uploadedImages.filter(img =>
-        img.url && img.descripcion && img.tipoFotografia
-    );
-
-    console.log('Imágenes con datos completos:', imagenesCompletas);
-
-    if (imagenesCompletas.length === 0) {
-        showNotification("No hay imágenes válidas para guardar", 'error');
-        return;
-    }
-
-    //showNotification(`Guardando ${imagenesCompletas.length} imagen(es)...`, 'info', 1500);
-
-    // PREPARAR datos con información adicional para historial
-    const dataToTransfer = {
-        images: imagenesCompletas.map(img => ({
-            ...img,
-            transferTimestamp: Date.now(),
-            transferDate: new Date().toISOString(),
-            readyForHistorial: true // Marca para que el historial sepa que están listas
-        })),
-        timestamp: new Date().toISOString(),
-        source: 'fotos-sit-add',
-        totalImages: imagenesCompletas.length,
-        metadata: {
-            ordenSit: imagenesCompletas[0]?.ordenSit || 'N/A',
-            uploadSession: Date.now().toString(36) // ID único de sesión de subida
+        if (uploadedImages.length === 0) {
+            showNotification("Debe subir al menos una imagen antes de continuar", 'warning');
+            return;
         }
-    };
 
-    console.log('Datos preparados para transferencia:', dataToTransfer);
+        // 🎯 TODAS LAS IMÁGENES YA ESTÁN EN EL BACKEND
+        console.log(`${uploadedImages.length} imágenes ya guardadas en el backend`);
 
-    localStorage.setItem('newUploadedImages', JSON.stringify(dataToTransfer));
-    console.log('Datos guardados en localStorage con metadatos de historial');
+        // 🎯 PREPARAR datos para historial en fotos-index
+        const dataToTransfer = {
+            images: uploadedImages.map(img => ({
+                ...img,
+                source: 'backend-upload',
+                transferTimestamp: Date.now(),
+                readyForHistorial: true
+            })),
+            metadata: {
+                totalUploaded: uploadedImages.length,
+                uploadSession: Date.now().toString(36),
+                source: 'fotos-sit-add'
+                ordenSit: document.getElementById('ordenSitValue')?.textContent || 'Nueva'
+            }
+        };
 
-    // Redirigir a fotos-index
-    console.log('Redirigiendo automáticamente a fotos-index...');
-    window.location.href = "{{ route('fotos-index') }}";
-   }
+        // 🎯 GUARDAR para mostrar en fotos-index
+        localStorage.setItem('newUploadedImages', JSON.stringify(dataToTransfer));
+
+        // 🎯 REDIRECCIÓN AUTOMÁTICA
+        showNotification(`${uploadedImages.length} imagen(es) guardadas. Redirigiendo...`, 'success', 1500);
+
+        setTimeout(() => {
+            window.location.href = "{{ route('fotos-index') }}";
+        }, 1500);
+    }
 
     // Lightbox functions
     function openLightbox(imageUrl, description, type) {
@@ -562,6 +649,130 @@
         return new Promise((resolve, reject) => {
             console.log('Procesando archivo:', file.name);
 
+            // 🎯 CREAR FormData para enviar al backend
+            const formData = new FormData();
+            formData.append('imagen', file);
+            formData.append('orden_sit', document.getElementById('ordenSitValue').textContent || '');
+            formData.append('po', generatePONumber());
+            formData.append('oc', generateOCNumber());
+            formData.append('timestamp', new Date().toISOString());
+
+            // 🎯 Mostrar modal para datos adicionales ANTES de enviar
+            const modalEl = document.getElementById('imageDataModal');
+            const modal = new bootstrap.Modal(modalEl);
+            modal.show();
+
+            // Limpiar formulario
+            document.getElementById('descripcionInput').value = '';
+            document.getElementById('tipoFotografiaSelect').selectedIndex = 0;
+
+            // Event listener para guardar
+            const saveBtn = document.getElementById('saveImageData');
+            const handleSave = () => {
+                const descripcion = document.getElementById('descripcionInput').value.trim();
+                const tipoFotografia = document.getElementById('tipoFotografiaSelect').value;
+
+                if (!descripcion || !tipoFotografia) {
+                    showNotification("Por favor ingrese todos los campos.", 'warning');
+                    return;
+                }
+
+                // 🎯 AGREGAR campos adicionales al FormData
+                formData.append('descripcion', descripcion);
+                formData.append('tipo', tipoFotografia.toUpperCase());
+
+                modal.hide();
+                saveBtn.removeEventListener('click', handleSave);
+
+                // 🎯 ENVIAR AL BACKEND con AJAX
+                uploadToBackend(formData)
+                    .then(response => {
+                        console.log('Imagen subida al backend:', response);
+
+                        // 🎯 GUARDAR para transferir a fotos-index
+                        const imageData = {
+                            id: response.data.id,
+                            url: response.data.imagen_url, // URL del servidor
+                            orden_sit: response.data.orden_sit,
+                            po: response.data.po,
+                            oc: response.data.oc,
+                            descripcion: response.data.descripcion,
+                            tipo: response.data.tipo,
+                            fecha_subida: response.data.fecha_subida,
+                            source: 'backend'
+                        };
+
+                        resolve(imageData);
+                    })
+                    .catch(error => {
+                        console.error('Error subiendo imagen:', error);
+                        showNotification('Error al subir imagen', 'error');
+                        reject(error);
+                    });
+            };
+
+            saveBtn.addEventListener('click', handleSave);
+        });
+    }
+
+    // 🎯 NUEVA FUNCIÓN: Subir al backend
+    function uploadToBackend(formData) {
+        return new Promise((resolve, reject) => {
+            $.ajax({
+                url: '/api/fotografias', // Ruta del backend
+                type: 'POST',
+                data: formData,
+                processData: false,
+                contentType: false,
+                headers: {
+                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                },
+                success: function(response) {
+                    if (response.success) {
+                        resolve(response);
+                    } else {
+                        reject(new Error(response.message || 'Error del servidor'));
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error('Error AJAX:', xhr.responseText);
+                    reject(new Error('Error de conexión con el servidor'));
+                }
+            });
+        });
+    }
+
+    // 🎯 NUEVA FUNCIÓN: Subir al backend
+    function uploadToBackend(formData) {
+        return new Promise((resolve, reject) => {
+            $.ajax({
+                url: '/api/fotografias', // Ruta del backend
+                type: 'POST',
+                data: formData,
+                processData: false,
+                contentType: false,
+                headers: {
+                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                },
+                success: function(response) {
+                    if (response.success) {
+                        resolve(response);
+                    } else {
+                        reject(new Error(response.message || 'Error del servidor'));
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error('Error AJAX:', xhr.responseText);
+                    reject(new Error('Error de conexión con el servidor'));
+                }
+            });
+        });
+    }
+
+    /*function uploadSingleImage(file) {
+        return new Promise((resolve, reject) => {
+            console.log('Procesando archivo:', file.name);
+
             // Convertir archivo a Base64 para almacenamiento persistente
             const reader = new FileReader();
 
@@ -689,7 +900,7 @@
             // Leer archivo como Base64
             reader.readAsDataURL(file);
         });
-    }
+    }*/
 
     // NUEVA FUNCIÓN: Determinar categoría para historial
     function determineImageCategory(tipoFotografia) {

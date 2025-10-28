@@ -9,12 +9,11 @@
 
     <!-- Buscar Orden SIT -->
     <div class="mb-3">
-        <label for="ordenSitInput" class="form-label">Buscar orden SIT</label>
         <div class="input-group">
             <input type="text"
                 id="ordenSitInput"
                 class="form-control"
-                placeholder="Ej: 12345678"
+                placeholder="Buscar orden SIT"
                 oninput="this.value = this.value.replace(/[^0-9]/g, '')">
             <button id="searchBoton" class="btn btn-primary"><i class="fas fa-search"></i></button>
         </div>
@@ -270,32 +269,6 @@
         showNotification(`Nueva orden ${numeroOrden} lista para fotografías`, 'info', 2000);
     }
 
-
-    /*function buscarOrdenSit() {
-        const ordenSitInput = document.getElementById('ordenSitInput');
-        const value = ordenSitInput.value.trim();
-
-        if (value === "") {
-            alert("Ingrese un número de orden", "warning");
-            return;
-        }
-
-        // Simular orden encontrada(Eliminar luego) - Imagen más grande
-        ordenSitValue.textContent = value;
-        prendaPreview.src = "https://picsum.photos/id/535/400/600";
-
-        // Limpiar datos previos
-        descripcion.textContent = "";
-        tipoOrden.textContent = "";
-        tipoOrden.className = "";
-        tipoSeleccionado = null;
-        currentImageData = null;
-        uploadedImages = [];
-
-        ordenSitCard.style.display = 'block';
-       showNotification(`Orden SIT ${value} encontrada`, 'success',2000);
-    }*/
-
     // Cambiar estado
     function setTipoFoto(tipo) {
         tipoSeleccionado = tipo;
@@ -307,30 +280,38 @@
     }
 
    // Guardar y redirigir a fotos-index
-    function guardarFoto() {
-        console.log('Iniciando guardado automático...');
+    function guardarFoto(savedImages) {
+        console.log('Iniciando guardado automático...', savedImages);
 
-        if (uploadedImages.length === 0) {
-            showNotification("Debe subir al menos una imagen antes de continuar", 'warning');
+        if (!savedImages || savedImages.length === 0) {
+            showNotification("No hay imágenes guardadas para procesar", 'warning');
             return;
         }
 
         // 🎯 TODAS LAS IMÁGENES YA ESTÁN EN EL BACKEND
-        console.log(`${uploadedImages.length} imágenes ya guardadas en el backend`);
+        console.log(`${savedImages.length} imágenes confirmadas en backend`);
 
-        // 🎯 PREPARAR datos para historial en fotos-index
+        // 🎯 PREPARAR datos para transferir a fotos-index
         const dataToTransfer = {
-            images: uploadedImages.map(img => ({
-                ...img,
-                source: 'backend-upload',
+            images: savedImages.map(img => ({
+                id: img.id,
+                url: img.url,
+                orden_sit: img.orden_sit,
+                po: img.po,
+                oc: img.oc,
+                descripcion: img.descripcion,
+                tipo: img.tipo,
+                source: 'backend-confirmed',
                 transferTimestamp: Date.now(),
-                readyForHistorial: true
+                saved: true,
+                backendId: img.id  // ID real del backend
             })),
             metadata: {
-                totalUploaded: uploadedImages.length,
-                uploadSession: Date.now().toString(36),
-                source: 'fotos-sit-add'
-                ordenSit: document.getElementById('ordenSitValue')?.textContent || 'Nueva'
+                totalSaved: savedImages.length,
+                saveSession: Date.now().toString(36),
+                source: 'fotos-sit-add',
+                ordenSit: savedImages[0]?.orden_sit || 'N/A',
+                confirmed: true
             }
         };
 
@@ -338,7 +319,7 @@
         localStorage.setItem('newUploadedImages', JSON.stringify(dataToTransfer));
 
         // 🎯 REDIRECCIÓN AUTOMÁTICA
-        showNotification(`${uploadedImages.length} imagen(es) guardadas. Redirigiendo...`, 'success', 1500);
+        showNotification(`${savedImages.length} imagen(es) guardadas. Redirigiendo...`, 'success', 1500);
 
         setTimeout(() => {
             window.location.href = "{{ route('fotos-index') }}";
@@ -501,7 +482,6 @@
             // Solo mostrar cantidad
             addSimpleInfo(imageDataArray.length);
 
-
             // Configurar modal para no cerrarse
             modalEl.setAttribute('data-bs-backdrop', 'static');
             modalEl.setAttribute('data-bs-keyboard', 'false');
@@ -509,7 +489,7 @@
             // Manejar guardado para TODAS las imágenes
             const saveBtn = document.getElementById('saveImageData');
 
-            const handleBatchSave = () => {
+            const handleBatchSave = async () => {
                 const descripcionVal = descripcionInput ? descripcionInput.value.trim() : '';
                 const tipoFotografia = tipoSelect ? tipoSelect.value : '';
 
@@ -524,60 +504,76 @@
                 saveBtn.disabled = true;
                 saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Procesando...';
 
-                //showNotification(`Guardando ${imageDataArray.length} imagen(es)...`, 'info', 2000);
-
                 // ====== Procesamiento Automatico ========
                 try {
-                    const completedImages = imageDataArray.map((imageData, index) => {
-                        const ordenSitValue = document.getElementById('ordenSitValue').textContent || 'N/A';
+                    const savedImages = [];
+                    const ordenSitValue = document.getElementById('ordenSitValue').textContent || 'N/A';
 
-                        return {
-                            id: Date.now() + index + Math.random(),
-                            url: imageData.base64,
-                            name: imageData.name,
-                            size: imageData.size,
-                            uploadDate: new Date().toISOString(),
-                            uploadTimestamp: Date.now() + index, // Timestamps únicos
-                            ordenSit: ordenSitValue,
-                            po: generatePONumber(),
-                            oc: generateOCNumber(),
-                            descripcion: descripcionVal,
-                            tipoFotografia: tipoFotografia,
-                            categoria: determineImageCategory(tipoFotografia),
-                            completionTimestamp: Date.now(),
-                            status: 'completed',
-                            source: 'fotos-sit-add',
-                            fileType: imageData.file.type,
-                            batchId: Date.now(), // ID del lote
-                            batchIndex: index + 1 // Posición en el lote
-                        };
-                    });
+                    for (let i = 0; i < imageDataArray.length; i++) {
+                        const imageData = imageDataArray[i];
 
-                    // Agregar TODAS las imágenes al array
-                    uploadedImages.push(...completedImages);
+                        showNotification(`Guardando imagen ${i + 1} de ${imageDataArray.length}...`, 'info', 1000);
 
-                    // Actualizar vista previa con la primera imagen
-                    if (completedImages.length > 0) {
-                        updateCardPreview(completedImages[0]);
+                        // Convertir base64 a File objeto
+                        const response = await fetch(imageData.base64);
+                        const blob = await response.blob();
+                        const file = new File([blob], imageData.name, { type: imageData.file.type });
+
+                        // Crear FormData y agregar archivo
+                        const formData = new FormData();
+                        formData.append('imagen', file);
+                        formData.append('orden_sit', ordenSitValue);
+                        formData.append('po', generatePONumber());
+                        formData.append('oc', generateOCNumber());
+                        formData.append('descripcion', descripcionVal);
+                        formData.append('tipo', tipoFotografia.toUpperCase());
+
+                        // ==== Enviar al Backend ====
+                        const backendResponse = await uploadToBackend(formData);
+
+                        if (backendResponse.success) {
+                            savedImages.push({
+                                id: backendResponse.data.id,
+                                url: backendResponse.data.imagen_url,
+                                orden_sit: backendResponse.data.orden_sit,
+                                po: backendResponse.data.po,
+                                oc: backendResponse.data.oc,
+                                descripcion: backendResponse.data.descripcion,
+                                tipo: backendResponse.data.tipo,
+                                source: 'backend-real',
+                                saved: true
+                            });
+                            console.log(`Imagen ${i + 1} guardada con ID: ${backendResponse.data.id}`);
+                        } else {
+                            throw new Error(`Error al guardar imagen ${i + 1}: ${backendResponse.message}`);
+                        }
                     }
 
-                    console.log(` ${completedImages.length}Procesamiento de imágenes completado.`);
+                    // Agregar TODAS las imágenes al array
+                    uploadedImages.push(...savedImages);
 
                     // Cerrar modal inmediatamente
                     modal.hide();
 
+                    // Actualizar vista previa con la primera imagen
+                    if (savedImages.length > 0) {
+                        updateCardPreview(savedImages[0]);
+                    }
+
+                    console.log(` ${savedImages.length} Procesamiento de imágenes completado.`);
+
                     // == Guardado y redireccion automatica ==
                     setTimeout(() => {
                         console.log('Guardado automatico iniciado...');
-                        guardarFoto(); // Redireccion automatica
+                        guardarFoto(savedImages); // Redireccion automatica
                     }, 500);
                 } catch (error) {
                     console.error('Error durante el procesamiento automático:', error);
                 } finally {
                     // Cleanup
-                    saveBtn.removeEventListener('click', handleBatchSave);
                     saveBtn.disabled = false;
-                    saveBtn.innerHTML = 'Continuar';
+                    saveBtn.innerHTML = 'Guardar';
+                     saveBtn.removeEventListener('click', handleBatchSave);
                     setUploadState(uploadBtn, 'normal');
                 }
             };
@@ -586,14 +582,13 @@
             saveBtn.addEventListener('click', handleBatchSave);
 
             // Cambiar texto del botón
-            saveBtn.innerHTML = 'Continuar';
+            saveBtn.innerHTML = 'Guardar al Sistema';
 
             // Mostrar modal
             modal.show();
-            console.log('Modal mostrado - Listo para continuar');
         }
 
-        //////////////////////////////////////////////////////////////////////
+        // =======================================================================================
         // ===== FUNCIÓN AUXILIAR: Mostrar información basica =====
         function addSimpleInfo(imageCount) {
             // Buscar si ya existe info container
@@ -718,6 +713,9 @@
     // 🎯 NUEVA FUNCIÓN: Subir al backend
     function uploadToBackend(formData) {
         return new Promise((resolve, reject) => {
+            // Agregar token CSRF
+            formData.append('_token', document.querySelector('meta[name="csrf-token"]').getAttribute('content'));
+
             $.ajax({
                 url: '/api/fotografias', // Ruta del backend
                 type: 'POST',
@@ -725,7 +723,8 @@
                 processData: false,
                 contentType: false,
                 headers: {
-                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content'),
+                    'Accept': 'application/json'
                 },
                 success: function(response) {
                     if (response.success) {
@@ -735,172 +734,28 @@
                     }
                 },
                 error: function(xhr, status, error) {
-                    console.error('Error AJAX:', xhr.responseText);
-                    reject(new Error('Error de conexión con el servidor'));
+                    console.error('Error AJAX:', {
+                        status: xhr.status,
+                        statusText: xhr.statusText,
+                        responseText: xhr.responseText,
+                        error: error
+                    });
+
+                    let errorMessage = 'Error de conexión con el servidor';
+
+                    if (xhr.responseJSON && xhr.responseJSON.message) {
+                        errorMessage = xhr.responseJSON.message;
+                    } else if (xhr.status === 422) {
+                        errorMessage = 'Error de validación de datos';
+                    } else if (xhr.status === 500) {
+                        errorMessage = 'Error interno del servidor';
+                    }
+
+                    reject(new Error(errorMessage));
                 }
             });
         });
     }
-
-    // 🎯 NUEVA FUNCIÓN: Subir al backend
-    function uploadToBackend(formData) {
-        return new Promise((resolve, reject) => {
-            $.ajax({
-                url: '/api/fotografias', // Ruta del backend
-                type: 'POST',
-                data: formData,
-                processData: false,
-                contentType: false,
-                headers: {
-                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-                },
-                success: function(response) {
-                    if (response.success) {
-                        resolve(response);
-                    } else {
-                        reject(new Error(response.message || 'Error del servidor'));
-                    }
-                },
-                error: function(xhr, status, error) {
-                    console.error('Error AJAX:', xhr.responseText);
-                    reject(new Error('Error de conexión con el servidor'));
-                }
-            });
-        });
-    }
-
-    /*function uploadSingleImage(file) {
-        return new Promise((resolve, reject) => {
-            console.log('Procesando archivo:', file.name);
-
-            // Convertir archivo a Base64 para almacenamiento persistente
-            const reader = new FileReader();
-
-            reader.onload = function(e) {
-                const base64Data = e.target.result;
-                console.log('Imagen convertida a Base64');
-
-                // DATOS BASE MEJORADOS para sincronización con historial
-                const tempData = {
-                    id: Date.now() + Math.random(),
-                    url: base64Data, // Base64 persistente
-                    name: file.name,
-                    size: file.size,
-                    uploadDate: new Date().toISOString(),
-                    uploadTimestamp: Date.now(), // Timestamp para ordenamiento
-                    ordenSit: document.getElementById('ordenSitValue').textContent || 'N/A',
-                    po: generatePONumber(),
-                    oc: generateOCNumber(),
-                    source: 'fotos-sit-add', // Identificador de origen
-                    fileType: file.type
-                };
-
-                console.log('Datos temporales preparados para historial');
-
-                // Abrir modal y esperar datos del usuario
-                const modalEl = document.getElementById('imageDataModal');
-                const modal = new bootstrap.Modal(modalEl);
-
-                // Limpiar formulario antes de mostrar
-                document.getElementById('descripcionInput').value = '';
-                document.getElementById('tipoFotografiaSelect').selectedIndex = 0;
-
-                // Prevenir que el modal se cierre al hacer clic fuera
-                modalEl.setAttribute('data-bs-backdrop', 'static');
-                modalEl.setAttribute('data-bs-keyboard', 'false');
-
-                // Evento al guardar
-                const saveBtn = document.getElementById('saveImageData');
-
-                const handleSave = () => {
-                    const descripcionVal = document.getElementById('descripcionInput').value.trim();
-                    const tipoFotografia = document.getElementById('tipoFotografiaSelect').value;
-
-                    console.log('Guardando datos:', { descripcionVal, tipoFotografia });
-
-                    if (!descripcionVal || !tipoFotografia) {
-                        alert("Por favor ingrese todos los campos.");
-                        return;
-                    }
-
-                    // Desactivar el boton mientras se procesa
-                    saveBtn.disabled = true;
-
-                    // DATOS COMPLETOS con metadatos para historial
-                    const completeData = {
-                        ...tempData,
-                        descripcion: descripcionVal,
-                        tipoFotografia,
-                        categoria: determineImageCategory(tipoFotografia), // Para agrupación en historial
-                        completionTimestamp: Date.now(), // Cuando se completó el proceso
-                        status: 'completed'
-                    };
-
-                    console.log('Datos completos preparados con metadatos de historial');
-
-                    // SINCRONIZACIÓN: Actualizar elementos del card
-                    descripcion.textContent = descripcionVal;
-                    tipoOrden.textContent = tipoFotografia;
-                    tipoOrden.className = "badge badge-color-personalizado";
-                    tipoSeleccionado = tipoFotografia;
-
-                    // Actualizar imagen de vista previa
-                    prendaPreview.src = base64Data;
-                    prendaPreview.onclick = () => openLightbox(base64Data, descripcionVal, tipoFotografia);
-
-                    // Guardar datos actuales
-                    currentImageData = completeData;
-
-                    // Agregar imagen al array
-                    uploadedImages.push(completeData);
-
-                    console.log('Ejecutando guardarFoto() automáticamente...');
-
-                    // cerrar modal y Resolver con los datos
-                    modal.hide();
-                    //resolve(completeData);
-
-                    // Ejecutar guardarFoto después de un pequeño delay
-                    setTimeout(() => {
-                        guardarFoto();
-                    }, 300);
-
-                    // Remover listener
-                    saveBtn.removeEventListener('click', handleSave);
-
-                    // Habilitar boton nuevamente
-                    saveBtn.disabled = false;
-
-                    console.log('Imagen procesada exitosamente con datos de historial');
-                };
-
-                // Manejar cierre del modal con botón cancelar
-                const cancelBtn = modalEl.querySelector('.btn-secondary');
-                const handleCancel = () => {
-                    console.log('Upload cancelado');
-                    reject(new Error('Upload cancelled'));
-                    saveBtn.removeEventListener('click', handleSave);
-                    cancelBtn.removeEventListener('click', handleCancel);
-                };
-                cancelBtn.addEventListener('click', handleCancel);
-
-                // Agregar event listener para el boton guardar
-                saveBtn.addEventListener('click', handleSave);
-
-                // Mostrar modal
-                modal.show();
-                console.log('Modal mostrado');
-            };
-
-            reader.onerror = function() {
-                console.error('Error leyendo archivo:', file.name);
-                reject(new Error('Error reading file'));
-            };
-
-            // Leer archivo como Base64
-            reader.readAsDataURL(file);
-        });
-    }*/
 
     // NUEVA FUNCIÓN: Determinar categoría para historial
     function determineImageCategory(tipoFotografia) {

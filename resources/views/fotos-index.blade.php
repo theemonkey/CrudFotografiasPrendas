@@ -215,7 +215,7 @@
                                                             id="filtroMuestra"
                                                             value="MUESTRA"
                                                             onchange="filterByTipoFotografia()">
-                                                        <span class="flex-grow-1">Muestra</span>
+                                                        <span class="grow">Muestra</span>
                                             </label>
                                             </li>
 
@@ -226,7 +226,7 @@
                                                             id="filtroPrendaFinal"
                                                             value="PRENDA FINAL"
                                                             onchange="filterByTipoFotografia()">
-                                                        <span class="flex-grow-1">Prenda Final</span>
+                                                        <span class="grow">Prenda Final</span>
                                                 </label>
                                             </li>
 
@@ -237,7 +237,7 @@
                                                             id="filtroValidacionAC"
                                                             value="VALIDACION AC"
                                                             onchange="filterByTipoFotografia()">
-                                                        <span class="flex-grow-1">Validación AC</span>
+                                                        <span class="grow">Validación AC</span>
                                                 </label>
                                             </li>
 
@@ -247,13 +247,13 @@
                                             <!-- NUEVO: Controles del filtro -->
                                             <li class="dropdown-item-text p-2">
                                                 <div class="d-flex gap-1">
-                                                    <button class="btn btn-sm btn-outline-primary flex-grow-1"
+                                                    <button class="btn btn-sm btn-outline-primary grow"
                                                             onclick="selectAllTipoFotografia()"
                                                             title="Seleccionar todos">
                                                         <i class="fas fa-check-double"></i>
                                                         <span class="d-none d-sm-inline ms-1">Todos</span>
                                                     </button>
-                                                    <button class="btn btn-sm btn-outline-danger flex-grow-1"
+                                                    <button class="btn btn-sm btn-outline-danger grow"
                                                             onclick="clearTipoFotografiaFilter()"
                                                             title="Limpiar filtro">
                                                         <i class="fas fa-times"></i>
@@ -916,7 +916,7 @@
 
 <script>
     // ===== FUNCIONES DE LIGHTBOX CORREGIDAS =====
-    function openImageLightbox(imageUrl, alt, description, type) {
+   function openImageLightbox(imageUrl, alt, description, type) {
         console.log('Intentando abrir lightbox:', { imageUrl, alt, description, type });
 
         // Validar que la URL existe y es válida
@@ -1505,7 +1505,7 @@
         console.log('Datos extraídos para historial:', imageData);
 
         // Cargar historial con datos REALES únicamente
-        loadRealHistorialData(imageData.ordenSit, imageData);
+        //loadRealHistorialData(imageData.ordenSit, imageData);
 
         // Mostrar modal
         const modalElement = document.getElementById('historialModal');

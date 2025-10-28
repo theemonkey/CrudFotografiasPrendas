@@ -3,18 +3,8 @@
 use App\Http\Controllers\FotografiaPrendaController;
 use Illuminate\Support\Facades\Route;
 
-// Página inicial para agregar fotos
-/*Route::get('/', function () {
-    return view('fotos-sit-add');
-});
-
-// Página principal de fotos ( index)
-Route::get('/fotos', function () {
-    return view('fotos-index');
-})->name('fotos-index');*/
-
 // Páginas principales
-// 🎯 FLUJO CORRECTO: Primero agregar, luego ver índice
+// FLUJO CORRECTO: Primero agregar, luego ver índice
 Route::get('/', [FotografiaPrendaController::class, 'create'])->name('home'); // Agregar fotos es la página principal
 Route::get('/fotos', [FotografiaPrendaController::class, 'index'])->name('fotos.index'); // Ver índice después
 

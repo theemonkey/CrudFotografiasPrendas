@@ -307,61 +307,6 @@
                                     </button>
                                 </td>
                             </tr>
-
-                            <!-- Fila de ejemplo 2 -->
-                            <tr data-image-id="img_example_2" data-fecha-creacion="2025-09-29">
-                                <td data-column="imagen">
-                                    <img src="https://picsum.photos/id/535/200/300"
-                                         alt="Camisa verde"
-                                         class="img-thumbnail preview-image"
-                                         style="width: 60px; height: 60px; cursor: pointer;"
-                                         onclick="openImageLightbox(this.src, this.alt, 'Camisa verde clásica', 'MUESTRA')">
-                                </td>
-                                <td data-column="orden-sit">10001600</td>
-                                <td data-column="po">3000001545</td>
-                                <td data-column="oc">-</td>
-                                <td data-column="descripcion">Muestra Validación</td>
-                                <td data-column="tipo-fotografia">MUESTRA</td>
-                                <td data-column="acciones">
-                                    <button class="btn btn-danger btn-sm me-1 btn-delete" onclick="deleteImage(this)" title="Eliminar imagen">
-                                        <i class="fas fa-trash"></i>
-                                    </button>
-                                    <button class="btn btn-warning btn-sm me-1 btn-edit" onclick="editImage(this)" title="Editar información">
-                                        <i class="fas fa-edit"></i>
-                                    </button>
-                                    <button class="btn btn-info btn-sm comment-btn" onclick="openCommentsModal(this)" title="Ver/Agregar comentarios">
-                                        <i class="fas fa-comments"></i>
-                                        <span class="comment-count" data-count="0"></span>
-                                    </button>
-                                </td>
-                            </tr>
-
-                            <!-- Fila de ejemplo 3 -->
-                            <tr data-image-id="img_example_3" data-fecha-creacion="2025-09-27">
-                                <td data-column="imagen">
-                                    <img src="https://picsum.photos/id/535/200/300"
-                                         alt="Camisa Blanca"
-                                         class="img-thumbnail preview-image"
-                                         style="width: 60px; height: 60px; cursor: pointer;"
-                                         onclick="openImageLightbox(this.src, this.alt, 'Camisa polo', 'PRENDA FINAL')">
-                                </td>
-                                <td data-column="orden-sit">10047396</td>
-                                <td data-column="po">6000081373</td>
-                                <td data-column="oc">4000065347</td>
-                                <td data-column="descripcion">POLO BUSINESS</td>
-                                <td data-column="tipo-fotografia">VALIDACION AC</td>
-                                <td data-column="acciones">
-                                    <button class="btn btn-danger btn-sm me-1 btn-delete" onclick="deleteImage(this)" title="Eliminar imagen">
-                                        <i class="fas fa-trash"></i>
-                                    </button>
-                                    <button class="btn btn-warning btn-sm me-1 btn-edit" onclick="editImage(this)" title="Editar información">
-                                        <i class="fas fa-edit"></i>
-                                    </button>
-                                    <button class="btn btn-info btn-sm comment-btn" onclick="openCommentsModal(this)" title="Ver/Agregar comentarios">
-                                        <i class="fas fa-comments"></i>
-                                    </button>
-                                </td>
-                            </tr>
                         </tbody>
                     </table>
                 </div>
@@ -915,6 +860,56 @@
 <script src="{{ asset('js/pagination.js') }}"></script>
 
 <script>
+    // === Funcion crear filas de imagen ===
+    function createImageRowHTML(data, source = 'frontend') {
+        const isBackend = source === 'backend';
+
+        // Mapear datos según la fuente
+        const imageUrl = isBackend ? data.imagen_url : data.url;
+        const altText = isBackend ? data.descripcion : (data.name || data.descripcion || 'Imagen');
+        const ordenSit = isBackend ? data.orden_sit : (data.ordenSit || 'N/A');
+        const po = isBackend ? data.po : (data.po || 'N/A');
+        const oc = isBackend ? (data.oc || '-') : (data.oc || 'N/A');
+        const descripcion = data.descripcion || 'Sin descripción';
+        const tipo = isBackend ? data.tipo : data.normalizedType;
+
+        // Funciones de eliminacion
+        const deleteFunction = isBackend ? `deleteBackendImage(${data.id}, this)` : 'deleteImage(this)';
+
+        // Funciones de edición
+        const editFunction = isBackend ? `editBackendImage(${data.id}, this)` : 'editImage(this)';
+
+        return `
+            <td data-column="imagen">
+                <img src="${imageUrl}"
+                    alt="${altText}"
+                    class="img-thumbnail preview-image"
+                    style="width: 60px; height: 60px; cursor: pointer; object-fit: cover; background-color: #f8f9fa;"
+                    onclick="openImageLightbox('${imageUrl}', '${altText}', '${descripcion}', '${tipo}')"
+                    onerror="this.src='https://picsum.photos/id/535/400/600'">
+            </td>
+            <td data-column="orden-sit">${ordenSit}</td>
+            <td data-column="po">${po}</td>
+            <td data-column="oc">${oc}</td>
+            <td data-column="descripcion">${descripcion}</td>
+            <td data-column="tipo-fotografia">${tipo}</td>
+            <td data-column="acciones">
+                <button class="btn btn-danger btn-sm me-1 btn-delete" onclick="${deleteFunction}" title="Eliminar imagen">
+                    <i class="fas fa-trash"></i>
+                </button>
+                <button class="btn btn-warning btn-sm me-1 btn-edit" onclick="${editFunction}" title="Editar información">
+                    <i class="fas fa-edit"></i>
+                </button>
+                <button class="btn btn-info btn-sm comment-btn me-1" onclick="openCommentsModal(this)" title="Ver comentarios">
+                    <i class="fas fa-comments"></i>
+                </button>
+                <button class="btn btn-success btn-sm btn-historial" onclick="openHistorialModal(this)" title="Historial">
+                    <i class="fas fa-history"></i>
+                </button>
+            </td>
+        `;
+    }
+/*==============================================================================================================*/
     // ===== FUNCIONES DE LIGHTBOX CORREGIDAS =====
    function openImageLightbox(imageUrl, alt, description, type) {
         console.log('Intentando abrir lightbox:', { imageUrl, alt, description, type });
@@ -1087,7 +1082,7 @@
 
     function uploadSingleImage(file) {
         return new Promise((resolve, reject) => {
-            console.log('Subiendo directamente al backend:', file.name);
+            console.log('Subiendo desde fotos-index.blade.php:', file.name);
 
             const formData = new FormData();
             formData.append('imagen', file);
@@ -1095,6 +1090,10 @@
             formData.append('po', generatePONumber());
             formData.append('oc', generateOCNumber());
             formData.append('timestamp', new Date().toISOString());
+
+            // Agregar origen de la vista
+            formData.append('origen_vista', 'fotos-index');
+            formData.append('procesado_por', 'fotos-index-blade');
 
             // Modal para datos adicionales
             const modalEl = document.getElementById('imageDataModal');
@@ -1119,7 +1118,7 @@
 
                 modal.hide();
 
-                // 🎯 SUBIR AL BACKEND DIRECTAMENTE
+                // 🎯 SUBIR AL BACKEND CON MARCADO DE ORIGEN
                 $.ajax({
                     url: '/api/fotografias',
                     type: 'POST',
@@ -1127,11 +1126,16 @@
                     processData: false,
                     contentType: false,
                     headers: {
-                        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content'),
+                        'Origen-Vista': 'fotos-index'
                     },
                     success: function(response) {
                         if (response.success) {
-                            console.log('Imagen subida al backend:', response.data);
+                            console.log('Imagen subida desde fotos-index:', response.data);
+
+                            // Marcar como procesada por fotos index
+                            response.data.procesadoPor = 'fotos-index';
+                            response.data.origenVista = 'fotos-index';
 
                             // 🎯 AGREGAR DIRECTAMENTE A LA TABLA
                             addBackendImageToTable(response.data);
@@ -1144,7 +1148,7 @@
                         }
                     },
                     error: function(xhr, status, error) {
-                        console.error('Error subiendo al backend:', error);
+                        console.error('Error subiendo desde fotos-index:', error);
                         showNotification('Error de conexión con el servidor', 'error');
                         reject(new Error('Error de conexión'));
                     }
@@ -1156,18 +1160,10 @@
             saveBtn.addEventListener('click', handleSave);
         });
     }
-
+/*=====================================================================================================================*/
     // ====>>>> Al cargar la página, verificar si hay imágenes nuevas(agregadas) En fotos-sit-add
     document.addEventListener("DOMContentLoaded", function() {
         console.log('DOM cargado, verificando imágenes transferidas...');
-
-        // INICIALIZAR PAGINACIÓN
-        setTimeout(() => {
-            if (typeof initializePaginationSystem === 'function') {
-                initializePaginationSystem();
-                console.log('Paginación inicializada en fotos-index');
-            }
-        }, 1000);
 
         // Verificar si hay imágenes transferidas desde fotos-sit-add
         const transferredData = localStorage.getItem('newUploadedImages');
@@ -1179,71 +1175,56 @@
                 if (data.images && data.images.length > 0) {
                     console.log('Procesando', data.images.length, 'imágenes transferidas');
 
-                    // Verificar y recrear URLs de blob si es necesario
-                    const validatedImages = data.images.map((imageData, index) => {
-                        console.log(`Validando imagen ${index + 1}:`, imageData);
+                    // ==>> Verificar que no sea duplicado
+                    data.images.forEach((imageData, index) => {
+                        if (imageData.origenVista === 'fotos-sit-add' && imageData.displayOnly === true) {
+                            console.log(`Imagen ${index + 1} desde fotos-sit-add, solo mostrar:`, imageData);
 
-                        // Si la URL es un blob que ya no existe, usar imagen por defecto
-                        if (imageData.url && imageData.url.startsWith('blob:')) {
-                            console.warn('URL de blob detectada, usando imagen por defecto');
-                            // Usar una imagen por defecto basada en el tipo
-                            imageData.url = getDefaultImageByType(imageData.tipoFotografia);
-                            imageData.isDefaultImage = true;
+                            // SOLO MOSTRAR, NO SUBIR DE NUEVO
+                            setTimeout(() => {
+                                addBackendImageToTable(imageData);
+                            }, index * 100);
+
+                        } else if (imageData.origenVista === 'fotos-index') {
+                            console.log(`Imagen ${index + 1} desde fotos-index, ya procesada`);
+                            // No hacer nada, ya fue procesada
+
+                        } else {
+                            console.log(`Imagen ${index + 1} sin origen definido, procesando:`, imageData);
+                            // Procesar normalmente para compatibilidad
+                            setTimeout(() => {
+                                addImageToTable(imageData);
+                            }, index * 100);
                         }
-
-                        return imageData;
                     });
 
                     // Agregar las imágenes a la tabla con un pequeño delay
                     setTimeout(() => {
-                        validatedImages.forEach((imageData, index) => {
-                            console.log(`Procesando imagen ${index + 1}:`, imageData);
-                            addImageToTable(imageData);
-                        });
-
-                        // Mostrar notificación de éxito
-                        setTimeout(() => {
-                            if (typeof showNotification === 'function') {
-                                showNotification(`${validatedImages.length} imagen(es) agregada(s) correctamente`, 'success');
-                            }
-                        }, 500);
-                    }, 200);
-
-                    // Limpiar localStorage
-                    localStorage.removeItem('newUploadedImages');
-                    console.log('LocalStorage limpiado');
+                        showNotification(`${data.images.length} imagen(es) cargada(s) desde fotos-sit-add`, 'success');
+                    }, 500);
                 }
-            } catch (error) {
-                console.error('Error procesando imágenes transferidas:', error);
+
+                // Limpiar localStorage
                 localStorage.removeItem('newUploadedImages');
-            }
-        } else {
-            console.log('No hay imágenes transferidas');
-        }
+                console.log('LocalStorage limpiado');
 
-        // Inicialización del lightbox
-        const lightbox = document.getElementById('imageLightbox');
-        if (lightbox) {
-            lightbox.onclick = function (e) {
-                if (e.target === lightbox) {
-                    closeLightbox();
+                } catch (error) {
+                    console.error('Error procesando imágenes transferidas:', error);
+                    localStorage.removeItem('newUploadedImages');
                 }
-            };
-            console.log('Lightbox inicializado');
-        }
+            }
 
-        // =====>>>>>>>>> INICIALIZACIÓN MEJORADA CON RESPONSIVE <<<<<<<<<<<<=====
-        // Inicialización del responsive system
-        if (window.responsiveSystem && !window.responsiveSystem.initialized) {
-            window.responsiveSystem.init();
-        }
+            //CARGAR IMÁGENES DEL BACKEND AL INICIAR
+            setTimeout(() => {
+                loadPhotosFromBackend();
+            }, 1000);
 
-        // Inicialización normal
-        initializeUploadButtons();
+            // Resto de inicializaciones...
+            initializeUploadButtons();
+            console.log('Sistema completamente inicializado');
+        });
 
-        console.log('Sistema completamente inicializado');
-    });
-
+/*=====================================================================================================================*/
     function getDefaultImageByType(tipo) {
         const defaultImages = {
             'MUESTRA': 'https://picsum.photos/id/535/200/300',
@@ -1279,18 +1260,16 @@
         row.setAttribute('data-image-id', imageId);
         row.setAttribute('data-fecha-creacion', fechaCreacion);
 
-        // Normalizar tipos para compatibilidad con filtros
-        let normalizedType = imageData.tipoFotografia;
-        if (normalizedType === 'Muestra') normalizedType = 'MUESTRA';
-        if (normalizedType === 'Prenda Final') normalizedType = 'PRENDA FINAL';
-        if (normalizedType === 'Validación AC') normalizedType = 'VALIDACION AC';
-
-        console.log('Tipo normalizado:', normalizedType);
-
         // Crear imagen con manejo de errores mejorado
         const imgSrc = imageData.url;
         const imgAlt = imageData.name || imageData.descripcion || 'Imagen';
         const imgDesc = imageData.descripcion || imgAlt;
+
+        // Normalizar tipos para compatibilidad con filtros
+        let normalizedType = imageData.tipoFotografia || imageData.tipo;
+        if (normalizedType === 'Muestra') normalizedType = 'MUESTRA';
+        if (normalizedType === 'Prenda Final') normalizedType = 'PRENDA FINAL';
+        if (normalizedType === 'Validación AC') normalizedType = 'VALIDACION AC';
 
         console.log('Datos de imagen:', { imgSrc, imgAlt, imgDesc, normalizedType });
 
@@ -1300,34 +1279,11 @@
             imageData.url = getDefaultImageByType(normalizedType);
         }
 
-        row.innerHTML = `
-            <td data-column="imagen">
-                <img src="${imageData.url}"
-                    alt="${imageData.name || imageData.descripcion || 'Imagen'}"
-                    class="img-thumbnail preview-image"
-                    style="width: 60px; height: 60px; cursor: pointer; object-fit: cover; background-color: #f8f9fa;"
-                    onclick="openImageLightbox('${imageData.url}', '${imageData.name || imageData.descripcion}', '${imageData.descripcion}', '${normalizedType}')">
-            </td>
-            <td data-column="orden-sit">${imageData.ordenSit || 'N/A'}</td>
-            <td data-column="po">${imageData.po || 'N/A'}</td>
-            <td data-column="oc">${imageData.oc || 'N/A'}</td>
-            <td data-column="descripcion">${imageData.descripcion || 'Sin descripción'}</td>
-            <td data-column="tipo-fotografia">${normalizedType}</td>
-            <td data-column="acciones">
-                <button class="btn btn-danger btn-sm me-1 btn-delete" onclick="deleteImage(this)" title="Eliminar imagen">
-                    <i class="fas fa-trash"></i>
-                </button>
-                <button class="btn btn-warning btn-sm me-1 btn-edit" onclick="editImage(this)" title="Editar información">
-                    <i class="fas fa-edit"></i>
-                </button>
-                <button class="btn btn-info btn-sm comment-btn" onclick="openCommentsModal(this)" title="Ver/Agregar comentarios" data-comment-count="0">
-                    <i class="fas fa-comments"></i>
-                </button>
-                <button class="btn btn-success btn-sm btn-historial" onclick="openHistorialModal(this)" title="Historial de la Prenda">
-                    <i class="fas fa-history"></i>
-                </button>
-            </td>
-        `;
+        // Agregar al objeto de datos
+        imageData.normalizedType = normalizedType;
+
+        // Usar función unificada
+        row.innerHTML = createImageRowHTML(imageData, 'frontend');
 
         // === INSERCION INTELIGENTE ===
         if (imageData.isNew && imageData.source === 'edit-multiple') {
@@ -1478,327 +1434,6 @@
             link.click();
         }
     }
-
-    // Hacer las funciones globalmente disponibles
-    window.openImageLightbox = openImageLightbox;
-    window.closeLightbox = closeLightbox;
-    window.downloadImage = downloadImage;
-
-    console.log('Funciones de lightbox registradas globalmente');
-
-    // =/=/=/=/=/=/=/=/=/=/=>>>>>>>>> Función para abrir el modal de historial
-    function openHistorialModal(button) {
-        console.log('Abriendo modal de historial...');
-
-        const row = button.closest('tr');
-        if (!row) {
-            showNotification('Error: No se encontró la fila', 'error');
-            return;
-        }
-
-        const imageData = extractImageDataFromRowReal(row);
-        if (!imageData) {
-            showNotification('Error: No se pudieron extraer datos', 'error');
-            return;
-        }
-
-        console.log('Datos extraídos para historial:', imageData);
-
-        // Cargar historial con datos REALES únicamente
-        //loadRealHistorialData(imageData.ordenSit, imageData);
-
-        // Mostrar modal
-        const modalElement = document.getElementById('historialModal');
-        if (modalElement) {
-            const modal = new bootstrap.Modal(modalElement);
-            modal.show();
-        }
-    }
-
-    function extractImageDataFromRowReal(row) {
-        const img = row.querySelector('img');
-        const ordenSitCell = row.querySelector('[data-column="orden-sit"]');
-        const poCell = row.querySelector('[data-column="po"]');
-        const ocCell = row.querySelector('[data-column="oc"]');
-        const descripcionCell = row.querySelector('[data-column="descripcion"]');
-        const tipoCell = row.querySelector('[data-column="tipo-fotografia"]');
-
-        let imageId = row.dataset.imageId;
-        if (!imageId) {
-            imageId = 'img_' + Date.now() + '_' + Math.random().toString(36).substring(2, 9);
-            row.dataset.imageId = imageId;
-        }
-
-        const data = {
-            id: imageId,
-            imageUrl: img ? img.src : '',
-            imageAlt: img ? img.alt : '',
-            ordenSit: ordenSitCell ? ordenSitCell.textContent.trim() : '',
-            po: poCell ? poCell.textContent.trim() : '',
-            oc: ocCell ? ocCell.textContent.trim() : '',
-            descripcion: descripcionCell ? descripcionCell.textContent.trim() : '',
-            tipo: tipoCell ? tipoCell.textContent.trim() : ''
-        };
-
-        console.log('Datos extraídos:', data);
-        return data;
-    }
-
-    function loadRealHistorialData(ordenSit, currentImageData = null) {
-        console.log('Cargando historial REAL para orden:', ordenSit);
-
-        // Buscar TODAS las imágenes reales de la misma orden SIT
-        const allRealImages = findAllImagesFromOrder(ordenSit);
-        console.log('Imágenes reales encontradas:', allRealImages);
-
-        // Generar historial basado SOLO en datos reales
-        const historialData = generateRealOnlyHistorialData(ordenSit, allRealImages, currentImageData);
-
-        console.log('Historial real generado:', historialData);
-
-        // Actualizar interfaz con datos reales
-        updateRealProgressSteps(historialData.estados);
-        loadRealPhotosByCategory('muestra', historialData.fotos.muestra);
-        loadRealPhotosByCategory('validacion', historialData.fotos.validacion);
-        loadRealPhotosByCategory('final', historialData.fotos.final);
-
-        console.log('Historial real cargado correctamente');
-    }
-
-    function findAllImagesFromOrder(ordenSit) {
-        const allImages = [];
-        const tableBody = document.getElementById('imagesTableBody');
-
-        if (!tableBody) {
-            console.warn('No se encontró la tabla');
-            return allImages;
-        }
-
-        // Buscar en todas las filas de la tabla y comparar # Orden SIT
-        const rows = tableBody.querySelectorAll('tr[data-image-id]');
-        console.log(`Buscando en ${rows.length} filas para orden SIT: "${ordenSit}"`);
-
-        rows.forEach((row, index) => {
-            const ordenCell = row.querySelector('[data-column="orden-sit"]');
-            const currentOrdenSit = ordenCell ? ordenCell.textContent.trim() : '';
-
-            console.log(`Fila ${index}: "${currentOrdenSit}" vs "${ordenSit}"`);
-
-            if (currentOrdenSit === ordenSit) {
-                const imageData = extractImageDataFromRowReal(row);
-                allImages.push({
-                    ...imageData,
-                    source: 'table',
-                    timestamp: Date.now() - (Math.random() * 86400000)
-                });
-                console.log(`Imagen real encontrada:`, imageData);
-            }
-        });
-
-        // También verificar en localStorage por imágenes recién transferidas
-        try {
-            const recentData = localStorage.getItem('newUploadedImages');
-            if (recentData) {
-                const parsed = JSON.parse(recentData);
-                if (parsed.images) {
-                    parsed.images.forEach(img => {
-                        if (img.ordenSit === ordenSit) {
-                            allImages.push({
-                                id: img.id || 'localStorage_' + Date.now(),
-                                imageUrl: img.url,
-                                imageAlt: img.name || img.descripcion,
-                                ordenSit: img.ordenSit,
-                                po: img.po,
-                                oc: img.oc,
-                                descripcion: img.descripcion,
-                                tipo: img.tipoFotografia,
-                                source: 'localStorage-transfer',
-                                timestamp: img.uploadTimestamp || Date.now()
-                            });
-                            console.log('Imagen encontrada en localStorage:', img);
-                        }
-                    });
-                }
-            }
-        } catch (error) {
-            console.warn('Error leyendo localStorage:', error);
-        }
-
-        console.log(`Total imágenes reales encontradas: ${allImages.length}`);
-        return allImages;
-    }
-
-    function generateRealOnlyHistorialData(ordenSit, realImages, currentImage) {
-        console.log('Generando historial con SOLO datos reales...');
-
-        // Categorizar imágenes REALES por tipo
-        const imagesByType = {
-            muestra: [],
-            validacion: [],
-            final: []
-        };
-
-        // Estados basados SOLO en imágenes reales existentes
-        const estados = {
-            muestra: false,
-            validacion: false,
-            final: false
-        };
-
-        // Procesar cada imagen real
-        realImages.forEach((imageData, index) => {
-            console.log(`Procesando imagen real ${index + 1}:`, imageData);
-
-            const tipo = imageData.tipo ? imageData.tipo.toUpperCase() : '';
-            const imageForHistory = {
-                url: imageData.imageUrl,
-                fecha: new Date(imageData.timestamp || Date.now()).toISOString(),
-                descripcion: imageData.descripcion || imageData.imageAlt || 'Sin descripción',
-                ordenSit: imageData.ordenSit,
-                po: imageData.po,
-                oc: imageData.oc,
-                source: imageData.source || 'unknown',
-                isReal: true // Marcar como imagen real
-            };
-
-            // Categorizar POR TIPO REAL
-            if (tipo.includes('MUESTRA')) {
-                imagesByType.muestra.push(imageForHistory);
-                estados.muestra = true;
-                console.log('MUESTRA real agregada');
-            } else if (tipo.includes('VALIDACION') || tipo.includes('VALIDACIÓN')) {
-                imagesByType.validacion.push(imageForHistory);
-                estados.validacion = true;
-                console.log('VALIDACIÓN real agregada');
-            } else if (tipo.includes('FINAL') || tipo.includes('PRENDA FINAL')) {
-                imagesByType.final.push(imageForHistory);
-                estados.final = true;
-                console.log('PRENDA FINAL real agregada');
-            } else {
-                console.log(`Tipo no reconocido: "${tipo}" - Clasificando como general`);
-                imagesByType.muestra.push(imageForHistory);
-                estados.muestra = true;
-            }
-        });
-
-        // SI NO hay imágenes reales, mantener estados en false
-        console.log('Estados finales basados en imágenes reales:', estados);
-
-        const result = {
-            estados: estados,
-            fotos: imagesByType,
-            totalImages: realImages.length,
-            metadata: {
-                ordenSit,
-                generatedAt: new Date().toISOString(),
-                source: 'real-data-only',
-                realImagesOnly: true
-            }
-        };
-
-        console.log('Historial real final:', result);
-        return result;
-    }
-
-    function updateRealProgressSteps(estados) {
-        console.log('Actualizando pasos con datos REALES:', estados);
-
-        const stepMuestra = document.getElementById('stepMuestra');
-        const stepValidacionAC = document.getElementById('stepValidacionAC');
-        const stepPrendaFinal = document.getElementById('stepPrendaFinal');
-
-        // Reset classes
-        [stepMuestra, stepValidacionAC, stepPrendaFinal].forEach(step => {
-            if (step) {
-                step.classList.remove('completed', 'pending');
-            }
-        });
-
-        // Aplicar estados REALES con animación
-        setTimeout(() => {
-            if (stepMuestra) {
-                stepMuestra.classList.add(estados.muestra ? 'completed' : 'pending');
-                console.log(`MUESTRA: ${estados.muestra ? 'COMPLETADO (tiene imágenes )' : 'PENDIENTE (sin imágenes)'}`);
-            }
-        }, 100);
-
-        setTimeout(() => {
-            if (stepValidacionAC) {
-                stepValidacionAC.classList.add(estados.validacion ? 'completed' : 'pending');
-                console.log(`VALIDACIÓN: ${estados.validacion ? 'COMPLETADO (tiene imágenes )' : 'PENDIENTE (sin imágenes)'}`);
-            }
-        }, 200);
-
-        setTimeout(() => {
-            if (stepPrendaFinal) {
-                stepPrendaFinal.classList.add(estados.final ? 'completed' : 'pending');
-                console.log(`FINAL: ${estados.final ? 'COMPLETADO (tiene imágenes )' : 'PENDIENTE (sin imágenes)'}`);
-            }
-        }, 300);
-    }
-
-    function loadRealPhotosByCategory(categoria, fotos) {
-        console.log(`Cargando ${fotos.length} fotos REALES para ${categoria}`);
-
-        const photosContainer = document.getElementById(`${categoria}Photos`);
-        const countBadge = document.getElementById(`${categoria}Count`);
-
-        if (!photosContainer || !countBadge) {
-            console.warn(`Contenedores no encontrados para: ${categoria}`);
-            return;
-        }
-
-        // Actualizar contador
-        countBadge.textContent = `${fotos.length} foto${fotos.length !== 1 ? 's' : ''}`;
-
-        // Limpiar contenedor
-        photosContainer.innerHTML = '';
-
-        if (fotos.length === 0) {
-            // Estado vacío REAL (sin fotos de este tipo)
-            photosContainer.innerHTML = `
-                <div class="empty-state">
-                    <i class="fas fa-image"></i>
-                    <span>No hay fotografías en esta etapa</span>
-                </div>
-            `;
-            console.log(` ${categoria}: Sin fotos reales`);
-        } else {
-            // Ordenar fotos por fecha (más recientes primero)
-            const sortedFotos = fotos.sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
-
-            // Agregar fotos REALES únicamente
-            sortedFotos.forEach((foto, index) => {
-                setTimeout(() => {
-                    const photoDiv = document.createElement('div');
-                    photoDiv.className = 'photo-item';
-                    photoDiv.innerHTML = `
-                        <img src="${foto.url}"
-                             alt="${foto.descripcion}"
-                             title="Descripción: ${foto.descripcion}\n OrdenSIT: ${foto.ordenSit}\n Fuente: ${foto.source}"
-                             onclick="openImageLightbox('${foto.url}', '${foto.descripcion}', '${foto.descripcion}', '${categoria.toUpperCase()}')">
-                        <div class="photo-date">${formatRealDate(foto.fecha)}</div>
-                    `;
-                    photosContainer.appendChild(photoDiv);
-                }, index * 100);
-            });
-
-            console.log(` ${categoria}: ${fotos.length} fotos REALES cargadas`);
-        }
-    }
-
-    function formatRealDate(dateString) {
-        const date = new Date(dateString);
-        return date.toLocaleDateString('es-ES', {
-            day: '2-digit',
-            month: '2-digit',
-            hour: '2-digit',
-            minute: '2-digit'
-        });
-    }
-
-    // Hacer función global
-    window.openHistorialModal = openHistorialModal;
 </script>
 
 <script>
@@ -1865,38 +1500,33 @@
             return;
         }
 
+        const existingRow = tableBody.querySelector(`tr[data-image-id="backend_${fotografiaData.id}"]`);
+        if (existingRow) {
+            console.log('Imagen ya existe en la tabla, cancelando duplicación');
+            return;
+        }
+
+        //VERIFICAR TAMBIÉN POR URL
+        if (fotografiaData.imagen_url || fotografiaData.url) {
+            const imageUrl = fotografiaData.imagen_url || fotografiaData.url;
+            const existingImageRow = Array.from(tableBody.querySelectorAll('img')).find(img => 
+                img.src === imageUrl
+            );
+            if (existingImageRow) {
+                console.log('Imagen con misma URL ya existe, cancelando duplicación');
+                return;
+            }
+        }
+
         const row = document.createElement('tr');
         row.setAttribute('data-image-id', `backend_${fotografiaData.id}`);
-        row.setAttribute('data-fecha-creacion', fotografiaData.fecha_subida);
+        row.setAttribute('data-fecha-creacion', fotografiaData.fecha_subida || fotografiaData.created_at);
 
-        row.innerHTML = `
-            <td data-column="imagen">
-                <img src="${fotografiaData.imagen_url}"
-                    alt="${fotografiaData.descripcion}"
-                    class="img-thumbnail preview-image"
-                    style="width: 60px; height: 60px; cursor: pointer; object-fit: cover;"
-                    onclick="openImageLightbox('${fotografiaData.imagen_url}', '${fotografiaData.descripcion}', '${fotografiaData.descripcion}', '${fotografiaData.tipo}')">
-            </td>
-            <td data-column="orden-sit">${fotografiaData.orden_sit}</td>
-            <td data-column="po">${fotografiaData.po}</td>
-            <td data-column="oc">${fotografiaData.oc || '-'}</td>
-            <td data-column="descripcion">${fotografiaData.descripcion}</td>
-            <td data-column="tipo-fotografia">${fotografiaData.tipo}</td>
-            <td data-column="acciones">
-                <button class="btn btn-danger btn-sm me-1 btn-delete" onclick="deleteBackendImage(${fotografiaData.id}, this)" title="Eliminar imagen">
-                    <i class="fas fa-trash"></i>
-                </button>
-                <button class="btn btn-warning btn-sm me-1 btn-edit" onclick="editBackendImage(${fotografiaData.id}, this)" title="Editar información">
-                    <i class="fas fa-edit"></i>
-                </button>
-                <button class="btn btn-info btn-sm comment-btn me-1" onclick="openCommentsModal(this)" title="Ver/Agregar comentarios">
-                    <i class="fas fa-comments"></i>
-                </button>
-                <button class="btn btn-success btn-sm btn-historial" onclick="openHistorialModal(this)" title="Historial de la Prenda">
-                    <i class="fas fa-history"></i>
-                </button>
-            </td>
-        `;
+        //Marcar origen en el DOM
+        row.setAttribute('data-origen-vista', fotografiaData.origenVista || 'backend');
+
+        // Usar función unificada
+        row.innerHTML = createImageRowHTML(fotografiaData, 'backend');
 
         // Insertar al inicio de la tabla
         tableBody.insertBefore(row, tableBody.firstChild);
@@ -1915,67 +1545,39 @@
             if (window.refreshPagination) {
                 window.refreshPagination();
             }
-        }, 200);
+        }, 100);
+
+        console.log('Fila agregada correctamente sin duplicación');
     }
 
+/*===================================================================================================*/
     // 🎯 FUNCIÓN PARA ELIMINAR IMAGEN DEL BACKEND
     function deleteBackendImage(fotografiaId, button) {
         console.log('Eliminando fotografía del backend:', fotografiaId);
 
-        Swal.fire({
-            title: '¿Eliminar esta fotografía?',
-            text: 'Esta acción eliminará permanentemente la imagen del servidor',
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: '#dc3545',
-            cancelButtonColor: '#6c757d',
-            confirmButtonText: 'Sí, eliminar',
-            cancelButtonText: 'Cancelar'
-        }).then((result) => {
-            if (result.isConfirmed) {
-                // Mostrar loading
-                Swal.fire({
-                    title: 'Eliminando...',
-                    allowOutsideClick: false,
-                    showConfirmButton: false,
-                    didOpen: () => {
-                        Swal.showLoading();
-                    }
-                });
+        const row = button.closest('tr');
+        if (!row) {
+            showNotification('Error: No se encontró la fila', 'error');
+            return;
+        }
 
-                // Eliminar del backend
-                $.ajax({
-                    url: `/api/fotografias/${fotografiaId}`,
-                    type: 'DELETE',
-                    headers: {
-                        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-                    },
-                    success: function(response) {
-                        if (response.success) {
-                            // Eliminar fila de la tabla
-                            const row = button.closest('tr');
-                            row.style.transition = 'all 0.5s ease';
-                            row.style.opacity = '0';
-                            row.style.transform = 'translateX(-100%)';
+        // Extraer datos usando la función de fotos-index.js
+        const imageData = extractImageDataFromRow(row);
+        if (!imageData) {
+            showNotification('Error: No se pudieron extraer los datos de la imagen', 'error');
+            return;
+        }
 
-                            setTimeout(() => {
-                                row.remove();
-                            }, 500);
+        // Agregar ID de backend para eliminación
+        imageData.backendId = fotografiaId;
+        imageData.isBackendImage = true;
 
-                            Swal.fire('¡Eliminada!', 'La fotografía ha sido eliminada.', 'success');
-                        } else {
-                            Swal.fire('Error', response.message || 'No se pudo eliminar', 'error');
-                        }
-                    },
-                    error: function(xhr, status, error) {
-                        console.error('Error eliminando:', error);
-                        Swal.fire('Error', 'Error de conexión con el servidor', 'error');
-                    }
-                });
-            }
-        });
+        console.log('Datos extraídos para eliminación backend:', imageData);
+
+        showDeleteConfirmation(imageData, row);
     }
 
+/*===================================================================================================*/
     // 🎯 FUNCIÓN PARA EDITAR IMAGEN DEL BACKEND
     function editBackendImage(fotografiaId, button) {
         console.log('Editando fotografía del backend:', fotografiaId);
@@ -1997,10 +1599,6 @@
         }, 1000);
     });
 </script>
-
-
-
-
 
 <!-- Adicionales para el uso del selector rango de fechas -->
 <!-- jQuery -->
@@ -2243,5 +1841,6 @@ $(document).ready(function() {
 
     console.log('Filtrado automático por fechas inicializado');
 });
+
 </script>
 @endsection

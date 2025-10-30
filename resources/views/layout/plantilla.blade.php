@@ -16,9 +16,7 @@
         <!-- Font Awesome version reciente-->
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
 
-
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.css">
-        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.css">
 
         <!-- Alertas emergentes usando SweetAlert2 -->
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
@@ -51,9 +49,6 @@
 
         <!-- CropperJS (para funcionalidad de recorte) -->
         <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.js"></script>
-
-        <!-- SortableJS (para ordenamiento) -->
-        <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
 
         <!-- JQuery -->
         <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>

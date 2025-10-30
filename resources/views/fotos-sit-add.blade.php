@@ -154,6 +154,9 @@
     </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+
 <!-- Scripts utiles-->
 <!-- ==========Busqueda orden sit - Botones card agregar fotos prenda  ============0-->
 <script>
@@ -288,31 +291,30 @@
             return;
         }
 
-        // 🎯 TODAS LAS IMÁGENES YA ESTÁN EN EL BACKEND
-        console.log(`${savedImages.length} imágenes confirmadas en backend`);
-
-        // 🎯 PREPARAR datos para transferir a fotos-index
+        // 🎯 PREPARAR datos para mostrar (No subir de nuevo a la tabla)
         const dataToTransfer = {
             images: savedImages.map(img => ({
+                //Datos del backend real (ya subido)
                 id: img.id,
+                backendId: img.id,
                 url: img.url,
+                imagen_url: img.url, // Para compatibilidad con backend
                 orden_sit: img.orden_sit,
                 po: img.po,
                 oc: img.oc,
                 descripcion: img.descripcion,
                 tipo: img.tipo,
-                source: 'backend-confirmed',
-                transferTimestamp: Date.now(),
-                saved: true,
-                backendId: img.id  // ID real del backend
-            })),
-            metadata: {
-                totalSaved: savedImages.length,
-                saveSession: Date.now().toString(36),
-                source: 'fotos-sit-add',
-                ordenSit: savedImages[0]?.orden_sit || 'N/A',
-                confirmed: true
-            }
+                created_at: img.created_at,
+                fecha_subida: img.created_at,
+                
+                //MARCADORES DE CONTROL
+                origenVista: 'fotos-sit-add',
+                procesadoPor: 'fotos-sit-add',
+                displayOnly: true,        //Solo para mostrar
+                uploaded: true,           //Ya subida
+                isBackendImage: true,     //Es imagen de backend
+                source: 'backend-confirmed' //Confirmada en backend
+            }))
         };
 
         // 🎯 GUARDAR para mostrar en fotos-index
@@ -582,7 +584,7 @@
             saveBtn.addEventListener('click', handleBatchSave);
 
             // Cambiar texto del botón
-            saveBtn.innerHTML = 'Guardar al Sistema';
+            saveBtn.innerHTML = 'Guardar';
 
             // Mostrar modal
             modal.show();
@@ -713,8 +715,12 @@
     // 🎯 NUEVA FUNCIÓN: Subir al backend
     function uploadToBackend(formData) {
         return new Promise((resolve, reject) => {
-            // Agregar token CSRF
-            formData.append('_token', document.querySelector('meta[name="csrf-token"]').getAttribute('content'));
+
+            console.log('Subiendo desde fotos-sit-add.blade.php...');
+
+            // Origen de la vista
+            formData.append('origen_vista', 'fotos-sit-add');
+            formData.append('procesado_por', 'fotos-sit-add-blade');
 
             $.ajax({
                 url: '/api/fotografias', // Ruta del backend
@@ -723,8 +729,8 @@
                 processData: false,
                 contentType: false,
                 headers: {
-                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content'),
-                    'Accept': 'application/json'
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                    'X-Origen-Vista': 'fotos-sit-add'
                 },
                 success: function(response) {
                     if (response.success) {

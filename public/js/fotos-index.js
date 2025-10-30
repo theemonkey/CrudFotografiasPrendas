@@ -759,90 +759,175 @@ function performImageDeletion(imageData, row) {
         }
     });
 
-    // Simular proceso de eliminación (reemplazar con lógica real)
-    setTimeout(() => {
-        try {
-            // Aquí iría la lógica de eliminación real (AJAX, fetch, etc.)
-            // Por ejemplo:
-            // await deleteImageFromServer(imageData.id);
+    // ====>>>> Detectar si es imagen de Backend o Frontend ====>>>
+    if (imageData.isBackendImage && imageData.backendId) {
+        // ===== ELIMINACIÓN DE BACKEND CON AJAX =====
+        console.log('Eliminando imagen del backend con ID:', imageData.backendId);
 
-            // Eliminar fila de la tabla
-            if (row && row.parentNode) {
-                // Animación de salida
-                row.style.transition = 'all 0.5s ease';
-                row.style.opacity = '0';
-                row.style.transform = 'translateX(-100%)';
-                row.style.backgroundColor = '#f8d7da';
+        $.ajax({
+            url: `/api/fotografias/${imageData.backendId}`,
+            type: 'DELETE',
+            headers: {
+                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content'),
+                'Accept': 'application/json'
+            },
+            success: function (response) {
+                console.log('Respuesta del backend:', response);
 
-                setTimeout(() => {
-                    row.remove();
-                    console.log('Fila eliminada del DOM');
+                if (response.success) {
+                    // Eliminar fila de la tabla con animación
+                    if (row && row.parentNode) {
+                        row.style.transition = 'all 0.5s ease';
+                        row.style.opacity = '0';
+                        row.style.transform = 'translateX(-100%)';
+                        row.style.backgroundColor = '#f8d7da';
 
-                    // Actualizar cards móviles si existen
-                    if (window.responsiveSystem) {
-                        window.responsiveSystem.refresh();
+                        setTimeout(() => {
+                            row.remove();
+                            console.log('Fila eliminada del DOM');
+
+                            // Actualizar filtros si existen
+                            if (typeof refreshPredictiveFiltersData === 'function') {
+                                refreshPredictiveFiltersData();
+                            }
+                        }, 500);
                     }
 
-                    // Actualizar contadores de filtros
-                    if (typeof updateFilterStatusIndicator === 'function') {
-                        updateFilterStatusIndicator();
-                    }
-                }, 500);
-            }
+                    // Mostrar confirmación de éxito
+                    Swal.fire({
+                        title: '¡Eliminada correctamente!',
+                        html: `
+                            <div class="text-center">
+                                <p>La fotografía ha sido eliminada del servidor</p>
+                                <small class="text-muted">Orden SIT: ${imageData.ordenSit} | ID: ${imageData.backendId}</small>
+                            </div>
+                        `,
+                        icon: 'success',
+                        timer: 3000,
+                        timerProgressBar: true,
+                        showConfirmButton: false
+                    });
 
-            // Limpiar de localStorage si existe
-            try {
-                const savedImages = localStorage.getItem('newUploadedImages');
-                if (savedImages) {
-                    const imagesData = JSON.parse(savedImages);
-                    if (imagesData.images) {
-                        imagesData.images = imagesData.images.filter(img => img.id !== imageData.id);
-                        localStorage.setItem('newUploadedImages', JSON.stringify(imagesData));
-                    }
+                    console.log('Imagen backend eliminada exitosamente');
+
+                } else {
+                    throw new Error(response.message || 'Error del servidor');
                 }
-            } catch (error) {
-                console.warn('Error limpiando localStorage:', error);
-            }
+            },
+            error: function (xhr, status, error) {
+                console.error('Error AJAX eliminando imagen:', error);
+                console.error('Response:', xhr.responseText);
 
-            // Mostrar confirmación de éxito
-            Swal.fire({
-                title: '¡Eliminada correctamente!',
-                html: `
+                let errorMessage = 'Error de conexión con el servidor';
+                if (xhr.responseJSON && xhr.responseJSON.message) {
+                    errorMessage = xhr.responseJSON.message;
+                } else if (xhr.status === 404) {
+                    errorMessage = 'La imagen ya no existe en el servidor';
+                } else if (xhr.status === 403) {
+                    errorMessage = 'No tiene permisos para eliminar esta imagen';
+                }
+
+                Swal.fire({
+                    title: 'Error al eliminar',
+                    html: `
+                        <div class="text-center">
+                            <i class="fas fa-exclamation-triangle text-warning fa-3x mb-3"></i>
+                            <p>${errorMessage}</p>
+                            <small class="text-muted">ID: ${imageData.backendId}</small>
+                        </div>
+                    `,
+                    icon: 'error',
+                    confirmButtonText: 'Entendido',
+                    confirmButtonColor: '#dc3545'
+                });
+            }
+        });
+
+    } else {
+
+        // ===== ELIMINACION DE FRONTEND =====
+        console.log('Eliminando imagen del frontend/localStorage');
+
+        setTimeout(() => {
+            try {
+                // Eliminar fila de la tabla
+                if (row && row.parentNode) {
+                    // Animación de salida
+                    row.style.transition = 'all 0.5s ease';
+                    row.style.opacity = '0';
+                    row.style.transform = 'translateX(-100%)';
+                    row.style.backgroundColor = '#f8d7da';
+
+                    setTimeout(() => {
+                        row.remove();
+                        console.log('Fila eliminada del DOM');
+
+                        // Actualizar cards móviles si existen
+                        if (window.responsiveSystem) {
+                            window.responsiveSystem.refresh();
+                        }
+
+                        // Actualizar contadores de filtros
+                        if (typeof updateFilterStatusIndicator === 'function') {
+                            updateFilterStatusIndicator();
+                        }
+                    }, 500);
+                }
+
+                // Limpiar de localStorage si existe
+                try {
+                    const savedImages = localStorage.getItem('newUploadedImages');
+                    if (savedImages) {
+                        const imagesData = JSON.parse(savedImages);
+                        if (imagesData.images) {
+                            imagesData.images = imagesData.images.filter(img => img.id !== imageData.id);
+                            localStorage.setItem('newUploadedImages', JSON.stringify(imagesData));
+                        }
+                    }
+                } catch (error) {
+                    console.warn('Error limpiando localStorage:', error);
+                }
+
+                // Mostrar confirmación de éxito
+                Swal.fire({
+                    title: '¡Eliminada correctamente!',
+                    html: `
                     <div class="text-center">
                         <p>La fotografía ha sido eliminada exitosamente</p>
                         <small class="text-muted">Orden SIT: ${imageData.ordenSit} | Tipo: ${imageData.tipo}</small>
                     </div>
                 `,
-                icon: 'success',
-                timer: 3000,
-                timerProgressBar: true,
-                showConfirmButton: false,
-                toast: false,
-                customClass: {
-                    popup: 'success-popup'
-                }
-            });
+                    icon: 'success',
+                    timer: 3000,
+                    timerProgressBar: true,
+                    showConfirmButton: false,
+                    toast: false,
+                    customClass: {
+                        popup: 'success-popup'
+                    }
+                });
 
-            console.log('Imagen eliminada exitosamente');
+                console.log('Imagen frontend eliminada exitosamente');
 
-        } catch (error) {
-            console.error('Error eliminando imagen:', error);
+            } catch (error) {
+                console.error('Error eliminando imagen frontend:', error);
 
-            Swal.fire({
-                title: 'Error al eliminar',
-                html: `
+                Swal.fire({
+                    title: 'Error al eliminar',
+                    html: `
                     <div class="text-center">
                         <i class="fas fa-exclamation-triangle text-warning fa-3x mb-3"></i>
                         <p>No se pudo eliminar la fotografía</p>
                         <small class="text-muted">Error: ${error.message || 'Error desconocido'}</small>
                     </div>
                 `,
-                icon: 'error',
-                confirmButtonText: 'Entendido',
-                confirmButtonColor: '#dc3545'
-            });
-        }
-    }, 2000); // Simular delay de 2 segundos
+                    icon: 'error',
+                    confirmButtonText: 'Entendido',
+                    confirmButtonColor: '#dc3545'
+                });
+            }
+        }, 2000); // Simular delay de 2 segundos
+    }
 }
 
 // ================================================================================================
@@ -3337,6 +3422,7 @@ window.searchRecords = searchRecords || function () { console.warn('searchRecord
 window.deleteImage = deleteImage || function () { console.warn('deleteImage no definida'); };
 window.editImage = editImage || function () { console.warn('editImage no definida'); };
 window.openHistorialModal = openHistorialModal;
+window.extractImageDataFromRow = extractImageDataFromRow || function () { console.warn('extractImageDataFromRow no definida'); };
 window.filterByTipoFotografia = filterByTipoFotografia;
 window.selectAllTipoFotografia = selectAllTipoFotografia || function () { console.warn('selectAllTipoFotografia no definida'); };
 window.clearTipoFotografiaFilter = clearTipoFotografiaFilter || function () { console.warn('clearTipoFotografiaFilter no definida'); };

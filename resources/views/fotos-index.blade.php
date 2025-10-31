@@ -1016,6 +1016,7 @@
         console.log('Sistema de subida inicializado');
     }
 
+/*======================================================================================================================*/
     function handleImageUpload(files, source) {
         if (!files || files.length === 0) {
             showNotification('No se seleccionaron archivos', 'warning');
@@ -1045,13 +1046,13 @@
         }
 
         // Mostrar estado de carga
-        const uploadBtn = source === 'camera'
+        /*const uploadBtn = source === 'camera'
             ? document.getElementById('cameraUpload')
             : document.getElementById('fileUpload');
 
-        setUploadState(uploadBtn, 'uploading');
+        setUploadState(uploadBtn, 'uploading');*/
 
-        // Procesar archivos
+        // Procesar archivos sólo cuando es acción directa del usuario
         const uploadPromises = validFiles.map(file => uploadSingleImage(file));
 
         Promise.all(uploadPromises)
@@ -1061,157 +1062,104 @@
 
                 // Agregar imágenes a la tabla
                 results.forEach(imageData => {
-                    addImageToTable(imageData);
+                    addBackendImageToTable(imageData);
                 });
 
-                setUploadState(uploadBtn, 'success');
+                /*setUploadState(uploadBtn, 'success');
 
                 // Reset después de 2 segundos
                 setTimeout(() => {
                     setUploadState(uploadBtn, 'normal');
-                }, 2000);
+                }, 2000);*/
             })
             .catch(error => {
                 console.error('Error subiendo imágenes:', error);
                 showNotification('Error al subir las imágenes', 'error');
-                setUploadState(uploadBtn, 'normal');
+                //setUploadState(uploadBtn, 'normal');
             });
     }
-
+/*======================================================================================================================*/
     let currentUploadSession = null;
 
     function uploadSingleImage(file) {
-        return new Promise((resolve, reject) => {
-            console.log('Subiendo desde fotos-index.blade.php:', file.name);
+    return new Promise((resolve, reject) => {
+        console.log('Subiendo imagen desde fotos-index:', file.name);
 
-            const formData = new FormData();
-            formData.append('imagen', file);
-            formData.append('orden_sit', generateOrderNumber());
-            formData.append('po', generatePONumber());
-            formData.append('oc', generateOCNumber());
-            formData.append('timestamp', new Date().toISOString());
+        const formData = new FormData();
+        formData.append('imagen', file);
+        formData.append('orden_sit', generateOrderNumber());
+        formData.append('po', generatePONumber());
+        formData.append('oc', generateOCNumber());
+        formData.append('timestamp', new Date().toISOString());
+        formData.append('origen_vista', 'fotos-index');
 
-            // Agregar origen de la vista
-            formData.append('origen_vista', 'fotos-index');
-            formData.append('procesado_por', 'fotos-index-blade');
+        // 🎯 Mostrar modal para datos adicionales
+        const modalEl = document.getElementById('imageDataModal');
+        const modal = new bootstrap.Modal(modalEl);
 
-            // Modal para datos adicionales
-            const modalEl = document.getElementById('imageDataModal');
-            const modal = new bootstrap.Modal(modalEl);
-            modal.show();
+        // Limpiar y mostrar modal
+        document.getElementById('descripcionInput').value = '';
+        document.getElementById('tipoFotografiaSelect').selectedIndex = 0;
+        modal.show();
 
-            document.getElementById('descripcionInput').value = '';
-            document.getElementById('tipoFotografiaSelect').selectedIndex = 0;
+        // Configurar evento del botón guardar
+        const saveBtn = document.getElementById('saveImageData');
 
-            const saveBtn = document.getElementById('saveImageData');
-            const handleSave = () => {
-                const descripcion = document.getElementById('descripcionInput').value.trim();
-                const tipoFotografia = document.getElementById('tipoFotografiaSelect').value;
+        // Limpiar listeners anteriores
+        const newSaveBtn = saveBtn.cloneNode(true);
+        saveBtn.parentNode.replaceChild(newSaveBtn, saveBtn);
 
-                if (!descripcion || !tipoFotografia) {
-                    showNotification("Por favor complete todos los campos.", 'warning');
-                    return;
-                }
+        newSaveBtn.addEventListener('click', function() {
+            const descripcion = document.getElementById('descripcionInput').value.trim();
+            const tipoFotografia = document.getElementById('tipoFotografiaSelect').value;
 
-                formData.append('descripcion', descripcion);
-                formData.append('tipo', tipoFotografia.toUpperCase());
+            if (!descripcion || !tipoFotografia) {
+                showNotification("Complete todos los campos", 'warning');
+                return;
+            }
 
-                modal.hide();
+            formData.append('descripcion', descripcion);
+            formData.append('tipo', tipoFotografia.toUpperCase());
 
-                // 🎯 SUBIR AL BACKEND CON MARCADO DE ORIGEN
-                $.ajax({
-                    url: '/api/fotografias',
-                    type: 'POST',
-                    data: formData,
-                    processData: false,
-                    contentType: false,
-                    headers: {
-                        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content'),
-                        'Origen-Vista': 'fotos-index'
-                    },
-                    success: function(response) {
-                        if (response.success) {
-                            console.log('Imagen subida desde fotos-index:', response.data);
+            modal.hide();
 
-                            // Marcar como procesada por fotos index
-                            response.data.procesadoPor = 'fotos-index';
-                            response.data.origenVista = 'fotos-index';
-
-                            // 🎯 AGREGAR DIRECTAMENTE A LA TABLA
-                            addBackendImageToTable(response.data);
-
-                            showNotification('Imagen subida correctamente', 'success');
-                            resolve(response.data);
-                        } else {
-                            showNotification('Error: ' + response.message, 'error');
-                            reject(new Error(response.message));
-                        }
-                    },
-                    error: function(xhr, status, error) {
-                        console.error('Error subiendo desde fotos-index:', error);
-                        showNotification('Error de conexión con el servidor', 'error');
-                        reject(new Error('Error de conexión'));
+            // Subir al backend
+            $.ajax({
+                url: '/api/fotografias',
+                type: 'POST',
+                data: formData,
+                processData: false,
+                contentType: false,
+                headers: {
+                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content'),
+                    'X-Origen-Vista': 'fotos-index'
+                },
+                success: function(response) {
+                    if (response.success) {
+                        console.log('Imagen subida desde fotos-index:', response.data);
+                        resolve(response.data);
+                    } else {
+                        reject(new Error(response.message));
                     }
-                });
-
-                saveBtn.removeEventListener('click', handleSave);
-            };
-
-            saveBtn.addEventListener('click', handleSave);
+                },
+                error: function(xhr, status, error) {
+                    console.error('Error:', error);
+                    reject(new Error('Error de conexión'));
+                }
+            });
         });
-    }
+    });
+}
 /*=====================================================================================================================*/
     // ====>>>> Al cargar la página, verificar si hay imágenes nuevas(agregadas) En fotos-sit-add
     document.addEventListener("DOMContentLoaded", function() {
         console.log('DOM cargado, verificando imágenes transferidas...');
 
-        // Verificar si hay imágenes transferidas desde fotos-sit-add
-        const transferredData = localStorage.getItem('newUploadedImages');
-        if (transferredData) {
-            try {
-                const data = JSON.parse(transferredData);
-                console.log('Datos transferidos encontrados:', data);
-
-                if (data.images && data.images.length > 0) {
-                    console.log('Procesando', data.images.length, 'imágenes transferidas');
-
-                    // ==>> Verificar que no sea duplicado
-                    data.images.forEach((imageData, index) => {
-                        if (imageData.origenVista === 'fotos-sit-add' && imageData.displayOnly === true) {
-                            console.log(`Imagen ${index + 1} desde fotos-sit-add, solo mostrar:`, imageData);
-
-                            // SOLO MOSTRAR, NO SUBIR DE NUEVO
-                            setTimeout(() => {
-                                addBackendImageToTable(imageData);
-                            }, index * 100);
-
-                        } else if (imageData.origenVista === 'fotos-index') {
-                            console.log(`Imagen ${index + 1} desde fotos-index, ya procesada`);
-                            // No hacer nada, ya fue procesada
-
-                        } else {
-                            console.log(`Imagen ${index + 1} sin origen definido, procesando:`, imageData);
-                            // Procesar normalmente para compatibilidad
-                            setTimeout(() => {
-                                addImageToTable(imageData);
-                            }, index * 100);
-                        }
-                    });
-
-                    // Agregar las imágenes a la tabla con un pequeño delay
-                    setTimeout(() => {
-                        showNotification(`${data.images.length} imagen(es) cargada(s) desde fotos-sit-add`, 'success');
-                    }, 500);
-                }
-
-                // Limpiar localStorage
+            //LIMPIAR cualquier resto de localStorage sin procesar
+            const transferredData = localStorage.getItem('newUploadedImages');
+            if (transferredData) {
+                console.log('Limpiando localStorage de transferencias previas...');
                 localStorage.removeItem('newUploadedImages');
-                console.log('LocalStorage limpiado');
-
-                } catch (error) {
-                    console.error('Error procesando imágenes transferidas:', error);
-                    localStorage.removeItem('newUploadedImages');
-                }
             }
 
             //CARGAR IMÁGENES DEL BACKEND AL INICIAR
@@ -1509,7 +1457,7 @@
         //VERIFICAR TAMBIÉN POR URL
         if (fotografiaData.imagen_url || fotografiaData.url) {
             const imageUrl = fotografiaData.imagen_url || fotografiaData.url;
-            const existingImageRow = Array.from(tableBody.querySelectorAll('img')).find(img => 
+            const existingImageRow = Array.from(tableBody.querySelectorAll('img')).find(img =>
                 img.src === imageUrl
             );
             if (existingImageRow) {

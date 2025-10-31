@@ -292,7 +292,7 @@
         }
 
         // 🎯 PREPARAR datos para mostrar (No subir de nuevo a la tabla)
-        const dataToTransfer = {
+        /*const dataToTransfer = {
             images: savedImages.map(img => ({
                 //Datos del backend real (ya subido)
                 id: img.id,
@@ -306,7 +306,7 @@
                 tipo: img.tipo,
                 created_at: img.created_at,
                 fecha_subida: img.created_at,
-                
+
                 //MARCADORES DE CONTROL
                 origenVista: 'fotos-sit-add',
                 procesadoPor: 'fotos-sit-add',
@@ -318,7 +318,7 @@
         };
 
         // 🎯 GUARDAR para mostrar en fotos-index
-        localStorage.setItem('newUploadedImages', JSON.stringify(dataToTransfer));
+        localStorage.setItem('newUploadedImages', JSON.stringify(dataToTransfer));*/
 
         // 🎯 REDIRECCIÓN AUTOMÁTICA
         showNotification(`${savedImages.length} imagen(es) guardadas. Redirigiendo...`, 'success', 1500);
@@ -330,23 +330,60 @@
 
     // Lightbox functions
     function openLightbox(imageUrl, description, type) {
-        document.getElementById('lightboxImage').src = imageUrl;
-        document.getElementById('previewDescripcion').textContent = description || '-';
-        document.getElementById('previewTipo').textContent = type || '-';
-        document.getElementById('imageLightbox').style.display = 'flex';
+        console.log('🖼️ Abriendo lightbox:', { imageUrl, description, type });
+
+        const lightbox = document.getElementById('imageLightbox');
+        const lightboxImage = document.getElementById('lightboxImage');
+        const previewDescripcion = document.getElementById('previewDescripcion');
+        const previewTipo = document.getElementById('previewTipo');
+
+        if (lightbox && lightboxImage) {
+            lightboxImage.src = imageUrl;
+            lightboxImage.alt = description || 'Imagen';
+
+            if (previewDescripcion) {
+                previewDescripcion.textContent = description || 'Sin descripción';
+            }
+
+            if (previewTipo) {
+                previewTipo.textContent = type || 'Sin tipo';
+            }
+
+            lightbox.style.display = 'flex';
+            document.body.style.overflow = 'hidden';
+
+            console.log('✅ Lightbox abierto correctamente');
+        } else {
+            console.error('❌ No se encontraron elementos del lightbox');
+        }
     }
 
     function closeLightbox() {
-        document.getElementById('imageLightbox').style.display = 'none';
+        const lightbox = document.getElementById('imageLightbox');
+        if (lightbox) {
+            lightbox.style.display = 'none';
+            document.body.style.overflow = '';
+            console.log('✅ Lightbox cerrado');
+        }
     }
 
     function downloadImage() {
-        const imgSrc = document.getElementById('lightboxImage').src;
-        const link = document.createElement('a');
-        link.href = imgSrc;
-        link.download = "prenda.jpg";
-        link.click();
+        const lightboxImage = document.getElementById('lightboxImage');
+        if (lightboxImage && lightboxImage.src) {
+            const link = document.createElement('a');
+            link.href = lightboxImage.src;
+            link.download = 'imagen.jpg';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            console.log('✅ Descarga iniciada');
+        }
     }
+
+    window.openLightbox = openLightbox;
+    window.closeLightbox = closeLightbox;
+    window.downloadImage = downloadImage;
+
 </script>
 
 <!--/=/=/=/=/=/=/=//=/=/=/=/=/=/=//=/=/=/=/=/=/=//=/=/=/=/=/=/=//=/=/=/=/=/=/=//=/=/=/=/=/=/=/ -->
@@ -516,19 +553,25 @@
 
                         showNotification(`Guardando imagen ${i + 1} de ${imageDataArray.length}...`, 'info', 1000);
 
+                         //CREAR FormData correctamente
+                        const formData = new FormData();
+
                         // Convertir base64 a File objeto
                         const response = await fetch(imageData.base64);
                         const blob = await response.blob();
-                        const file = new File([blob], imageData.name, { type: imageData.file.type });
+                        const fileName = imageData.name || `imagen_${Date.now()}_${i}.jpg`;
+                        const file = new File([blob], fileName, { type: blob.type });
 
                         // Crear FormData y agregar archivo
-                        const formData = new FormData();
+                        //const formData = new FormData();
                         formData.append('imagen', file);
                         formData.append('orden_sit', ordenSitValue);
                         formData.append('po', generatePONumber());
                         formData.append('oc', generateOCNumber());
                         formData.append('descripcion', descripcionVal);
                         formData.append('tipo', tipoFotografia.toUpperCase());
+                        formData.append('origen_vista', 'fotos-sit-add');
+                        formData.append('timestamp', new Date().toISOString());
 
                         // ==== Enviar al Backend ====
                         const backendResponse = await uploadToBackend(formData);
@@ -542,6 +585,7 @@
                                 oc: backendResponse.data.oc,
                                 descripcion: backendResponse.data.descripcion,
                                 tipo: backendResponse.data.tipo,
+                                created_at: backendResponse.data.created_at,
                                 source: 'backend-real',
                                 saved: true
                             });
@@ -552,23 +596,31 @@
                     }
 
                     // Agregar TODAS las imágenes al array
-                    uploadedImages.push(...savedImages);
+                    //uploadedImages.push(...savedImages);
 
                     // Cerrar modal inmediatamente
-                    modal.hide();
+                    //modal.hide();
 
                     // Actualizar vista previa con la primera imagen
                     if (savedImages.length > 0) {
-                        updateCardPreview(savedImages[0]);
+                        uploadedImages.push(...savedImages);
+
+                        modal.hide();
+
+                        // Actualizar vista previa
+                        updateCardPreview(uploadedImages[0]);
+
+                        console.log(` ${savedImages.length} Procesamiento de imágenes completado.`);
+
+                        // == Guardado y redireccion automatica ==
+                        setTimeout(() => {
+                            console.log('Guardado automatico iniciado...');
+                            guardarFoto(savedImages); // Redireccion automatica
+                        }, 500);
+                    } else {
+                        throw new Error('No se guardaron imágenes.');
                     }
 
-                    console.log(` ${savedImages.length} Procesamiento de imágenes completado.`);
-
-                    // == Guardado y redireccion automatica ==
-                    setTimeout(() => {
-                        console.log('Guardado automatico iniciado...');
-                        guardarFoto(savedImages); // Redireccion automatica
-                    }, 500);
                 } catch (error) {
                     console.error('Error durante el procesamiento automático:', error);
                 } finally {
@@ -587,7 +639,7 @@
             saveBtn.innerHTML = 'Guardar';
 
             // Mostrar modal
-            modal.show();
+           modal.show();
         }
 
         // =======================================================================================
@@ -715,28 +767,65 @@
     // 🎯 NUEVA FUNCIÓN: Subir al backend
     function uploadToBackend(formData) {
         return new Promise((resolve, reject) => {
+            console.log('Subiendo imagen al backend...');
 
-            console.log('Subiendo desde fotos-sit-add.blade.php...');
+            //VERIFICAR datos antes del envío
+            console.log('FormData contents:');
+            for (let pair of formData.entries()) {
+                console.log(`${pair[0]}: ${pair[1]}`);
+            }
 
-            // Origen de la vista
-            formData.append('origen_vista', 'fotos-sit-add');
-            formData.append('procesado_por', 'fotos-sit-add-blade');
+            //AGREGAR campos obligatorios que podrían faltar
+            if (!formData.has('descripcion')) {
+                formData.append('descripcion', 'Imagen subida desde fotos-sit-add');
+            }
 
+            if (!formData.has('tipo')) {
+                formData.append('tipo', 'MUESTRA');
+            }
+
+            if (!formData.has('orden_sit')) {
+                const ordenSit = document.getElementById('ordenSitValue')?.textContent || 'N/A';
+                formData.append('orden_sit', ordenSit);
+            }
+
+            //ENVÍO CON MANEJO MEJORADO DE ERRORES
             $.ajax({
-                url: '/api/fotografias', // Ruta del backend
+                url: '/api/fotografias',
                 type: 'POST',
                 data: formData,
                 processData: false,
                 contentType: false,
+                timeout: 30000, // 30 segundos timeout
                 headers: {
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
-                    'X-Origen-Vista': 'fotos-sit-add'
+                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content'),
+                    'X-Origen-Vista': 'fotos-sit-add',
+                    'Accept': 'application/json'
+                },
+                beforeSend: function() {
+                    console.log('Enviando imagen al servidor...');
                 },
                 success: function(response) {
-                    if (response.success) {
-                        resolve(response);
+                    console.log('✅ Respuesta del servidor:', response);
+
+                    if (response.success && response.data) {
+                        //ESTRUCTURAR respuesta correctamente
+                        resolve({
+                            success: true,
+                            data: {
+                                id: response.data.id,
+                                imagen_url: response.data.imagen_url || response.data.url,
+                                orden_sit: response.data.orden_sit,
+                                po: response.data.po,
+                                oc: response.data.oc,
+                                descripcion: response.data.descripcion,
+                                tipo: response.data.tipo,
+                                created_at: response.data.created_at,
+                                fecha_subida: response.data.fecha_subida || response.data.created_at
+                            }
+                        });
                     } else {
-                        reject(new Error(response.message || 'Error del servidor'));
+                        reject(new Error(response.message || 'Respuesta inválida del servidor'));
                     }
                 },
                 error: function(xhr, status, error) {
@@ -749,12 +838,20 @@
 
                     let errorMessage = 'Error de conexión con el servidor';
 
-                    if (xhr.responseJSON && xhr.responseJSON.message) {
-                        errorMessage = xhr.responseJSON.message;
+                    if (xhr.responseJSON) {
+                        if (xhr.responseJSON.message) {
+                            errorMessage = xhr.responseJSON.message;
+                        } else if (xhr.responseJSON.errors) {
+                            // Error de validación Laravel
+                            const errors = Object.values(xhr.responseJSON.errors).flat();
+                            errorMessage = errors.join(', ');
+                        }
                     } else if (xhr.status === 422) {
-                        errorMessage = 'Error de validación de datos';
+                        errorMessage = 'Error de validación: Verifique que todos los campos estén completos';
                     } else if (xhr.status === 500) {
                         errorMessage = 'Error interno del servidor';
+                    } else if (xhr.status === 0) {
+                        errorMessage = 'No se pudo conectar al servidor';
                     }
 
                     reject(new Error(errorMessage));
@@ -922,7 +1019,7 @@
         }, duration);
     }
 
-    // Inicialización principal
+    // Inicialización principal fotos-sit-add
     document.addEventListener("DOMContentLoaded", function() {
         initializeUploadButtons();
 
@@ -944,6 +1041,8 @@
                 buscarOrdenSit();
             });
         }
+
+        console.log('Sistema fotos-sit-add listo');
     });
 </script>
 

@@ -2572,24 +2572,6 @@ function clearGlobalSearchOnly() {
 window.clearGlobalSearchOnly = clearGlobalSearchOnly;
 
 /* ================================================================================================= */
-// ===== INTEGRACIÓN CON FUNCIONES EXISTENTES =====
-
-// Sobrescribir la función original addImageToTable para incluir filtros
-const originalAddImageToTable = window.addImageToTable;
-window.addImageToTable = function (imageData) {
-    // Llamar a la función original
-    if (originalAddImageToTable) {
-        originalAddImageToTable(imageData);
-    }
-
-    // Actualizar filtros después de agregar imagen
-    setTimeout(() => {
-        console.log('Nueva imagen agregada, actualizando filtros...');
-        extractTableData();
-        applyAllFilters();
-    }, 200);
-};
-
 // Función para refrescar filtros manualmente
 function refreshFiltersData() {
     console.log('Refrescando datos de filtros...');

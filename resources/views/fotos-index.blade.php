@@ -38,39 +38,6 @@
                         </div>
                     </div>
                 </div>
-
-                <!-- DESCOMENTAR SI SE REQUIEREN ESTOS BOTONES
-                <button class="btn btn-pink" onclick="exportAll()">
-                    <i class="fas fa-download me-1"></i>
-                    Exportar todo
-                </button>
-
-                <button class="btn btn-danger" onclick="showFilters()">
-                    <i class="fas fa-filter me-1"></i>
-                    Filtros
-                </button>
-
-                <div class="btn-group">
-                    <button class="btn btn-warning dropdown-toggle" type="button" data-bs-toggle="dropdown">
-                        <i class="fas fa-columns me-1"></i>
-                        Columnas
-                    </button>
-                    <ul class="dropdown-menu" id="columnsDropdown">
-                        <li><label class="dropdown-item"><input type="checkbox" checked class="me-2" data-column="imagen">Imagen</label></li>
-                        <li><label class="dropdown-item"><input type="checkbox" checked class="me-2" data-column="orden-sit">Orden SIT</label></li>
-                        <li><label class="dropdown-item"><input type="checkbox" checked class="me-2" data-column="po">P.O</label></li>
-                        <li><label class="dropdown-item"><input type="checkbox" checked class="me-2" data-column="oc">O.C</label></li>
-                        <li><label class="dropdown-item"><input type="checkbox" checked class="me-2" data-column="descripcion">Descripción</label></li>
-                        <li><label class="dropdown-item"><input type="checkbox" checked class="me-2" data-column="tipo-fotografia">Tipo Fotografía</label></li>
-                        <li><label class="dropdown-item"><input type="checkbox" checked class="me-2" data-column="acciones">Acciones</label></li>
-                    </ul>
-                </div>
-
-                <button class="btn btn-success" onclick="exportSelected()">
-                    <i class="fas fa-file-export me-1"></i>
-                    Exportar
-                </button> -->
-
             </div>
         </div>
     </div>
@@ -277,36 +244,7 @@
                             </tr>
                         </thead>
                         <tbody id="imagesTableBody">
-                            <!-- Fila de ejemplo 1  ELIMINAR EN PRODUCCION -->
-                            <tr data-image-id="img_example_1" data-fecha-creacion="2025-10-02">
-                                <td data-column="imagen">
-                                    <img src="https://picsum.photos/id/535/200/300"
-                                         alt="Camisa azul"
-                                         class="img-thumbnail preview-image"
-                                         style="width: 60px; height: 60px; cursor: pointer;"
-                                         onclick="openImageLightbox(this.src, this.alt, 'Camisa azul clásica', 'PRENDA FINAL')">
-                                </td>
-                                <td data-column="orden-sit">10060482</td>
-                                <td data-column="po">6000101385</td>
-                                <td data-column="oc">4200020624</td>
-                                <td data-column="descripcion">CAM FORM UNIC</td>
-                                <td data-column="tipo-fotografia">PRENDA FINAL</td>
-                                <td data-column="acciones">
-                                    <button class="btn btn-danger btn-sm me-1 btn-delete" onclick="deleteImage(this)" title="Eliminar imagen">
-                                        <i class="fas fa-trash"></i>
-                                    </button>
-                                    <button class="btn btn-warning btn-sm me-1 btn-edit" onclick="editImage(this)" title="Editar información">
-                                        <i class="fas fa-edit"></i>
-                                    </button>
-                                    <button class="btn btn-info btn-sm comment-btn me-1" onclick="openCommentsModal(this)" title="Ver/Agregar comentarios">
-                                        <i class="fas fa-comments"></i>
-                                        <span class="comment-count" data-count="0"></span>
-                                    </button>
-                                    <button class="btn btn-success btn-sm btn-historial" onclick="openHistorialModal(this)" title="Historial de la Prenda">
-                                        <i class="fas fa-history"></i>
-                                    </button>
-                                </td>
-                            </tr>
+
                         </tbody>
                     </table>
                 </div>
@@ -379,146 +317,8 @@
 <!-- =========>>>>>>>> Container de notificaciones <<<<<<<<<<========= -->
 <div id="notificationContainer" class="position-fixed top-0 end-0 p-3" style="z-index: 9999;"></div>
 
-<!-- MODAL DE COMENTARIOS (ELIMINAR EN PRODUCCIÓN) -->
-<!-- <div class="modal fade" id="commentsModal" tabindex="-1" aria-labelledby="commentsModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="commentsModalLabel">
-                    <i class="fas fa-comments me-2"></i>
-                    Comentarios y Observaciones
-                </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <div class="row mb-4">
-                    <div class="col-md-3">
-                        <img id="commentImagePreview" src="" alt="" class="img-fluid rounded border">
-                    </div>
-                    <div class="col-md-9">
-                        <div class="row">
-                            <div class="col-md-6">
-                                <strong>Orden SIT:</strong>
-                                <p id="commentOrdenSit" class="mb-1">-</p>
-                            </div>
-                            <div class="col-md-6">
-                                <strong>P.O:</strong>
-                                <p id="commentPO" class="mb-1">-</p>
-                            </div>
-                            <div class="col-md-6">
-                                <strong>O.C:</strong>
-                                <p id="commentOC" class="mb-1">-</p>
-                            </div>
-                            <div class="col-md-6">
-                                <strong>Tipo:</strong>
-                                <p id="commentTipo" class="mb-1">-</p>
-                            </div>
-                            <div class="col-12">
-                                <strong>Descripción:</strong>
-                                <p id="commentDescripcion" class="mb-0">-</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+<!-- ESPACIO PARA MODAL DE COMENTARIOS (==========) -->
 
-                <hr>
-
-                <div class="card mb-4">
-                    <div class="card-header bg-light">
-                        <h6 class="mb-0">
-                            <i class="fas fa-plus-circle me-2"></i>
-                            Agregar Nuevo Comentario
-                        </h6>
-                    </div>
-                    <div class="card-body">
-                        <form id="commentForm">
-                            <div class="row">
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label">Tipo de Observación</label>
-                                    <select class="form-select" id="commentType" required>
-                                        <option value="">Seleccionar tipo</option>
-                                        <option value="quality">Calidad</option>
-                                        <option value="technical">Técnico</option>
-                                        <option value="production">Producción</option>
-                                        <option value="design">Diseño</option>
-                                        <option value="general">General</option>
-                                        <option value="urgent">Urgente</option>
-                                    </select>
-                                </div>
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label">Prioridad</label>
-                                    <select class="form-select" id="commentPriority" required>
-                                        <option value="low">Baja</option>
-                                        <option value="medium" selected>Media</option>
-                                        <option value="high">Alta</option>
-                                        <option value="critical">Crítica</option>
-                                    </select>
-                                </div>
-                                <div class="col-12 mb-3">
-                                    <label class="form-label">Comentario/Observación</label>
-                                    <textarea class="form-control" id="commentText" rows="3"
-                                              placeholder="Escribe tu comentario o observación aquí..." required></textarea>
-                                    <div class="form-text">
-                                        <small><span id="charCount">0</span>/500 caracteres</small>
-                                    </div>
-                                </div>
-                                <div class="col-12">
-                                    <button type="submit" class="btn btn-primary">
-                                        <i class="fas fa-save me-1"></i>
-                                        Agregar Comentario
-                                    </button>
-                                    <button type="button" class="btn btn-outline-secondary ms-2" onclick="clearCommentForm()">
-                                        <i class="fas fa-eraser me-1"></i>
-                                        Limpiar
-                                    </button>
-                                </div>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-
-                <div class="card">
-                    <div class="card-header bg-light d-flex justify-content-between align-items-center">
-                        <h6 class="mb-0">
-                            <i class="fas fa-list me-2"></i>
-                            Comentarios Existentes
-                            <span class="badge bg-secondary ms-2" id="totalCommentsCount">0</span>
-                        </h6>
-                        <div class="btn-group btn-group-sm">
-                            <button class="btn btn-outline-primary" onclick="sortComments('newest')" title="Más recientes primero">
-                                <i class="fas fa-sort-amount-down"></i>
-                            </button>
-                            <button class="btn btn-outline-primary" onclick="sortComments('oldest')" title="Más antiguos primero">
-                                <i class="fas fa-sort-amount-up"></i>
-                            </button>
-                            <button class="btn btn-outline-primary" onclick="filterCommentsByPriority()" title="Filtrar por prioridad">
-                                <i class="fas fa-filter"></i>
-                            </button>
-                        </div>
-                    </div>
-                    <div class="card-body p-0">
-                        <div id="commentsList" class="comments-list">
-                            <div class="text-center text-muted p-4" id="noCommentsMessage">
-                                <i class="fas fa-comment-slash fa-2x mb-2"></i>
-                                <p>No hay comentarios para esta imagen</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                    <i class="fas fa-times me-1"></i>
-                    Cerrar
-                </button>
-                <button type="button" class="btn btn-success" onclick="exportComments()">
-                    <i class="fas fa-file-export me-1"></i>
-                    Exportar Comentarios
-                </button>
-            </div>
-        </div>
-    </div>
-</div> -->
 
 <!-- ==========>>>>>>>> Modal para ingresar datos(Descripcion - Tipo fotografia) de la imagen <<<<<<<<<<<========== -->
 <div class="modal fade" id="imageDataModal" tabindex="-1" aria-labelledby="imageDataModalLabel" aria-hidden="true">
@@ -1042,15 +842,72 @@
         });
 
         if (validFiles.length === 0) {
+            showNotification('No hay archivos válidos para procesar', 'warning');
             return;
         }
 
-        // Mostrar estado de carga
-        /*const uploadBtn = source === 'camera'
-            ? document.getElementById('cameraUpload')
-            : document.getElementById('fileUpload');
+        processFilesSequentially(validFiles, source);
+    }
 
-        setUploadState(uploadBtn, 'uploading');*/
+
+    // REEMPLAZAR función processFilesSequentially (líneas ~690-720):
+async function processFilesSequentially(files, source) {
+    console.log(`🔄 Procesando ${files.length} archivos secuencialmente...`);
+
+    const results = [];
+    const errors = [];
+
+    // ✅ PROCESAR UN ARCHIVO A LA VEZ PARA EVITAR CONGELAMIENTO
+    for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+
+        try {
+            showNotification(`Procesando archivo ${i + 1} de ${files.length}: ${file.name}`, 'info', 1500);
+
+            // ✅ USAR TU FUNCIÓN EXISTENTE uploadSingleImage
+            const result = await uploadSingleImage(file);
+            results.push(result);
+
+            console.log(`✅ Archivo ${i + 1}/${files.length} procesado: ${file.name}`);
+
+            // ✅ AGREGAR A TABLA INMEDIATAMENTE
+            setTimeout(() => {
+                addBackendImageToTable(result);
+            }, 100);
+
+            // Delay entre archivos para evitar sobrecarga del servidor
+            if (i < files.length - 1) {
+                await new Promise(resolve => setTimeout(resolve, 1000)); // 1 segundo entre archivos
+            }
+
+        } catch (error) {
+            console.error(`❌ Error en archivo ${i + 1}:`, error);
+            errors.push({ file: file.name, error: error.message });
+
+            // Continuar con el siguiente archivo
+            await new Promise(resolve => setTimeout(resolve, 300));
+        }
+    }
+
+    // ✅ MOSTRAR RESULTADOS FINALES
+    if (results.length > 0) {
+        console.log(`🎉 ${results.length} de ${files.length} archivos procesados correctamente`);
+
+        const mensaje = results.length === files.length
+            ? `${results.length} imagen(es) subida(s) correctamente`
+            : `${results.length} de ${files.length} imagen(es) subida(s)`;
+
+        showNotification(mensaje, results.length === files.length ? 'success' : 'warning', 4000);
+    }
+
+    if (errors.length > 0) {
+        console.error(`❌ ${errors.length} errores:`, errors);
+        showNotification(`${errors.length} archivo(s) tuvieron errores`, 'error', 3000);
+    }
+}
+
+
+        /*setUploadState(uploadBtn, 'uploading');
 
         // Procesar archivos sólo cuando es acción directa del usuario
         const uploadPromises = validFiles.map(file => uploadSingleImage(file));
@@ -1064,26 +921,18 @@
                 results.forEach(imageData => {
                     addBackendImageToTable(imageData);
                 });
-
-                /*setUploadState(uploadBtn, 'success');
-
-                // Reset después de 2 segundos
-                setTimeout(() => {
-                    setUploadState(uploadBtn, 'normal');
-                }, 2000);*/
             })
             .catch(error => {
                 console.error('Error subiendo imágenes:', error);
                 showNotification('Error al subir las imágenes', 'error');
                 //setUploadState(uploadBtn, 'normal');
             });
-    }
+    }*/
 /*======================================================================================================================*/
-    let currentUploadSession = null;
-
+    //let currentUploadSession = null;
     function uploadSingleImage(file) {
     return new Promise((resolve, reject) => {
-        console.log('Subiendo imagen desde fotos-index:', file.name);
+        console.log('📤 Subiendo imagen desde fotos-index:', file.name);
 
         const formData = new FormData();
         formData.append('imagen', file);
@@ -1093,7 +942,7 @@
         formData.append('timestamp', new Date().toISOString());
         formData.append('origen_vista', 'fotos-index');
 
-        // 🎯 Mostrar modal para datos adicionales
+        // ✅ MOSTRAR MODAL PARA DATOS ADICIONALES
         const modalEl = document.getElementById('imageDataModal');
         const modal = new bootstrap.Modal(modalEl);
 
@@ -1102,10 +951,8 @@
         document.getElementById('tipoFotografiaSelect').selectedIndex = 0;
         modal.show();
 
-        // Configurar evento del botón guardar
+        // ✅ CONFIGURAR BOTÓN GUARDAR
         const saveBtn = document.getElementById('saveImageData');
-
-        // Limpiar listeners anteriores
         const newSaveBtn = saveBtn.cloneNode(true);
         saveBtn.parentNode.replaceChild(newSaveBtn, saveBtn);
 
@@ -1113,43 +960,78 @@
             const descripcion = document.getElementById('descripcionInput').value.trim();
             const tipoFotografia = document.getElementById('tipoFotografiaSelect').value;
 
-            if (!descripcion || !tipoFotografia) {
-                showNotification("Complete todos los campos", 'warning');
+            // ✅ VALIDACIÓN MÁS ESTRICTA
+            if (!descripcion || descripcion.length < 3) {
+                showNotification("La descripción debe tener al menos 3 caracteres", 'warning');
+                return;
+            }
+
+            if (!tipoFotografia) {
+                showNotification("Seleccione un tipo de fotografía", 'warning');
                 return;
             }
 
             formData.append('descripcion', descripcion);
-            formData.append('tipo', tipoFotografia.toUpperCase());
+            formData.append('tipo', tipoFotografia); // ✅ SIN .toUpperCase() - dejar como está
 
             modal.hide();
 
-            // Subir al backend
+            // ✅ SUBIR AL BACKEND usando AJAX existente
             $.ajax({
                 url: '/api/fotografias',
                 type: 'POST',
                 data: formData,
                 processData: false,
                 contentType: false,
+                timeout: 30000, // 30 segundos timeout
                 headers: {
                     'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content'),
                     'X-Origen-Vista': 'fotos-index'
                 },
+                beforeSend: function() {
+                    console.log('🔄 Enviando al servidor...');
+                },
                 success: function(response) {
-                    if (response.success) {
-                        console.log('Imagen subida desde fotos-index:', response.data);
+                    if (response.success && response.data) {
+                        console.log('✅ Imagen subida desde fotos-index:', response.data);
                         resolve(response.data);
                     } else {
-                        reject(new Error(response.message));
+                        reject(new Error(response.message || 'Respuesta inválida del servidor'));
                     }
                 },
                 error: function(xhr, status, error) {
-                    console.error('Error:', error);
-                    reject(new Error('Error de conexión'));
+                    console.error('❌ Error AJAX:', {
+                        status: xhr.status,
+                        statusText: xhr.statusText,
+                        responseText: xhr.responseText
+                    });
+
+                    let errorMessage = `Error ${xhr.status}: `;
+
+                    if (xhr.responseJSON && xhr.responseJSON.message) {
+                        errorMessage += xhr.responseJSON.message;
+                    } else if (xhr.responseJSON && xhr.responseJSON.errors) {
+                        const errors = Object.values(xhr.responseJSON.errors).flat();
+                        errorMessage += errors.join(', ');
+                    } else {
+                        errorMessage += error || 'Error de conexión';
+                    }
+
+                    reject(new Error(errorMessage));
                 }
             });
         });
+
+        // ✅ MANEJAR CANCELACIÓN DEL MODAL
+        modalEl.addEventListener('hidden.bs.modal', function() {
+            // Si el modal se cierra sin guardar, rechazar la promesa
+            if (!newSaveBtn.disabled) {
+                reject(new Error('Operación cancelada por el usuario'));
+            }
+        }, { once: true });
     });
 }
+
 /*=====================================================================================================================*/
     // ====>>>> Al cargar la página, verificar si hay imágenes nuevas(agregadas) En fotos-sit-add
     document.addEventListener("DOMContentLoaded", function() {
@@ -1158,12 +1040,58 @@
             //LIMPIAR cualquier resto de localStorage sin procesar
             const transferredData = localStorage.getItem('newUploadedImages');
             if (transferredData) {
-                console.log('Limpiando localStorage de transferencias previas...');
-                localStorage.removeItem('newUploadedImages');
+                try {
+                    const data = JSON.parse(transferredData);
+                    console.log('📦 Datos transferidos encontrados:', data);
+
+                    if (data.images && data.images.length > 0) {
+                        console.log(`🔄 Procesando ${data.images.length} imágenes transferidas...`);
+
+                        // ✅ PROCESAR CADA IMAGEN TRANSFERIDA
+                        data.images.forEach((imageData, index) => {
+                            console.log(`📸 Procesando imagen ${index + 1}:`, {
+                                id: imageData.id,
+                                url: imageData.url,
+                                origen: imageData.origenVista,
+                                fromSitAdd: imageData.fromSitAdd
+                            });
+
+                            // ✅ VERIFICAR QUE VIENE DE FOTOS-SIT-ADD
+                            if (imageData.fromSitAdd === true && imageData.displayOnly === true) {
+                                // ✅ AGREGAR A TABLA SIN SUBIR DE NUEVO
+                                setTimeout(() => {
+                                    addBackendImageToTable(imageData);
+                                }, index * 200); // Delay escalonado para animación
+                            } else {
+                                console.log(`⚠️ Imagen ${index + 1} no tiene marcadores correctos`);
+                            }
+                        });
+
+                        // ✅ MOSTRAR NOTIFICACIÓN DE ÉXITO
+                        setTimeout(() => {
+                            showNotification(
+                                `✅ ${data.images.length} imagen(es) cargada(s) desde fotos-sit-add`,
+                                'success',
+                                3000
+                            );
+                        }, 500);
+                    }
+
+                    // ✅ LIMPIAR localStorage después de procesar
+                    localStorage.removeItem('newUploadedImages');
+                    console.log('🧹 LocalStorage limpiado');
+
+                } catch (error) {
+                    console.error('Error al procesar imágenes transferidas:', error);
+                    localStorage.removeItem('newUploadedImages'); // Limpiar en caso de error
+                }
+            } else {
+                console.log('No hay imágenes transferidas');
             }
 
-            //CARGAR IMÁGENES DEL BACKEND AL INICIAR
+            //CARGAR IMÁGENES DEL BACKEND (después de las transferidas)
             setTimeout(() => {
+                console.log('Cargando imágenes del backend...')
                 loadPhotosFromBackend();
             }, 1000);
 

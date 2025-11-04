@@ -292,7 +292,7 @@
         }
 
         // 🎯 PREPARAR datos para mostrar (No subir de nuevo a la tabla)
-        /*const dataToTransfer = {
+        const dataToTransfer = {
             images: savedImages.map(img => ({
                 //Datos del backend real (ya subido)
                 id: img.id,
@@ -313,17 +313,21 @@
                 displayOnly: true,        //Solo para mostrar
                 uploaded: true,           //Ya subida
                 isBackendImage: true,     //Es imagen de backend
-                source: 'backend-confirmed' //Confirmada en backend
-            }))
+                source: 'backend-confirmed', //Confirmada en backend
+                fromSitAdd: true
+            })),
+            timestamp: Date.now(),
+            totalImages: savedImages.length
         };
 
         // 🎯 GUARDAR para mostrar en fotos-index
-        localStorage.setItem('newUploadedImages', JSON.stringify(dataToTransfer));*/
+        localStorage.setItem('newUploadedImages', JSON.stringify(dataToTransfer));
 
         // 🎯 REDIRECCIÓN AUTOMÁTICA
         showNotification(`${savedImages.length} imagen(es) guardadas. Redirigiendo...`, 'success', 1500);
 
         setTimeout(() => {
+            console.log('Redirigiendo a fotos-index...');
             window.location.href = "{{ route('fotos-index') }}";
         }, 1500);
     }
@@ -460,6 +464,26 @@
         function processMultipleImageAtOnce(files, source) {
             console.log(`Procesando ${files.length} imágenes en lote...`);
 
+            // ✅ VALIDAR archivos antes de procesar
+            const validFiles = Array.from(files).filter(file => {
+                if (!file.type.startsWith('image/')) {
+                    showNotification(`"${file.name}" no es una imagen válida`, 'error');
+                    return false;
+                }
+                if (file.size > 10 * 1024 * 1024) {
+                    showNotification(`"${file.name}" es demasiado grande (máx 10MB)`, 'error');
+                    return false;
+                }
+                return true;
+            });
+
+            if (validFiles.length === 0) {
+                showNotification('No hay archivos válidos para procesar', 'warning');
+                return;
+            }
+
+            console.log(`✅ ${validFiles.length} archivos válidos de ${files.length} total`);
+
             // Mostrar estado de carga
             const uploadBtn = source === 'camera'
                 ? document.getElementById('cameraUpload')
@@ -467,42 +491,127 @@
 
             setUploadState(uploadBtn, 'uploading');
 
-            // Convertir todas las imagenes a base64 primero
-            const filePromises = Array.from(files).map(file => {
-                return new Promise((resolve, reject) => {
-                    const reader = new FileReader();
-                    reader.onload = function(e) {
-                        resolve({
-                            file: file,
-                            base64: e.target.result,
-                            name: file.name,
-                            size: file.size
-                        });
+            // ✅ PROCESAR ARCHIVOS DE FORMA ASÍNCRONA Y ROBUSTA
+            const imageDataArray = [];
+            let processedCount = 0;
+            let hasErrors = false;
+
+            // Mostrar progreso inicial
+            showNotification(`Procesando ${validFiles.length} archivo(s)...`, 'info', 2000);
+
+            // ✅ PROCESAR CADA ARCHIVO CON MANEJO DE ERRORES
+            validFiles.forEach((file, index) => {
+                const reader = new FileReader();
+
+                reader.onload = function(e) {
+                    console.log(`📸 Archivo ${index + 1}/${validFiles.length} leído: ${file.name}`);
+
+                    const imageData = {
+                        id: 'temp_' + Date.now() + '_' + index,
+                        name: file.name,
+                        size: file.size,
+                        type: file.type,
+                        base64: e.target.result,
+                        file: file,
+                        timestamp: Date.now(),
+                        index: index
                     };
-                    reader.onerror = () => reject(new Error(`Error leyendo ${file.name}`));
-                    reader.readAsDataURL(file);
-                });
+
+                    imageDataArray.push(imageData);
+                    processedCount++;
+
+                    console.log(`✅ Progreso: ${processedCount}/${validFiles.length}`);
+
+                    // ✅ VERIFICAR SI TODOS LOS ARCHIVOS ESTÁN PROCESADOS
+                    if (processedCount === validFiles.length) {
+                        console.log('🎉 Todos los archivos procesados');
+
+                        if (imageDataArray.length > 0) {
+                            // ✅ ORDENAR por índice para mantener orden original
+                            imageDataArray.sort((a, b) => a.index - b.index);
+
+                            console.log(`📋 Orden de imágenes confirmado: ${imageDataArray.map(img => img.name).join(', ')}`);
+
+                            // Pequeño delay para asegurar que todo esté listo
+                            setTimeout(() => {
+                                showBatchImageModal(imageDataArray, uploadBtn);
+                            }, 200);
+                        } else {
+                            console.error('❌ No se procesaron imágenes válidas');
+                            showNotification('No se pudo procesar ningún archivo válido', 'error');
+                            setUploadState(uploadBtn, 'normal');
+                        }
+                    }
+                };
+
+                reader.onerror = function(error) {
+                    console.error(`❌ Error leyendo archivo ${index + 1} (${file.name}):`, error);
+                    showNotification(`Error leyendo ${file.name}`, 'error', 2000);
+
+                    hasErrors = true;
+                    processedCount++;
+
+                    // ✅ CONTINUAR AUNQUE HAYA ERRORES
+                    if (processedCount === validFiles.length) {
+                        if (imageDataArray.length > 0) {
+                            console.log(`⚠️ Procesamiento completado con errores. ${imageDataArray.length} imágenes válidas.`);
+
+                            // Ordenar y mostrar las imágenes que sí se procesaron
+                            imageDataArray.sort((a, b) => a.index - b.index);
+
+                            setTimeout(() => {
+                                showBatchImageModal(imageDataArray, uploadBtn);
+                            }, 200);
+                        } else {
+                            console.error('❌ No se pudo procesar ningún archivo');
+                            showNotification('No se pudo procesar ningún archivo', 'error');
+                            setUploadState(uploadBtn, 'normal');
+                        }
+                    }
+                };
+
+                // ✅ INICIAR LECTURA CON LOG
+                console.log(`🔄 Iniciando lectura del archivo ${index + 1}: ${file.name} (${(file.size / 1024 / 1024).toFixed(2)}MB)`);
+                reader.readAsDataURL(file);
             });
 
-            // Cuando todas las imágenes estén convertidas, abrir UN SOLO modal
-            Promise.all(filePromises)
-                .then(imageDataArray => {
-                    console.log('Todas las imágenes convertidas a Base64');
-                    // Abrir modal para configurar datos para todas las imagenes
-                    showBatchImageModal(imageDataArray, uploadBtn);
-                })
-                .catch(error => {
-                    console.error('Error convirtiendo imágenes a Base64:', error);
-                    showNotification('Error al convertir imágenes a Base64', 'error');
-                    setUploadState(uploadBtn, 'normal');
-                });
+            // ✅ TIMEOUT DE SEGURIDAD
+            setTimeout(() => {
+                if (processedCount < validFiles.length) {
+                    console.error(`⏰ Timeout: Solo se procesaron ${processedCount}/${validFiles.length} archivos`);
+
+                    if (imageDataArray.length > 0) {
+                        showNotification(`Solo se procesaron ${imageDataArray.length} de ${validFiles.length} archivos`, 'warning');
+                        imageDataArray.sort((a, b) => a.index - b.index);
+                        showBatchImageModal(imageDataArray, uploadBtn);
+                    } else {
+                        showNotification('Timeout: No se pudo procesar ningún archivo', 'error');
+                        setUploadState(uploadBtn, 'normal');
+                    }
+                }
+            }, 15000); // 15 segundos timeout
         }
 
         // ================= FUNCIÓN: Modal para lote de imágenes ===================
         function showBatchImageModal(imageDataArray, uploadBtn) {
             console.log(`Abriendo modal para ${imageDataArray.length} imágenes`);
 
+            // ✅ VALIDACIÓN ADICIONAL
+            if (!imageDataArray || imageDataArray.length === 0) {
+                console.error('❌ No hay imágenes para procesar en modal');
+                showNotification('No hay imágenes para procesar', 'warning');
+                setUploadState(uploadBtn, 'normal');
+                return;
+            }
+
             const modalEl = document.getElementById('imageDataModal');
+             if (!modalEl) {
+                console.error('❌ Modal no encontrado');
+                showNotification('Error del sistema: Modal no disponible', 'error');
+                setUploadState(uploadBtn, 'normal');
+                return;
+            }
+
             const modal = new bootstrap.Modal(modalEl);
 
             // Mostrar titulo simple
@@ -527,116 +636,144 @@
 
             // Manejar guardado para TODAS las imágenes
             const saveBtn = document.getElementById('saveImageData');
+            const newSaveBtn = saveBtn.cloneNode(true);
+            saveBtn.parentNode.replaceChild(newSaveBtn, saveBtn);
 
-            const handleBatchSave = async () => {
+            // ✅ CONFIGURAR NUEVO EVENT LISTENER
+            newSaveBtn.addEventListener('click', async function handleBatchSave() {
                 const descripcionVal = descripcionInput ? descripcionInput.value.trim() : '';
                 const tipoFotografia = tipoSelect ? tipoSelect.value : '';
 
+                // Validación
                 if (!descripcionVal || !tipoFotografia) {
-                    showNotification("Por favor ingrese todos los campos", 'warning');
+                    showNotification("Por favor complete todos los campos", 'warning');
                     return;
                 }
 
-                console.log(`Procesando ${imageDataArray.length} imágenes...`);
+                console.log(`🔄 Iniciando procesamiento de ${imageDataArray.length} imágenes con:`, {
+                    descripcion: descripcionVal,
+                    tipo: tipoFotografia
+                });
 
-                // Desactivar botón mientras se procesa
-                saveBtn.disabled = true;
-                saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Procesando...';
+                // Desactivar botón durante procesamiento
+                newSaveBtn.disabled = true;
+                newSaveBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Procesando...';
 
-                // ====== Procesamiento Automatico ========
                 try {
                     const savedImages = [];
-                    const ordenSitValue = document.getElementById('ordenSitValue').textContent || 'N/A';
+                    const ordenSitValue = document.getElementById('ordenSitValue')?.textContent || 'N/A';
 
+                    if (!ordenSitValue || ordenSitValue === 'N/A') {
+                        throw new Error('Debe buscar una orden SIT válida antes de subir imágenes');
+                    }
+
+                    // ✅ PROCESAR SECUENCIALMENTE PARA EVITAR SOBRECARGA
                     for (let i = 0; i < imageDataArray.length; i++) {
                         const imageData = imageDataArray[i];
 
                         showNotification(`Guardando imagen ${i + 1} de ${imageDataArray.length}...`, 'info', 1000);
 
-                         //CREAR FormData correctamente
-                        const formData = new FormData();
+                        try {
+                            // Convertir base64 a File
+                            const response = await fetch(imageData.base64);
+                            const blob = await response.blob();
+                            const fileName = imageData.name || `imagen_${Date.now()}_${i}.jpg`;
+                            const file = new File([blob], fileName, { type: blob.type });
 
-                        // Convertir base64 a File objeto
-                        const response = await fetch(imageData.base64);
-                        const blob = await response.blob();
-                        const fileName = imageData.name || `imagen_${Date.now()}_${i}.jpg`;
-                        const file = new File([blob], fileName, { type: blob.type });
+                            // Crear FormData
+                            const formData = new FormData();
+                            formData.append('imagen', file);
+                            formData.append('orden_sit', ordenSitValue);
+                            formData.append('po', generatePONumber());
+                            formData.append('oc', generateOCNumber());
+                            formData.append('descripcion', descripcionVal);
+                            formData.append('tipo', tipoFotografia.toUpperCase());
+                            formData.append('origen_vista', 'fotos-sit-add');
+                            formData.append('timestamp', new Date().toISOString());
+                             formData.append('batch_index', i.toString());
+                            formData.append('batch_total', imageDataArray.length.toString());
 
-                        // Crear FormData y agregar archivo
-                        //const formData = new FormData();
-                        formData.append('imagen', file);
-                        formData.append('orden_sit', ordenSitValue);
-                        formData.append('po', generatePONumber());
-                        formData.append('oc', generateOCNumber());
-                        formData.append('descripcion', descripcionVal);
-                        formData.append('tipo', tipoFotografia.toUpperCase());
-                        formData.append('origen_vista', 'fotos-sit-add');
-                        formData.append('timestamp', new Date().toISOString());
+                            console.log(`FormData para imagen ${i + 1}:`);
+                            for (let pair of formData.entries()) {
+                                if (pair[1] instanceof File) {
+                                    console.log(`${pair[0]}: File(${pair[1].name}, ${pair[1].size} bytes, ${pair[1].type})`);
+                                } else {
+                                    console.log(`${pair[0]}: ${pair[1]}`);
+                                }
+                            }
 
-                        // ==== Enviar al Backend ====
-                        const backendResponse = await uploadToBackend(formData);
+                            // Subir al backend
+                            const backendResponse = await uploadToBackend(formData);
 
-                        if (backendResponse.success) {
-                            savedImages.push({
-                                id: backendResponse.data.id,
-                                url: backendResponse.data.imagen_url,
-                                orden_sit: backendResponse.data.orden_sit,
-                                po: backendResponse.data.po,
-                                oc: backendResponse.data.oc,
-                                descripcion: backendResponse.data.descripcion,
-                                tipo: backendResponse.data.tipo,
-                                created_at: backendResponse.data.created_at,
-                                source: 'backend-real',
-                                saved: true
-                            });
-                            console.log(`Imagen ${i + 1} guardada con ID: ${backendResponse.data.id}`);
-                        } else {
-                            throw new Error(`Error al guardar imagen ${i + 1}: ${backendResponse.message}`);
+                            if (backendResponse.success) {
+                                savedImages.push({
+                                    id: backendResponse.data.id,
+                                    url: backendResponse.data.imagen_url,
+                                    orden_sit: backendResponse.data.orden_sit,
+                                    po: backendResponse.data.po,
+                                    oc: backendResponse.data.oc,
+                                    descripcion: backendResponse.data.descripcion,
+                                    tipo: backendResponse.data.tipo,
+                                    created_at: backendResponse.data.created_at,
+                                    source: 'backend-real',
+                                    saved: true
+                                });
+                                console.log(`✅ Imagen ${i + 1}/${imageDataArray.length} guardada: ID ${backendResponse.data.id}`);
+
+                                // Delay mas largo entre subidas
+                                if (i < imageDataArray.length - 1) {
+                                    await new Promise(resolve => setTimeout(resolve, 2000)); // 2 segundos
+                                }
+                            } else {
+                                throw new Error(backendResponse.message || 'Error en respuesta');
+                            }
+
+                        } catch (imageError) {
+                            console.error(`❌ Error procesando imagen ${i + 1}:`, imageError);
+                            showNotification(`Error en imagen ${i + 1}: ${imageError.message}`, 'error', 2000);
+                            // Continuar con las siguientes imágenes
+
+                            // Continuar con delay
+                            await new Promise(resolve => setTimeout(resolve, 1000)); // 1 segundo
                         }
                     }
 
-                    // Agregar TODAS las imágenes al array
-                    //uploadedImages.push(...savedImages);
-
-                    // Cerrar modal inmediatamente
-                    //modal.hide();
-
-                    // Actualizar vista previa con la primera imagen
+                    // ✅ FINALIZACIÓN
                     if (savedImages.length > 0) {
                         uploadedImages.push(...savedImages);
-
                         modal.hide();
 
-                        // Actualizar vista previa
-                        updateCardPreview(uploadedImages[0]);
+                        // Actualizar vista previa con la primera imagen subida
+                        updateCardPreview(savedImages[0]);
 
-                        console.log(` ${savedImages.length} Procesamiento de imágenes completado.`);
+                        console.log(`🎉 Procesamiento completado: ${savedImages.length}/${imageDataArray.length} imágenes guardadas`);
 
-                        // == Guardado y redireccion automatica ==
+                        // Mostrar resultado
+                        if (savedImages.length === imageDataArray.length) {
+                            showNotification(`${savedImages.length} imagen(es) guardada(s) correctamente`, 'success', 2000);
+                        } else {
+                            showNotification(`${savedImages.length} de ${imageDataArray.length} imagen(es) guardada(s)`, 'warning', 3000);
+                        }
+
+                        // Guardado automático y redirección
                         setTimeout(() => {
-                            console.log('Guardado automatico iniciado...');
-                            guardarFoto(savedImages); // Redireccion automatica
-                        }, 500);
+                            guardarFoto(savedImages);
+                        }, 1000);
+
                     } else {
-                        throw new Error('No se guardaron imágenes.');
+                        throw new Error('No se pudo guardar ninguna imagen');
                     }
 
                 } catch (error) {
-                    console.error('Error durante el procesamiento automático:', error);
+                    console.error('❌ Error durante el procesamiento:', error);
+                    showNotification(`Error general: ${error.message}`, 'error', 5000);
                 } finally {
-                    // Cleanup
-                    saveBtn.disabled = false;
-                    saveBtn.innerHTML = 'Guardar';
-                     saveBtn.removeEventListener('click', handleBatchSave);
+                    // ✅ CLEANUP
+                    newSaveBtn.disabled = false;
+                    newSaveBtn.innerHTML = 'Guardar';
                     setUploadState(uploadBtn, 'normal');
                 }
-            };
-
-            // Agregar event listener
-            saveBtn.addEventListener('click', handleBatchSave);
-
-            // Cambiar texto del botón
-            saveBtn.innerHTML = 'Guardar';
+            });
 
             // Mostrar modal
            modal.show();

@@ -75,8 +75,32 @@ class FotografiaPrendaController extends Controller
             $perPage = $request->get('per_page', 10);
             $fotografias = $query->paginate($perPage);
 
-            // Formatear datos para el frontend
+            // Formatear datos para el frontend con URLS correctas
             $data = $fotografias->through(function ($foto) {
+                //CONSTRUIR URL correcta según si ya tiene URL completa o no
+                $imageUrl = $foto->imagen_url;
+
+                if (!$imageUrl || !filter_var($imageUrl, FILTER_VALIDATE_URL)) {
+                    // Si no tiene URL válida, construir desde imagen_path
+                    $imageUrl = asset('storage/' . $foto->imagen_path);
+                }
+
+                //VERIFICAR que el archivo existe
+                $imagePath = public_path('storage/' . $foto->imagen_path);
+                $fileExists = file_exists($imagePath);
+
+                if (!$fileExists) {
+                    \Log::warning('Archivo de imagen no encontrado', [
+                        'id' => $foto->id,
+                        'path' => $foto->imagen_path,
+                        'full_path' => $imagePath,
+                        'url' => $imageUrl
+                    ]);
+
+                    //USAR imagen por defecto si no existe
+                    $imageUrl = asset('images/default-image.jpg'); // o cualquier imagen por defecto
+                }
+
                 return [
                     'id' => $foto->id,
                     'orden_sit' => $foto->orden_sit,
@@ -84,10 +108,13 @@ class FotografiaPrendaController extends Controller
                     'oc' => $foto->oc ?? '-',
                     'descripcion' => $foto->descripcion,
                     'tipo' => $foto->tipo,
-                    'imagen_url' => $foto->imagen_url,
-                    'imagen_size_formatted' => $foto->imagen_size_formatted,
+                    'imagen_url' => $imageUrl,
+                    'imagen_path' => $foto->imagen_path,
+                    'imagen_size_formatted' => $foto->imagen_size_formatted ?? 'N/A',
                     'fecha_subida' => $foto->created_at->format('d-m-Y H:i'),
-                    'subido_por' => $foto->subido_por ?? 'Sistema'
+                    'created_at' => $foto->created_at->toISOString(),
+                    'subido_por' => $foto->subido_por ?? 'Sistema',
+                    'file_exists' => $fileExists
                 ];
             });
 
@@ -144,6 +171,8 @@ class FotografiaPrendaController extends Controller
             // Guardar imagen
             $rutaCompleta = $imagen->storeAs($rutaDestino, $nombreArchivo, 'public');
 
+            $imageUrl = asset('storage/' . $rutaCompleta);
+
             // Crear registro en BD
             $fotografia = FotografiaPrenda::create([
                 'orden_sit' => $request->orden_sit,
@@ -152,6 +181,7 @@ class FotografiaPrendaController extends Controller
                 'descripcion' => $request->descripcion,
                 'tipo' => $request->tipo,
                 'imagen_path' => $rutaCompleta,
+                'imagen_url' => $imageUrl,
                 'imagen_original_name' => $imagen->getClientOriginalName(),
                 'imagen_size' => $imagen->getSize(),
                 'imagen_mime_type' => $imagen->getMimeType(),
@@ -160,8 +190,23 @@ class FotografiaPrendaController extends Controller
                 'metadatos' => [
                     'ip_address' => $request->ip(),
                     'user_agent' => $request->userAgent(),
-                    'upload_timestamp' => time()
+                    'upload_timestamp' => time(),
+                    'origen_vista' => $request->origen_vista ?? 'unknown'
                 ]
+            ]);
+
+            // Verificar que el archivo realmente existe
+            $fullPath = public_path('storage/' . $rutaCompleta);
+            if (!file_exists($fullPath)) {
+                \Log::error('Archivo no encontrado: ' . $fullPath);
+                throw new \Exception('Archivo no se guardó correctamente');
+            }
+
+            \Log::info('Fotografía subida correctamente', [
+                'id' => $fotografia->id,
+                'path' => $rutaCompleta,
+                'url' => $imageUrl,
+                'file_exists' => file_exists($fullPath)
             ]);
 
             return response()->json([
@@ -174,7 +219,8 @@ class FotografiaPrendaController extends Controller
                     'oc' => $fotografia->oc ?? '-',
                     'descripcion' => $fotografia->descripcion,
                     'tipo' => $fotografia->tipo,
-                    'imagen_url' => $fotografia->imagen_url,
+                    'imagen_url' => $imageUrl,
+                    'imagen_path' => $rutaCompleta,
                     'fecha_subida' => $fotografia->created_at->format('d-m-Y H:i')
                 ]
             ]);

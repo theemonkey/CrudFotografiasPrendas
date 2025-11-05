@@ -183,7 +183,7 @@
             return;
         }
 
-        // 🎯 BUSCAR EN EL BACKEND
+        //BUSCAR EN EL BACKEND
         $.ajax({
             url: '/api/fotografias',
             type: 'GET',
@@ -198,11 +198,11 @@
                     const fotografias = response.data.data || [];
 
                     if (fotografias.length > 0) {
-                        // 🎯 ORDEN EXISTE - Mostrar datos existentes
+                        //ORDEN EXISTE - Mostrar datos existentes
                         const primeraFoto = fotografias[0];
                         mostrarOrdenExistente(primeraFoto, fotografias.length);
                     } else {
-                        // 🎯 ORDEN NO EXISTE - Permitir crear nueva
+                        //ORDEN NO EXISTE - Permitir crear nueva
                         mostrarOrdenNueva(value);
                     }
                 } else {
@@ -212,13 +212,13 @@
             },
             error: function(xhr, status, error) {
                 console.error('Error buscando orden:', error);
-                // 🎯 FALLBACK: Permitir crear nueva orden
+                //FALLBACK: Permitir crear nueva orden
                 mostrarOrdenNueva(value);
             }
         });
     }
 
-    // 🎯 NUEVA FUNCIÓN: Mostrar orden existente
+    //NUEVA FUNCIÓN: Mostrar orden existente
     function mostrarOrdenExistente(primeraFoto, totalFotos) {
         const ordenSitValue = document.getElementById('ordenSitValue');
         const tipoOrden = document.getElementById('tipoOrden');
@@ -245,7 +245,7 @@
         showNotification(`Orden ${primeraFoto.orden_sit} encontrada con ${totalFotos} fotografía(s)`, 'success', 2000);
     }
 
-    // 🎯 NUEVA FUNCIÓN: Mostrar orden nueva
+    //NUEVA FUNCIÓN: Mostrar orden nueva
     function mostrarOrdenNueva(numeroOrden) {
         const ordenSitValue = document.getElementById('ordenSitValue');
         const tipoOrden = document.getElementById('tipoOrden');
@@ -269,7 +269,7 @@
 
         ordenSitCard.style.display = 'block';
 
-        showNotification(`Nueva orden ${numeroOrden} lista para fotografías`, 'info', 2000);
+        //showNotification(`Nueva orden ${numeroOrden} lista para fotografías`, 'info', 2000);
     }
 
     // Cambiar estado
@@ -291,7 +291,7 @@
             return;
         }
 
-        // 🎯 PREPARAR datos para mostrar (No subir de nuevo a la tabla)
+        //PREPARAR datos para mostrar (No subir de nuevo a la tabla)
         const dataToTransfer = {
             images: savedImages.map(img => ({
                 //Datos del backend real (ya subido)
@@ -320,11 +320,11 @@
             totalImages: savedImages.length
         };
 
-        // 🎯 GUARDAR para mostrar en fotos-index
+        //GUARDAR para mostrar en fotos-index
         localStorage.setItem('newUploadedImages', JSON.stringify(dataToTransfer));
 
-        // 🎯 REDIRECCIÓN AUTOMÁTICA
-        showNotification(`${savedImages.length} imagen(es) guardadas. Redirigiendo...`, 'success', 1500);
+        //REDIRECCIÓN AUTOMÁTICA
+        //showNotification(`${savedImages.length} imagen(es) guardadas. Redirigiendo...`, 'success', 1500);
 
         setTimeout(() => {
             console.log('Redirigiendo a fotos-index...');
@@ -334,7 +334,7 @@
 
     // Lightbox functions
     function openLightbox(imageUrl, description, type) {
-        console.log('🖼️ Abriendo lightbox:', { imageUrl, description, type });
+        console.log('Abriendo lightbox:', { imageUrl, description, type });
 
         const lightbox = document.getElementById('imageLightbox');
         const lightboxImage = document.getElementById('lightboxImage');
@@ -356,9 +356,9 @@
             lightbox.style.display = 'flex';
             document.body.style.overflow = 'hidden';
 
-            console.log('✅ Lightbox abierto correctamente');
+            console.log('Lightbox abierto correctamente');
         } else {
-            console.error('❌ No se encontraron elementos del lightbox');
+            console.error('No se encontraron elementos del lightbox');
         }
     }
 
@@ -367,7 +367,7 @@
         if (lightbox) {
             lightbox.style.display = 'none';
             document.body.style.overflow = '';
-            console.log('✅ Lightbox cerrado');
+            console.log('Lightbox cerrado');
         }
     }
 
@@ -380,7 +380,7 @@
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
-            console.log('✅ Descarga iniciada');
+            console.log('Descarga iniciada');
         }
     }
 
@@ -464,7 +464,7 @@
         function processMultipleImageAtOnce(files, source) {
             console.log(`Procesando ${files.length} imágenes en lote...`);
 
-            // ✅ VALIDAR archivos antes de procesar
+            //VALIDAR archivos antes de procesar
             const validFiles = Array.from(files).filter(file => {
                 if (!file.type.startsWith('image/')) {
                     showNotification(`"${file.name}" no es una imagen válida`, 'error');
@@ -482,7 +482,7 @@
                 return;
             }
 
-            console.log(`✅ ${validFiles.length} archivos válidos de ${files.length} total`);
+            console.log(`${validFiles.length} archivos válidos de ${files.length} total`);
 
             // Mostrar estado de carga
             const uploadBtn = source === 'camera'
@@ -491,20 +491,20 @@
 
             setUploadState(uploadBtn, 'uploading');
 
-            // ✅ PROCESAR ARCHIVOS DE FORMA ASÍNCRONA Y ROBUSTA
+            //PROCESAR ARCHIVOS DE FORMA ASÍNCRONA Y ROBUSTA
             const imageDataArray = [];
             let processedCount = 0;
             let hasErrors = false;
 
             // Mostrar progreso inicial
-            showNotification(`Procesando ${validFiles.length} archivo(s)...`, 'info', 2000);
+            //showNotification(`Procesando ${validFiles.length} archivo(s)...`, 'info', 2000);
 
-            // ✅ PROCESAR CADA ARCHIVO CON MANEJO DE ERRORES
+            //PROCESAR CADA ARCHIVO CON MANEJO DE ERRORES
             validFiles.forEach((file, index) => {
                 const reader = new FileReader();
 
                 reader.onload = function(e) {
-                    console.log(`📸 Archivo ${index + 1}/${validFiles.length} leído: ${file.name}`);
+                    console.log(`Archivo ${index + 1}/${validFiles.length} leído: ${file.name}`);
 
                     const imageData = {
                         id: 'temp_' + Date.now() + '_' + index,
@@ -520,24 +520,24 @@
                     imageDataArray.push(imageData);
                     processedCount++;
 
-                    console.log(`✅ Progreso: ${processedCount}/${validFiles.length}`);
+                    console.log(`Progreso: ${processedCount}/${validFiles.length}`);
 
-                    // ✅ VERIFICAR SI TODOS LOS ARCHIVOS ESTÁN PROCESADOS
+                    //VERIFICAR SI TODOS LOS ARCHIVOS ESTÁN PROCESADOS
                     if (processedCount === validFiles.length) {
-                        console.log('🎉 Todos los archivos procesados');
+                        console.log('Todos los archivos procesados');
 
                         if (imageDataArray.length > 0) {
-                            // ✅ ORDENAR por índice para mantener orden original
+                            //ORDENAR por índice para mantener orden original
                             imageDataArray.sort((a, b) => a.index - b.index);
 
-                            console.log(`📋 Orden de imágenes confirmado: ${imageDataArray.map(img => img.name).join(', ')}`);
+                            console.log(`Orden de imágenes confirmado: ${imageDataArray.map(img => img.name).join(', ')}`);
 
                             // Pequeño delay para asegurar que todo esté listo
                             setTimeout(() => {
                                 showBatchImageModal(imageDataArray, uploadBtn);
                             }, 200);
                         } else {
-                            console.error('❌ No se procesaron imágenes válidas');
+                            console.error('No se procesaron imágenes válidas');
                             showNotification('No se pudo procesar ningún archivo válido', 'error');
                             setUploadState(uploadBtn, 'normal');
                         }
@@ -545,16 +545,16 @@
                 };
 
                 reader.onerror = function(error) {
-                    console.error(`❌ Error leyendo archivo ${index + 1} (${file.name}):`, error);
+                    console.error(`Error leyendo archivo ${index + 1} (${file.name}):`, error);
                     showNotification(`Error leyendo ${file.name}`, 'error', 2000);
 
                     hasErrors = true;
                     processedCount++;
 
-                    // ✅ CONTINUAR AUNQUE HAYA ERRORES
+                    //CONTINUAR AUNQUE HAYA ERRORES
                     if (processedCount === validFiles.length) {
                         if (imageDataArray.length > 0) {
-                            console.log(`⚠️ Procesamiento completado con errores. ${imageDataArray.length} imágenes válidas.`);
+                            console.log(`Procesamiento completado con errores. ${imageDataArray.length} imágenes válidas.`);
 
                             // Ordenar y mostrar las imágenes que sí se procesaron
                             imageDataArray.sort((a, b) => a.index - b.index);
@@ -563,22 +563,22 @@
                                 showBatchImageModal(imageDataArray, uploadBtn);
                             }, 200);
                         } else {
-                            console.error('❌ No se pudo procesar ningún archivo');
+                            console.error('No se pudo procesar ningún archivo');
                             showNotification('No se pudo procesar ningún archivo', 'error');
                             setUploadState(uploadBtn, 'normal');
                         }
                     }
                 };
 
-                // ✅ INICIAR LECTURA CON LOG
-                console.log(`🔄 Iniciando lectura del archivo ${index + 1}: ${file.name} (${(file.size / 1024 / 1024).toFixed(2)}MB)`);
+                //INICIAR LECTURA CON LOG
+                console.log(`Iniciando lectura del archivo ${index + 1}: ${file.name} (${(file.size / 1024 / 1024).toFixed(2)}MB)`);
                 reader.readAsDataURL(file);
             });
 
-            // ✅ TIMEOUT DE SEGURIDAD
+            //TIMEOUT DE SEGURIDAD
             setTimeout(() => {
                 if (processedCount < validFiles.length) {
-                    console.error(`⏰ Timeout: Solo se procesaron ${processedCount}/${validFiles.length} archivos`);
+                    console.error(`Timeout: Solo se procesaron ${processedCount}/${validFiles.length} archivos`);
 
                     if (imageDataArray.length > 0) {
                         showNotification(`Solo se procesaron ${imageDataArray.length} de ${validFiles.length} archivos`, 'warning');
@@ -596,9 +596,9 @@
         function showBatchImageModal(imageDataArray, uploadBtn) {
             console.log(`Abriendo modal para ${imageDataArray.length} imágenes`);
 
-            // ✅ VALIDACIÓN ADICIONAL
+            //VALIDACIÓN ADICIONAL
             if (!imageDataArray || imageDataArray.length === 0) {
-                console.error('❌ No hay imágenes para procesar en modal');
+                console.error('No hay imágenes para procesar en modal');
                 showNotification('No hay imágenes para procesar', 'warning');
                 setUploadState(uploadBtn, 'normal');
                 return;
@@ -606,7 +606,7 @@
 
             const modalEl = document.getElementById('imageDataModal');
              if (!modalEl) {
-                console.error('❌ Modal no encontrado');
+                console.error('Modal no encontrado');
                 showNotification('Error del sistema: Modal no disponible', 'error');
                 setUploadState(uploadBtn, 'normal');
                 return;
@@ -639,7 +639,7 @@
             const newSaveBtn = saveBtn.cloneNode(true);
             saveBtn.parentNode.replaceChild(newSaveBtn, saveBtn);
 
-            // ✅ CONFIGURAR NUEVO EVENT LISTENER
+            //CONFIGURAR NUEVO EVENT LISTENER
             newSaveBtn.addEventListener('click', async function handleBatchSave() {
                 const descripcionVal = descripcionInput ? descripcionInput.value.trim() : '';
                 const tipoFotografia = tipoSelect ? tipoSelect.value : '';
@@ -650,7 +650,7 @@
                     return;
                 }
 
-                console.log(`🔄 Iniciando procesamiento de ${imageDataArray.length} imágenes con:`, {
+                console.log(`Iniciando procesamiento de ${imageDataArray.length} imágenes con:`, {
                     descripcion: descripcionVal,
                     tipo: tipoFotografia
                 });
@@ -667,11 +667,11 @@
                         throw new Error('Debe buscar una orden SIT válida antes de subir imágenes');
                     }
 
-                    // ✅ PROCESAR SECUENCIALMENTE PARA EVITAR SOBRECARGA
+                    //PROCESAR SECUENCIALMENTE PARA EVITAR SOBRECARGA
                     for (let i = 0; i < imageDataArray.length; i++) {
                         const imageData = imageDataArray[i];
 
-                        showNotification(`Guardando imagen ${i + 1} de ${imageDataArray.length}...`, 'info', 1000);
+                        //showNotification(`Guardando imagen ${i + 1} de ${imageDataArray.length}...`, 'info', 1000);
 
                         try {
                             // Convertir base64 a File
@@ -718,7 +718,7 @@
                                     source: 'backend-real',
                                     saved: true
                                 });
-                                console.log(`✅ Imagen ${i + 1}/${imageDataArray.length} guardada: ID ${backendResponse.data.id}`);
+                                console.log(`Imagen ${i + 1}/${imageDataArray.length} guardada: ID ${backendResponse.data.id}`);
 
                                 // Delay mas largo entre subidas
                                 if (i < imageDataArray.length - 1) {
@@ -729,7 +729,7 @@
                             }
 
                         } catch (imageError) {
-                            console.error(`❌ Error procesando imagen ${i + 1}:`, imageError);
+                            console.error(`Error procesando imagen ${i + 1}:`, imageError);
                             showNotification(`Error en imagen ${i + 1}: ${imageError.message}`, 'error', 2000);
                             // Continuar con las siguientes imágenes
 
@@ -738,7 +738,7 @@
                         }
                     }
 
-                    // ✅ FINALIZACIÓN
+                    //FINALIZACIÓN
                     if (savedImages.length > 0) {
                         uploadedImages.push(...savedImages);
                         modal.hide();
@@ -746,13 +746,13 @@
                         // Actualizar vista previa con la primera imagen subida
                         updateCardPreview(savedImages[0]);
 
-                        console.log(`🎉 Procesamiento completado: ${savedImages.length}/${imageDataArray.length} imágenes guardadas`);
+                        console.log(`Procesamiento completado: ${savedImages.length}/${imageDataArray.length} imágenes guardadas`);
 
                         // Mostrar resultado
                         if (savedImages.length === imageDataArray.length) {
-                            showNotification(`${savedImages.length} imagen(es) guardada(s) correctamente`, 'success', 2000);
+                            //showNotification(`${savedImages.length} imagen(es) guardada(s) correctamente`, 'success', 2000);
                         } else {
-                            showNotification(`${savedImages.length} de ${imageDataArray.length} imagen(es) guardada(s)`, 'warning', 3000);
+                            //showNotification(`${savedImages.length} de ${imageDataArray.length} imagen(es) guardada(s)`, 'warning', 3000);
                         }
 
                         // Guardado automático y redirección
@@ -765,10 +765,10 @@
                     }
 
                 } catch (error) {
-                    console.error('❌ Error durante el procesamiento:', error);
+                    console.error('Error durante el procesamiento:', error);
                     showNotification(`Error general: ${error.message}`, 'error', 5000);
                 } finally {
-                    // ✅ CLEANUP
+                    //CLEANUP
                     newSaveBtn.disabled = false;
                     newSaveBtn.innerHTML = 'Guardar';
                     setUploadState(uploadBtn, 'normal');
@@ -835,7 +835,7 @@
         return new Promise((resolve, reject) => {
             console.log('Procesando archivo:', file.name);
 
-            // 🎯 CREAR FormData para enviar al backend
+            //CREAR FormData para enviar al backend
             const formData = new FormData();
             formData.append('imagen', file);
             formData.append('orden_sit', document.getElementById('ordenSitValue').textContent || '');
@@ -843,7 +843,7 @@
             formData.append('oc', generateOCNumber());
             formData.append('timestamp', new Date().toISOString());
 
-            // 🎯 Mostrar modal para datos adicionales ANTES de enviar
+            //Mostrar modal para datos adicionales ANTES de enviar
             const modalEl = document.getElementById('imageDataModal');
             const modal = new bootstrap.Modal(modalEl);
             modal.show();
@@ -863,19 +863,19 @@
                     return;
                 }
 
-                // 🎯 AGREGAR campos adicionales al FormData
+                //AGREGAR campos adicionales al FormData
                 formData.append('descripcion', descripcion);
                 formData.append('tipo', tipoFotografia.toUpperCase());
 
                 modal.hide();
                 saveBtn.removeEventListener('click', handleSave);
 
-                // 🎯 ENVIAR AL BACKEND con AJAX
+                //ENVIAR AL BACKEND con AJAX
                 uploadToBackend(formData)
                     .then(response => {
                         console.log('Imagen subida al backend:', response);
 
-                        // 🎯 GUARDAR para transferir a fotos-index
+                        //GUARDAR para transferir a fotos-index
                         const imageData = {
                             id: response.data.id,
                             url: response.data.imagen_url, // URL del servidor
@@ -901,7 +901,7 @@
         });
     }
 
-    // 🎯 NUEVA FUNCIÓN: Subir al backend
+    //NUEVA FUNCIÓN: Subir al backend
     function uploadToBackend(formData) {
         return new Promise((resolve, reject) => {
             console.log('Subiendo imagen al backend...');
@@ -943,7 +943,7 @@
                     console.log('Enviando imagen al servidor...');
                 },
                 success: function(response) {
-                    console.log('✅ Respuesta del servidor:', response);
+                    console.log('Respuesta del servidor:', response);
 
                     if (response.success && response.data) {
                         //ESTRUCTURAR respuesta correctamente
@@ -1055,7 +1055,6 @@
                 break;
             case 'normal':
             default:
-                // Estado normal, sin clases adicionales
                 break;
         }
     }

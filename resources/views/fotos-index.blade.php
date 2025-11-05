@@ -113,35 +113,17 @@
                                 </td>
                                 <td data-column="orden-sit">
                                     <div class="autocomplete-wrapper">
-                                        <input type="text"
-                                            class="form-control form-control-sm predictive-filter"
-                                            placeholder="Buscar"
-                                            id="filterOrdenSit"
-                                            data-column="orden-sit"
-                                            autocomplete="off">
-                                        <div class="autocomplete-suggestions" id="suggestionsOrdenSit"></div>
+
                                     </div>
                                 </td>
                                 <td data-column="po">
                                     <div class="autocomplete-wrapper">
-                                        <input type="text"
-                                            class="form-control form-control-sm predictive-filter"
-                                            placeholder="Buscar"
-                                            id="filterPO"
-                                            data-column="po"
-                                            autocomplete="off">
-                                        <div class="autocomplete-suggestions" id="suggestionsPO"></div>
+
                                     </div>
                                 </td>
                                 <td data-column="oc">
                                     <div class="autocomplete-wrapper">
-                                        <input type="text"
-                                            class="form-control form-control-sm predictive-filter"
-                                            placeholder="Buscar"
-                                            id="filterOC"
-                                            data-column="oc"
-                                            autocomplete="off">
-                                        <div class="autocomplete-suggestions" id="suggestionsOC"></div>
+
                                     </div>
                                 </td>
                                 <td data-column="descripcion">
@@ -357,7 +339,6 @@
   </div>
 </div>
 
-
 <!-- ==========>>>>>>>> Modal para Editar Información de la Prenda(BTN EDITAR) <<<<<<<<<<<========== -->
 <div class="modal fade" id="editImageModal" tabindex="-1" aria-labelledby="editImageModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-xl">
@@ -511,7 +492,6 @@
         </div>
     </div>
 </div>
-
 
 <!-- =======>>>>>>>>>>>> MODAL DE HISTORIAL DE LA PRENDA <<<<<<<<<========== -->
 <div class="modal fade" id="historialModal" tabindex="-1" aria-labelledby="historialModalLabel" aria-hidden="true">
@@ -850,89 +830,66 @@
     }
 
 
-    // REEMPLAZAR función processFilesSequentially (líneas ~690-720):
-async function processFilesSequentially(files, source) {
-    console.log(`🔄 Procesando ${files.length} archivos secuencialmente...`);
+    //Función de subida secuencial
+    async function processFilesSequentially(files, source) {
+        console.log(`Procesando ${files.length} archivos secuencialmente...`);
 
-    const results = [];
-    const errors = [];
+        const results = [];
+        const errors = [];
 
-    // ✅ PROCESAR UN ARCHIVO A LA VEZ PARA EVITAR CONGELAMIENTO
-    for (let i = 0; i < files.length; i++) {
-        const file = files[i];
+        //PROCESAR UN ARCHIVO A LA VEZ PARA EVITAR CONGELAMIENTO
+        for (let i = 0; i < files.length; i++) {
+            const file = files[i];
 
-        try {
-            showNotification(`Procesando archivo ${i + 1} de ${files.length}: ${file.name}`, 'info', 1500);
+            try {
+                //showNotification(`Procesando archivo ${i + 1} de ${files.length}: ${file.name}`, 'info', 1500);
 
-            // ✅ USAR TU FUNCIÓN EXISTENTE uploadSingleImage
-            const result = await uploadSingleImage(file);
-            results.push(result);
+                //USAR TU FUNCIÓN EXISTENTE uploadSingleImage
+                const result = await uploadSingleImage(file);
+                results.push(result);
 
-            console.log(`✅ Archivo ${i + 1}/${files.length} procesado: ${file.name}`);
+                console.log(`Archivo ${i + 1}/${files.length} procesado: ${file.name}`);
 
-            // ✅ AGREGAR A TABLA INMEDIATAMENTE
-            setTimeout(() => {
-                addBackendImageToTable(result);
-            }, 100);
+                //AGREGAR A TABLA INMEDIATAMENTE
+                setTimeout(() => {
+                    addBackendImageToTable(result);
+                }, 100);
 
-            // Delay entre archivos para evitar sobrecarga del servidor
-            if (i < files.length - 1) {
-                await new Promise(resolve => setTimeout(resolve, 1000)); // 1 segundo entre archivos
+                // Delay entre archivos para evitar sobrecarga del servidor
+                if (i < files.length - 1) {
+                    await new Promise(resolve => setTimeout(resolve, 1000)); // 1 segundo entre archivos
+                }
+
+            } catch (error) {
+                console.error(`Error en archivo ${i + 1}:`, error);
+                errors.push({ file: file.name, error: error.message });
+
+                // Continuar con el siguiente archivo
+                await new Promise(resolve => setTimeout(resolve, 300));
             }
+        }
 
-        } catch (error) {
-            console.error(`❌ Error en archivo ${i + 1}:`, error);
-            errors.push({ file: file.name, error: error.message });
+        //MOSTRAR RESULTADOS FINALES
+        if (results.length > 0) {
+            console.log(`${results.length} de ${files.length} archivos procesados correctamente`);
 
-            // Continuar con el siguiente archivo
-            await new Promise(resolve => setTimeout(resolve, 300));
+            const mensaje = results.length === files.length
+                ? `${results.length} imagen(es) subida(s) correctamente`
+                : `${results.length} de ${files.length} imagen(es) subida(s)`;
+
+            //showNotification(mensaje, results.length === files.length ? 'success' : 'warning', 4000);
+        }
+
+        if (errors.length > 0) {
+            console.error(`${errors.length} errores:`, errors);
+            //showNotification(`${errors.length} archivo(s) tuvieron errores`, 'error', 3000);
         }
     }
-
-    // ✅ MOSTRAR RESULTADOS FINALES
-    if (results.length > 0) {
-        console.log(`🎉 ${results.length} de ${files.length} archivos procesados correctamente`);
-
-        const mensaje = results.length === files.length
-            ? `${results.length} imagen(es) subida(s) correctamente`
-            : `${results.length} de ${files.length} imagen(es) subida(s)`;
-
-        showNotification(mensaje, results.length === files.length ? 'success' : 'warning', 4000);
-    }
-
-    if (errors.length > 0) {
-        console.error(`❌ ${errors.length} errores:`, errors);
-        showNotification(`${errors.length} archivo(s) tuvieron errores`, 'error', 3000);
-    }
-}
-
-
-        /*setUploadState(uploadBtn, 'uploading');
-
-        // Procesar archivos sólo cuando es acción directa del usuario
-        const uploadPromises = validFiles.map(file => uploadSingleImage(file));
-
-        Promise.all(uploadPromises)
-            .then(results => {
-                console.log('Todas las imágenes subidas correctamente');
-                showNotification(`${results.length} imagen(es) subida(s) correctamente`, 'success');
-
-                // Agregar imágenes a la tabla
-                results.forEach(imageData => {
-                    addBackendImageToTable(imageData);
-                });
-            })
-            .catch(error => {
-                console.error('Error subiendo imágenes:', error);
-                showNotification('Error al subir las imágenes', 'error');
-                //setUploadState(uploadBtn, 'normal');
-            });
-    }*/
 /*======================================================================================================================*/
     //let currentUploadSession = null;
     function uploadSingleImage(file) {
     return new Promise((resolve, reject) => {
-        console.log('📤 Subiendo imagen desde fotos-index:', file.name);
+        console.log('Subiendo imagen desde fotos-index:', file.name);
 
         const formData = new FormData();
         formData.append('imagen', file);
@@ -942,7 +899,7 @@ async function processFilesSequentially(files, source) {
         formData.append('timestamp', new Date().toISOString());
         formData.append('origen_vista', 'fotos-index');
 
-        // ✅ MOSTRAR MODAL PARA DATOS ADICIONALES
+        //MOSTRAR MODAL PARA DATOS ADICIONALES
         const modalEl = document.getElementById('imageDataModal');
         const modal = new bootstrap.Modal(modalEl);
 
@@ -951,7 +908,7 @@ async function processFilesSequentially(files, source) {
         document.getElementById('tipoFotografiaSelect').selectedIndex = 0;
         modal.show();
 
-        // ✅ CONFIGURAR BOTÓN GUARDAR
+        //CONFIGURAR BOTÓN GUARDAR
         const saveBtn = document.getElementById('saveImageData');
         const newSaveBtn = saveBtn.cloneNode(true);
         saveBtn.parentNode.replaceChild(newSaveBtn, saveBtn);
@@ -960,7 +917,7 @@ async function processFilesSequentially(files, source) {
             const descripcion = document.getElementById('descripcionInput').value.trim();
             const tipoFotografia = document.getElementById('tipoFotografiaSelect').value;
 
-            // ✅ VALIDACIÓN MÁS ESTRICTA
+            //VALIDACIÓN MÁS ESTRICTA
             if (!descripcion || descripcion.length < 3) {
                 showNotification("La descripción debe tener al menos 3 caracteres", 'warning');
                 return;
@@ -972,11 +929,11 @@ async function processFilesSequentially(files, source) {
             }
 
             formData.append('descripcion', descripcion);
-            formData.append('tipo', tipoFotografia); // ✅ SIN .toUpperCase() - dejar como está
+            formData.append('tipo', tipoFotografia); //SIN .toUpperCase() - dejar como está
 
             modal.hide();
 
-            // ✅ SUBIR AL BACKEND usando AJAX existente
+            //SUBIR AL BACKEND usando AJAX existente
             $.ajax({
                 url: '/api/fotografias',
                 type: 'POST',
@@ -989,18 +946,18 @@ async function processFilesSequentially(files, source) {
                     'X-Origen-Vista': 'fotos-index'
                 },
                 beforeSend: function() {
-                    console.log('🔄 Enviando al servidor...');
+                    console.log('Enviando al servidor...');
                 },
                 success: function(response) {
                     if (response.success && response.data) {
-                        console.log('✅ Imagen subida desde fotos-index:', response.data);
+                        console.log('Imagen subida desde fotos-index:', response.data);
                         resolve(response.data);
                     } else {
                         reject(new Error(response.message || 'Respuesta inválida del servidor'));
                     }
                 },
                 error: function(xhr, status, error) {
-                    console.error('❌ Error AJAX:', {
+                    console.error('Error AJAX:', {
                         status: xhr.status,
                         statusText: xhr.statusText,
                         responseText: xhr.responseText
@@ -1022,7 +979,7 @@ async function processFilesSequentially(files, source) {
             });
         });
 
-        // ✅ MANEJAR CANCELACIÓN DEL MODAL
+        //MANEJAR CANCELACIÓN DEL MODAL
         modalEl.addEventListener('hidden.bs.modal', function() {
             // Si el modal se cierra sin guardar, rechazar la promesa
             if (!newSaveBtn.disabled) {
@@ -1042,44 +999,44 @@ async function processFilesSequentially(files, source) {
             if (transferredData) {
                 try {
                     const data = JSON.parse(transferredData);
-                    console.log('📦 Datos transferidos encontrados:', data);
+                    console.log('Datos transferidos encontrados:', data);
 
                     if (data.images && data.images.length > 0) {
-                        console.log(`🔄 Procesando ${data.images.length} imágenes transferidas...`);
+                        console.log(`Procesando ${data.images.length} imágenes transferidas...`);
 
-                        // ✅ PROCESAR CADA IMAGEN TRANSFERIDA
+                        //PROCESAR CADA IMAGEN TRANSFERIDA
                         data.images.forEach((imageData, index) => {
-                            console.log(`📸 Procesando imagen ${index + 1}:`, {
+                            console.log(`Procesando imagen ${index + 1}:`, {
                                 id: imageData.id,
                                 url: imageData.url,
                                 origen: imageData.origenVista,
                                 fromSitAdd: imageData.fromSitAdd
                             });
 
-                            // ✅ VERIFICAR QUE VIENE DE FOTOS-SIT-ADD
+                            //VERIFICAR QUE VIENE DE FOTOS-SIT-ADD
                             if (imageData.fromSitAdd === true && imageData.displayOnly === true) {
-                                // ✅ AGREGAR A TABLA SIN SUBIR DE NUEVO
+                                //AGREGAR A TABLA SIN SUBIR DE NUEVO
                                 setTimeout(() => {
                                     addBackendImageToTable(imageData);
                                 }, index * 200); // Delay escalonado para animación
                             } else {
-                                console.log(`⚠️ Imagen ${index + 1} no tiene marcadores correctos`);
+                                console.log(`Imagen ${index + 1} no tiene marcadores correctos`);
                             }
                         });
 
-                        // ✅ MOSTRAR NOTIFICACIÓN DE ÉXITO
-                        setTimeout(() => {
+                        //MOSTRAR NOTIFICACIÓN DE ÉXITO
+                        /*setTimeout(() => {
                             showNotification(
-                                `✅ ${data.images.length} imagen(es) cargada(s) desde fotos-sit-add`,
+                                `${data.images.length} imagen(es) cargada(s) desde fotos-sit-add`,
                                 'success',
                                 3000
                             );
-                        }, 500);
+                        }, 500);*/
                     }
 
-                    // ✅ LIMPIAR localStorage después de procesar
+                    //LIMPIAR localStorage después de procesar
                     localStorage.removeItem('newUploadedImages');
-                    console.log('🧹 LocalStorage limpiado');
+                    console.log('LocalStorage limpiado');
 
                 } catch (error) {
                     console.error('Error al procesar imágenes transferidas:', error);
@@ -1313,7 +1270,7 @@ async function processFilesSequentially(files, source) {
 </script>
 
 <script>
-    // 🎯 FUNCIÓN PARA CARGAR DATOS DEL BACKEND AL INICIAR
+    //FUNCIÓN PARA CARGAR DATOS DEL BACKEND AL INICIAR
     function loadPhotosFromBackend() {
         console.log('Cargando fotografías desde el backend...');
 
@@ -1343,7 +1300,7 @@ async function processFilesSequentially(files, source) {
                         }, index * 50); // Pequeño delay para animación
                     });
 
-                    showNotification(`${fotografias.length} fotografías cargadas`, 'success');
+                    //showNotification(`${fotografias.length} fotografías cargadas`, 'success');
                 } else {
                     console.warn('No se pudieron cargar fotografías:', response.message);
                 }
@@ -1355,7 +1312,7 @@ async function processFilesSequentially(files, source) {
         });
     }
 
-    // 🎯 FUNCIÓN PARA LIMPIAR DATOS DE EJEMPLO
+    //FUNCIÓN PARA LIMPIAR DATOS DE EJEMPLO
     function clearExampleData() {
         const tableBody = document.getElementById('imagesTableBody');
         if (tableBody) {
@@ -1366,7 +1323,7 @@ async function processFilesSequentially(files, source) {
         }
     }
 
-    // 🎯 FUNCIÓN PARA AGREGAR IMAGEN DEL BACKEND A LA TABLA
+    //FUNCIÓN PARA AGREGAR IMAGEN DEL BACKEND A LA TABLA
     function addBackendImageToTable(fotografiaData) {
         console.log('Agregando fotografía del backend:', fotografiaData);
 
@@ -1427,7 +1384,7 @@ async function processFilesSequentially(files, source) {
     }
 
 /*===================================================================================================*/
-    // 🎯 FUNCIÓN PARA ELIMINAR IMAGEN DEL BACKEND
+    //FUNCIÓN PARA ELIMINAR IMAGEN DEL BACKEND
     function deleteBackendImage(fotografiaId, button) {
         console.log('Eliminando fotografía del backend:', fotografiaId);
 
@@ -1454,7 +1411,7 @@ async function processFilesSequentially(files, source) {
     }
 
 /*===================================================================================================*/
-    // 🎯 FUNCIÓN PARA EDITAR IMAGEN DEL BACKEND
+    //FUNCIÓN PARA EDITAR IMAGEN DEL BACKEND
     function editBackendImage(fotografiaId, button) {
         console.log('Editando fotografía del backend:', fotografiaId);
 
@@ -1467,7 +1424,7 @@ async function processFilesSequentially(files, source) {
         }
     }
 
-    // 🎯 CARGAR DATOS AL INICIAR PÁGINA
+    //CARGAR DATOS AL INICIAR PÁGINA
     document.addEventListener('DOMContentLoaded', function() {
         // Esperar a que se inicialice todo
         setTimeout(() => {
@@ -1650,24 +1607,7 @@ function getFechaCreacionFromRow(row) {
         }
     }
 
-    // Opción 3: Para imágenes de ejemplo o existentes, usar fechas simuladas
-    // Puedes ajustar estas fechas según tus datos reales
-    const ordenSit = row.querySelector('[data-column="orden-sit"]')?.textContent.trim();
-    if (ordenSit) {
-        // Simular fechas basadas en el número de orden (esto es temporal)
-        // En producción, estas fechas deben venir de la base de datos
-        const simulatedDates = {
-            '10060482': '2025-10-02',
-            '10001600': '2025-09-29',
-            '10047396': '2025-09-27'
-        };
-
-        if (simulatedDates[ordenSit]) {
-            return simulatedDates[ordenSit];
-        }
-    }
-
-    // Opción 4: Fecha actual para nuevas imágenes sin fecha específica
+    // Opción 3: Fecha actual para nuevas imágenes sin fecha específica
     return new Date();
 }
 
@@ -1683,7 +1623,6 @@ function showFilterNotification(visible, hidden, rangeType, fechaInicio, fechaFi
     // Usar la función de notificación existente
     if (typeof showNotification === 'function') {
         const tipo = visible > 0 ? 'success' : 'warning';
-        //showNotification(message, tipo);
     } else {
         // Crear notificación temporal
         createTemporaryNotification(message, visible > 0 ? 'success' : 'warning');

@@ -653,6 +653,13 @@
         const descripcion = data.descripcion || 'Sin descripción';
         const tipo = isBackend ? data.tipo : data.normalizedType;
 
+
+
+        // ✅ USAR LA MISMA LÓGICA QUE FOTOS-SIT-ADD
+        const safeImageUrl = (imageUrl || '').replace(/'/g, "\\'");
+        const safeDescripcion = (descripcion || '').replace(/'/g, "\\'");
+        const safeTipo = (tipo || '').replace(/'/g, "\\'");
+
         // Funciones de eliminacion
         const deleteFunction = isBackend ? `deleteBackendImage(${data.id}, this)` : 'deleteImage(this)';
 
@@ -661,11 +668,11 @@
 
         return `
             <td data-column="imagen">
-                <img src="${imageUrl}"
+                <img src="${safeImageUrl}"
                     alt="${altText}"
                     class="img-thumbnail preview-image"
                     style="width: 60px; height: 60px; cursor: pointer; object-fit: cover; background-color: #f8f9fa;"
-                    onclick="openImageLightbox('${imageUrl}', '${altText}', '${descripcion}', '${tipo}')"
+                    onclick="openLightbox('${safeImageUrl}', '${safeDescripcion}', '${safeTipo}')"
                     onerror="this.src='https://picsum.photos/id/535/400/600'">
             </td>
             <td data-column="orden-sit">${ordenSit}</td>
@@ -691,13 +698,13 @@
     }
 /*==============================================================================================================*/
     // ===== FUNCIONES DE LIGHTBOX CORREGIDAS =====
-   function openImageLightbox(imageUrl, alt, description, type) {
-        console.log('Intentando abrir lightbox:', { imageUrl, alt, description, type });
+    function openLightbox(imageUrl, description, type) {
+        console.log('Abriendo lightbox:', { imageUrl, description, type });
 
-        // Validar que la URL existe y es válida
-        if (!imageUrl || imageUrl === '' || imageUrl === 'undefined') {
+        // ✅ VALIDAR QUE LA URL NO ESTÉ VACÍA
+        if (!imageUrl || imageUrl === '' || imageUrl === 'undefined' || imageUrl === 'null') {
             console.error('URL de imagen inválida:', imageUrl);
-            alert('Error: La imagen no está disponible');
+            showNotification('Error: La imagen no está disponible', 'error');
             return;
         }
 
@@ -706,36 +713,56 @@
         const lightboxDescription = document.getElementById('lightboxDescription');
         const lightboxType = document.getElementById('lightboxType');
 
+        console.log('Elementos encontrados:', {
+            lightbox: !!lightbox,
+            lightboxImage: !!lightboxImage,
+            lightboxDescription: !!lightboxDescription,
+            lightboxType: !!lightboxType
+        });
+
+        // ✅ VALIDACIÓN CORRECTA
         if (lightbox && lightboxImage) {
-            // Verificar si la imagen se puede cargar
-            const testImg = new Image();
-            testImg.onload = function() {
-                console.log('Imagen válida, mostrando lightbox');
+            console.log('✅ Asignando imagen:', imageUrl);
 
-                lightboxImage.src = imageUrl;
-                lightboxImage.alt = alt || 'Imagen';
+            // ✅ ASIGNAR DIRECTAMENTE SIN VALIDACIONES ADICIONALES
+            lightboxImage.src = imageUrl;
+            lightboxImage.alt = description || 'Imagen';
 
-                if (lightboxDescription) {
-                    lightboxDescription.textContent = description || alt || 'Sin descripción';
-                }
+            // ✅ VERIFICAR QUE LA IMAGEN SE ASIGNÓ
+            console.log('Imagen asignada - src:', lightboxImage.src);
 
-                if (lightboxType) {
-                    lightboxType.textContent = type || 'Sin tipo especificado';
-                }
+            if (lightboxDescription) {
+                lightboxDescription.textContent = description || 'Sin descripción';
+                console.log('Descripción asignada:', description);
+            }
 
-                lightbox.style.display = 'flex';
-                document.body.style.overflow = 'hidden';
+            if (lightboxType) {
+                lightboxType.textContent = type || 'Sin tipo especificado';
+                console.log('Tipo asignado:', type);
+            }
+
+            // ✅ MOSTRAR LIGHTBOX INMEDIATAMENTE
+            lightbox.style.display = 'flex';
+            document.body.style.overflow = 'hidden';
+
+            console.log('✅ Lightbox mostrado - display:', lightbox.style.display);
+
+            // ✅ VERIFICAR QUE LA IMAGEN SE CARGÓ CORRECTAMENTE
+            lightboxImage.onload = function() {
+                console.log('✅ Imagen cargada exitosamente en lightbox');
             };
 
-            testImg.onerror = function() {
-                console.error('Error cargando imagen:', imageUrl);
-                alert('Error: No se pudo cargar la imagen');
+            lightboxImage.onerror = function() {
+                console.error('❌ Error cargando imagen en lightbox:', imageUrl);
+                showNotification('Error: No se pudo cargar la imagen', 'error');
             };
 
-            testImg.src = imageUrl;
         } else {
-            console.error('Error: No se encontraron los elementos del lightbox');
-            alert('Error al abrir la imagen');
+            console.error('❌ Elementos del lightbox no encontrados:', {
+                lightbox: !!lightbox,
+                lightboxImage: !!lightboxImage
+            });
+            showNotification('Error: Lightbox no disponible', 'error');
         }
     }
 
@@ -826,65 +853,443 @@
             return;
         }
 
-        processFilesSequentially(validFiles, source);
+        processMultipleImageAtOnce(validFiles, source);
     }
 
+  /*====================================================================================================*/
+    function processMultipleImageAtOnce(files, source) {
+    console.log(`[FOTOS-INDEX] Procesando ${files.length} imágenes en lote...`);
 
-    //Función de subida secuencial
-    async function processFilesSequentially(files, source) {
-        console.log(`Procesando ${files.length} archivos secuencialmente...`);
+    // VALIDAR archivos antes de procesar
+    const validFiles = Array.from(files).filter(file => {
+        if (!file.type.startsWith('image/')) {
+            showNotification(`"${file.name}" no es una imagen válida`, 'error');
+            return false;
+        }
+        if (file.size > 10 * 1024 * 1024) {
+            showNotification(`"${file.name}" es demasiado grande (máx 10MB)`, 'error');
+            return false;
+        }
+        return true;
+    });
 
-        const results = [];
-        const errors = [];
+    if (validFiles.length === 0) {
+        showNotification('No hay archivos válidos para procesar', 'warning');
+        return;
+    }
 
-        //PROCESAR UN ARCHIVO A LA VEZ PARA EVITAR CONGELAMIENTO
-        for (let i = 0; i < files.length; i++) {
-            const file = files[i];
+    console.log(`${validFiles.length} archivos válidos de ${files.length} total`);
 
-            try {
-                //showNotification(`Procesando archivo ${i + 1} de ${files.length}: ${file.name}`, 'info', 1500);
+    // Mostrar estado de carga (ADAPTAR para fotos-index)
+    const uploadBtn = source === 'camera'
+        ? document.getElementById('cameraUpload')
+        : document.getElementById('fileUpload');
 
-                //USAR TU FUNCIÓN EXISTENTE uploadSingleImage
-                const result = await uploadSingleImage(file);
-                results.push(result);
+    setUploadState(uploadBtn, 'uploading');
 
-                console.log(`Archivo ${i + 1}/${files.length} procesado: ${file.name}`);
+    // PROCESAR ARCHIVOS DE FORMA ASÍNCRONA Y ROBUSTA
+    const imageDataArray = [];
+    let processedCount = 0;
+    let hasErrors = false;
 
-                //AGREGAR A TABLA INMEDIATAMENTE
-                setTimeout(() => {
-                    addBackendImageToTable(result);
-                }, 100);
+    // PROCESAR CADA ARCHIVO CON MANEJO DE ERRORES
+    validFiles.forEach((file, index) => {
+        const reader = new FileReader();
 
-                // Delay entre archivos para evitar sobrecarga del servidor
-                if (i < files.length - 1) {
-                    await new Promise(resolve => setTimeout(resolve, 1000)); // 1 segundo entre archivos
+        reader.onload = function(e) {
+            console.log(`[FOTOS-INDEX] Archivo ${index + 1}/${validFiles.length} leído: ${file.name}`);
+
+            const imageData = {
+                id: 'temp_' + Date.now() + '_' + index,
+                name: file.name,
+                size: file.size,
+                type: file.type,
+                base64: e.target.result,
+                file: file,
+                timestamp: Date.now(),
+                index: index
+            };
+
+            imageDataArray.push(imageData);
+            processedCount++;
+
+            console.log(`Progreso: ${processedCount}/${validFiles.length}`);
+
+            // VERIFICAR SI TODOS LOS ARCHIVOS ESTÁN PROCESADOS
+            if (processedCount === validFiles.length) {
+                console.log('Todos los archivos procesados');
+
+                if (imageDataArray.length > 0) {
+                    // ORDENAR por índice para mantener orden original
+                    imageDataArray.sort((a, b) => a.index - b.index);
+
+                    console.log(`Orden de imágenes confirmado: ${imageDataArray.map(img => img.name).join(', ')}`);
+
+                    // Pequeño delay para asegurar que todo esté listo
+                    setTimeout(() => {
+                        showBatchImageModal(imageDataArray, uploadBtn);
+                    }, 200);
+                } else {
+                    console.error('No se procesaron imágenes válidas');
+                    showNotification('No se pudo procesar ningún archivo válido', 'error');
+                    setUploadState(uploadBtn, 'normal');
                 }
+            }
+        };
 
-            } catch (error) {
-                console.error(`Error en archivo ${i + 1}:`, error);
-                errors.push({ file: file.name, error: error.message });
+        reader.onerror = function(error) {
+            console.error(`Error leyendo archivo ${index + 1} (${file.name}):`, error);
+            showNotification(`Error leyendo ${file.name}`, 'error', 2000);
 
-                // Continuar con el siguiente archivo
-                await new Promise(resolve => setTimeout(resolve, 300));
+            hasErrors = true;
+            processedCount++;
+
+            // CONTINUAR AUNQUE HAYA ERRORES
+            if (processedCount === validFiles.length) {
+                if (imageDataArray.length > 0) {
+                    console.log(`Procesamiento completado con errores. ${imageDataArray.length} imágenes válidas.`);
+
+                    imageDataArray.sort((a, b) => a.index - b.index);
+
+                    setTimeout(() => {
+                        showBatchImageModal(imageDataArray, uploadBtn);
+                    }, 200);
+                } else {
+                    console.error('No se pudo procesar ningún archivo');
+                    showNotification('No se pudo procesar ningún archivo', 'error');
+                    setUploadState(uploadBtn, 'normal');
+                }
+            }
+        };
+
+        // INICIAR LECTURA CON LOG
+        console.log(`Iniciando lectura del archivo ${index + 1}: ${file.name} (${(file.size / 1024 / 1024).toFixed(2)}MB)`);
+        reader.readAsDataURL(file);
+    });
+
+    // TIMEOUT DE SEGURIDAD
+    setTimeout(() => {
+        if (processedCount < validFiles.length) {
+            console.error(`Timeout: Solo se procesaron ${processedCount}/${validFiles.length} archivos`);
+
+            if (imageDataArray.length > 0) {
+                showNotification(`Solo se procesaron ${imageDataArray.length} de ${validFiles.length} archivos`, 'warning');
+                imageDataArray.sort((a, b) => a.index - b.index);
+                showBatchImageModal(imageDataArray, uploadBtn);
+            } else {
+                showNotification('Timeout: No se pudo procesar ningún archivo', 'error');
+                setUploadState(uploadBtn, 'normal');
             }
         }
+    }, 15000); // 15 segundos timeout
+}
 
-        //MOSTRAR RESULTADOS FINALES
-        if (results.length > 0) {
-            console.log(`${results.length} de ${files.length} archivos procesados correctamente`);
+/*=======================================================================================================================*/
+// Copia de fotos-sit-add y adaptar para fotos-index
+function showBatchImageModal(imageDataArray, uploadBtn) {
+    console.log(`[FOTOS-INDEX] Abriendo modal para ${imageDataArray.length} imágenes`);
 
-            const mensaje = results.length === files.length
-                ? `${results.length} imagen(es) subida(s) correctamente`
-                : `${results.length} de ${files.length} imagen(es) subida(s)`;
+    // VALIDACIÓN ADICIONAL
+    if (!imageDataArray || imageDataArray.length === 0) {
+        console.error('No hay imágenes para procesar en modal');
+        showNotification('No hay imágenes para procesar', 'warning');
+        setUploadState(uploadBtn, 'normal');
+        return;
+    }
 
-            //showNotification(mensaje, results.length === files.length ? 'success' : 'warning', 4000);
+    const modalEl = document.getElementById('imageDataModal');
+    if (!modalEl) {
+        console.error('Modal no encontrado');
+        showNotification('Error del sistema: Modal no disponible', 'error');
+        setUploadState(uploadBtn, 'normal');
+        return;
+    }
+
+    const modal = new bootstrap.Modal(modalEl);
+
+    // Mostrar titulo simple
+    const modalTitle = document.getElementById('imageDataModalLabel');
+    if (modalTitle) {
+        modalTitle.textContent = `Detalles para ${imageDataArray.length} imagen(es)`;
+    }
+
+    // Limpiar formulario
+    const descripcionInput = document.getElementById('descripcionInput');
+    const tipoSelect = document.getElementById('tipoFotografiaSelect');
+
+    if (descripcionInput) descripcionInput.value = '';
+    if (tipoSelect) tipoSelect.selectedIndex = 0;
+
+    // Solo mostrar cantidad
+    addSimpleInfo(imageDataArray.length);
+
+    // Configurar modal para no cerrarse
+    modalEl.setAttribute('data-bs-backdrop', 'static');
+    modalEl.setAttribute('data-bs-keyboard', 'false');
+
+    // Manejar guardado para TODAS las imágenes
+    const saveBtn = document.getElementById('saveImageData');
+    const newSaveBtn = saveBtn.cloneNode(true);
+    saveBtn.parentNode.replaceChild(newSaveBtn, saveBtn);
+
+    // CONFIGURAR NUEVO EVENT LISTENER
+    newSaveBtn.addEventListener('click', async function handleBatchSave() {
+        const descripcionVal = descripcionInput ? descripcionInput.value.trim() : '';
+        const tipoFotografia = tipoSelect ? tipoSelect.value : '';
+
+        // Validación
+        if (!descripcionVal || !tipoFotografia) {
+            showNotification("Por favor complete todos los campos", 'warning');
+            return;
         }
 
-        if (errors.length > 0) {
-            console.error(`${errors.length} errores:`, errors);
-            //showNotification(`${errors.length} archivo(s) tuvieron errores`, 'error', 3000);
+        console.log(`[FOTOS-INDEX] Iniciando procesamiento de ${imageDataArray.length} imágenes con:`, {
+            descripcion: descripcionVal,
+            tipo: tipoFotografia
+        });
+
+        // Desactivar botón durante procesamiento
+        newSaveBtn.disabled = true;
+        newSaveBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Procesando...';
+
+        try {
+            const savedImages = [];
+
+            // ✅ OBTENER ORDEN SIT PARA FOTOS-INDEX
+            const ordenSitActual = getCurrentOrdenSit();
+            const poUnificado = generatePONumber();
+            const ocUnificado = generateOCNumber();
+
+            console.log(`[FOTOS-INDEX] Usando orden SIT: ${ordenSitActual}`);
+
+            // ✅ COPIAR LÓGICA SECUENCIAL DE FOTOS-SIT-ADD
+            for (let i = 0; i < imageDataArray.length; i++) {
+                const imageData = imageDataArray[i];
+
+                showNotification(`Guardando imagen ${i + 1} de ${imageDataArray.length}...`, 'info', 1000);
+
+                try {
+                    // Convertir base64 a File
+                    const response = await fetch(imageData.base64);
+                    const blob = await response.blob();
+                    const fileName = imageData.name || `imagen_${Date.now()}_${i}.jpg`;
+                    const file = new File([blob], fileName, { type: blob.type });
+
+                    // ✅ CREAR FormData CON ORDEN UNIFICADA (IGUAL QUE FOTOS-SIT-ADD)
+                    const formData = new FormData();
+                    formData.append('imagen', file);
+                    formData.append('orden_sit', ordenSitActual); // ✅ MISMA ORDEN PARA TODAS
+                    formData.append('po', poUnificado);           // ✅ MISMO PO PARA TODAS
+                    formData.append('oc', ocUnificado);           // ✅ MISMO OC PARA TODAS
+                    formData.append('descripcion', descripcionVal);
+                    formData.append('tipo', tipoFotografia);      // ✅ SIN .toUpperCase()
+                    formData.append('origen_vista', 'fotos-index');
+                    formData.append('timestamp', new Date().toISOString());
+                    formData.append('batch_index', i.toString());
+                    formData.append('batch_total', imageDataArray.length.toString());
+
+                    console.log(`[FOTOS-INDEX] FormData para imagen ${i + 1}:`);
+                    for (let pair of formData.entries()) {
+                        if (pair[1] instanceof File) {
+                            console.log(`${pair[0]}: File(${pair[1].name}, ${pair[1].size} bytes, ${pair[1].type})`);
+                        } else {
+                            console.log(`${pair[0]}: ${pair[1]}`);
+                        }
+                    }
+
+                    // ✅ SUBIR AL BACKEND (USAR FUNCIÓN EXISTENTE DE FOTOS-INDEX)
+                    const backendResponse = await uploadToBackendIndex(formData);
+
+                    if (backendResponse.success) {
+                        savedImages.push({
+                            id: backendResponse.data.id,
+                            url: backendResponse.data.imagen_url,
+                            orden_sit: backendResponse.data.orden_sit,
+                            po: backendResponse.data.po,
+                            oc: backendResponse.data.oc,
+                            descripcion: backendResponse.data.descripcion,
+                            tipo: backendResponse.data.tipo,
+                            created_at: backendResponse.data.created_at,
+                            source: 'backend-real',
+                            saved: true
+                        });
+                        console.log(`[FOTOS-INDEX] Imagen ${i + 1}/${imageDataArray.length} guardada: ID ${backendResponse.data.id}`);
+
+                        // ✅ DELAY ENTRE SUBIDAS (IGUAL QUE FOTOS-SIT-ADD)
+                        if (i < imageDataArray.length - 1) {
+                            await new Promise(resolve => setTimeout(resolve, 1000)); // 1 segundo para fotos-index
+                        }
+                    } else {
+                        throw new Error(backendResponse.message || 'Error en respuesta');
+                    }
+
+                } catch (imageError) {
+                    console.error(`[FOTOS-INDEX] Error procesando imagen ${i + 1}:`, imageError);
+                    showNotification(`Error en imagen ${i + 1}: ${imageError.message}`, 'error', 2000);
+                    // Continuar con las siguientes imágenes
+                    await new Promise(resolve => setTimeout(resolve, 500));
+                }
+            }
+
+            // ✅ FINALIZACIÓN (DIFERENTE A FOTOS-SIT-ADD)
+            if (savedImages.length > 0) {
+                modal.hide();
+
+                // ✅ AGREGAR A TABLA SECUENCIALMENTE (ESPECÍFICO DE FOTOS-INDEX)
+                savedImages.forEach((imageData, index) => {
+                    setTimeout(() => {
+                        addBackendImageToTable(imageData);
+                    }, index * 200);
+                });
+
+                console.log(`[FOTOS-INDEX] Procesamiento completado: ${savedImages.length}/${imageDataArray.length} imágenes guardadas`);
+
+                // Mostrar resultado
+                const mensaje = savedImages.length === imageDataArray.length
+                    ? `${savedImages.length} imagen(es) subida(s) a orden ${ordenSitActual}`
+                    : `${savedImages.length} de ${imageDataArray.length} imagen(es) subida(s)`;
+
+                showNotification(mensaje, savedImages.length === imageDataArray.length ? 'success' : 'warning', 4000);
+
+            } else {
+                throw new Error('No se pudo guardar ninguna imagen');
+            }
+
+        } catch (error) {
+            console.error('[FOTOS-INDEX] Error durante el procesamiento:', error);
+            showNotification(`Error general: ${error.message}`, 'error', 5000);
+        } finally {
+            // ✅ CLEANUP
+            newSaveBtn.disabled = false;
+            newSaveBtn.innerHTML = 'Guardar';
+            setUploadState(uploadBtn, 'normal');
+            removeSimpleInfo();
+        }
+    });
+
+    // Mostrar modal
+    modal.show();
+}
+
+/*======================================================================================================================*/
+//Funciones auxiliares de fotos-sit-add
+function addSimpleInfo(imageCount) {
+    // Buscar si ya existe info container
+    let infoContainer = document.getElementById('modalSimpleInfo');
+    if (!infoContainer) {
+        // Crear contenedor simple
+        infoContainer = document.createElement('div');
+        infoContainer.id = 'modalSimpleInfo';
+        infoContainer.className = 'mb-3';
+
+        // Insertar al inicio del modal-body
+        const modalBody = document.querySelector('#imageDataModal .modal-body');
+        if (modalBody) {
+            modalBody.insertAdjacentElement('afterbegin', infoContainer);
+            console.log('[FOTOS-INDEX] Info container creado');
         }
     }
+
+    // ✅ OBTENER ORDEN SIT ACTUAL PARA MOSTRAR
+    const ordenSitActual = getCurrentOrdenSit();
+
+    // HTML simple (IGUAL QUE FOTOS-SIT-ADD)
+    const infoHTML = `
+        <div class="alert alert-primary p-3 text-center">
+            <h5 class="mb-2">
+                <i class="fas fa-images me-2"></i>
+                ${imageCount} imagen(es) seleccionada(s)
+            </h5>
+            <p class="mb-1">
+                <strong>Orden SIT:</strong> ${ordenSitActual}
+            </p>
+            <p class="mb-0 text-muted">
+                Los datos que ingreses se aplicarán a todas las imágenes.
+            </p>
+        </div>
+    `;
+
+    infoContainer.innerHTML = infoHTML;
+    console.log(`[FOTOS-INDEX] Info mostrada para ${imageCount} imágenes con orden ${ordenSitActual}`);
+}
+
+function removeSimpleInfo() {
+    const infoContainer = document.getElementById('modalSimpleInfo');
+    if (infoContainer) {
+        infoContainer.remove();
+        console.log('[FOTOS-INDEX] Info container limpiado');
+    }
+}
+
+// =====>>> Buscar en tabla existente
+function getCurrentOrdenSit() {
+    // 1. Buscar en tabla existente
+    const tableRows = document.querySelectorAll('#imagesTableBody tr[data-image-id]');
+    if (tableRows.length > 0) {
+        const firstRow = tableRows[0];
+        const ordenSitCell = firstRow.querySelector('td[data-column="orden-sit"]');
+        if (ordenSitCell && ordenSitCell.textContent.trim() !== 'N/A') {
+            return ordenSitCell.textContent.trim();
+        }
+    }
+
+    // 2. Buscar en localStorage
+    const lastOrdenSit = localStorage.getItem('lastOrdenSit');
+    if (lastOrdenSit) {
+        return lastOrdenSit;
+    }
+
+    // 3. Generar nueva orden SIT
+    const newOrdenSit = generateOrderNumber();
+    localStorage.setItem('lastOrdenSit', newOrdenSit);
+    return newOrdenSit;
+}
+
+function uploadToBackendIndex(formData) {
+    return new Promise((resolve, reject) => {
+        console.log('[FOTOS-INDEX] Subiendo al backend...');
+
+        $.ajax({
+            url: '/api/fotografias',
+            type: 'POST',
+            data: formData,
+            processData: false,
+            contentType: false,
+            timeout: 30000,
+            headers: {
+                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content'),
+                'X-Origen-Vista': 'fotos-index',
+                'Accept': 'application/json'
+            },
+            success: function(response) {
+                if (response.success && response.data) {
+                    resolve({
+                        success: true,
+                        data: response.data
+                    });
+                } else {
+                    reject(new Error(response.message || 'Respuesta inválida'));
+                }
+            },
+            error: function(xhr, status, error) {
+                let errorMessage = `Error ${xhr.status}: `;
+
+                if (xhr.responseJSON && xhr.responseJSON.message) {
+                    errorMessage += xhr.responseJSON.message;
+                } else if (xhr.responseJSON && xhr.responseJSON.errors) {
+                    const errors = Object.values(xhr.responseJSON.errors).flat();
+                    errorMessage += errors.join(', ');
+                } else {
+                    errorMessage += error || 'Error de conexión';
+                }
+
+                reject(new Error(errorMessage));
+            }
+        });
+    });
+}
+
+
 /*======================================================================================================================*/
     //let currentUploadSession = null;
     function uploadSingleImage(file) {
@@ -1023,15 +1428,6 @@
                                 console.log(`Imagen ${index + 1} no tiene marcadores correctos`);
                             }
                         });
-
-                        //MOSTRAR NOTIFICACIÓN DE ÉXITO
-                        /*setTimeout(() => {
-                            showNotification(
-                                `${data.images.length} imagen(es) cargada(s) desde fotos-sit-add`,
-                                'success',
-                                3000
-                            );
-                        }, 500);*/
                     }
 
                     //LIMPIAR localStorage después de procesar
@@ -1288,11 +1684,6 @@
                     const fotografias = response.data || [];
                     console.log(`${fotografias.length} fotografías cargadas desde backend`);
 
-                    // Limpiar tabla actual (mantener ejemplos si no hay datos)
-                    if (fotografias.length > 0) {
-                        clearExampleData();
-                    }
-
                     // Agregar cada fotografía a la tabla
                     fotografias.forEach((foto, index) => {
                         setTimeout(() => {
@@ -1311,21 +1702,33 @@
             }
         });
     }
-
-    //FUNCIÓN PARA LIMPIAR DATOS DE EJEMPLO
-    function clearExampleData() {
-        const tableBody = document.getElementById('imagesTableBody');
-        if (tableBody) {
-            // Eliminar solo las filas de ejemplo (que tienen IDs específicos)
-            const exampleRows = tableBody.querySelectorAll('tr[data-image-id*="example"]');
-            exampleRows.forEach(row => row.remove());
-            console.log(`${exampleRows.length} filas de ejemplo eliminadas`);
-        }
-    }
-
+  /*=============================================================================================================*/
     //FUNCIÓN PARA AGREGAR IMAGEN DEL BACKEND A LA TABLA
     function addBackendImageToTable(fotografiaData) {
         console.log('Agregando fotografía del backend:', fotografiaData);
+
+        // ✅ VALIDACIÓN MEJORADA DE URL
+        if (!fotografiaData.imagen_url && !fotografiaData.url) {
+            console.error('❌ Imagen sin URL válida:', fotografiaData);
+            showNotification('Error: Imagen recibida sin URL válida', 'error');
+            return;
+        }
+
+        // ✅ NORMALIZAR URL - PRIORIZAR imagen_url
+        if (!fotografiaData.imagen_url && fotografiaData.url) {
+            fotografiaData.imagen_url = fotografiaData.url;
+            console.log('✅ URL normalizada de .url a .imagen_url');
+        }
+
+        // ✅ VERIFICACIÓN FINAL DE URL
+        const finalUrl = fotografiaData.imagen_url || fotografiaData.url;
+        if (!finalUrl || finalUrl === '' || finalUrl === 'undefined') {
+            console.warn('⚠️ URL vacía detectada, asignando imagen por defecto');
+            fotografiaData.imagen_url = 'https://picsum.photos/id/535/400/600';
+        }
+
+        console.log('✅ URL final para lightbox:', fotografiaData.imagen_url);
+
 
         const tableBody = document.getElementById('imagesTableBody');
         if (!tableBody) {
@@ -1339,17 +1742,12 @@
             return;
         }
 
-        //VERIFICAR TAMBIÉN POR URL
-        if (fotografiaData.imagen_url || fotografiaData.url) {
-            const imageUrl = fotografiaData.imagen_url || fotografiaData.url;
-            const existingImageRow = Array.from(tableBody.querySelectorAll('img')).find(img =>
-                img.src === imageUrl
-            );
-            if (existingImageRow) {
-                console.log('Imagen con misma URL ya existe, cancelando duplicación');
-                return;
-            }
-        }
+        console.log('✅ Datos válidos para crear fila:', {
+            id: fotografiaData.id,
+            imagen_url: fotografiaData.imagen_url,
+            descripcion: fotografiaData.descripcion,
+            tipo: fotografiaData.tipo
+        });
 
         const row = document.createElement('tr');
         row.setAttribute('data-image-id', `backend_${fotografiaData.id}`);

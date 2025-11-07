@@ -162,16 +162,34 @@ class FotografiaPrendaController extends Controller
         try {
             $imagen = $request->file('imagen');
 
-            // Generar nombre único para la imagen
-            $nombreArchivo = time() . '_' . Str::random(10) . '.' . $imagen->getClientOriginalExtension();
+            // Generar HASH único para la imagen
+            $fileContent = file_get_contents($imagen->getPathname());
+            $hashContent = hash('sha256', $fileContent);
+            $base64Hash = base64_encode($hashContent);
+
+            //Limpiar Base64 para nombre de archivo
+            $cleanHash = str_replace(['+', '/', '='], ['-', '_', ''], $base64Hash);
+            $cleanHash = substr($cleanHash, 0, 32); // Limitar Longitud
+            $nombreArchivo = $cleanHash . '.jpeg';
 
             // Organizar por año/mes
             $rutaDestino = 'fotografias/' . date('Y') . '/' . date('m');
 
             // Guardar imagen
-            $rutaCompleta = $imagen->storeAs($rutaDestino, $nombreArchivo, 'public');
+            $rutaCompleta = $rutaDestino . '/' . $nombreArchivo;
 
-            $imageUrl = asset('storage/' . $rutaCompleta);
+            // Verificar si ya existe archivo con mismo HASH
+            $existingPhoto = FotografiaPrenda::where('imagen_path', 'LIKE', '%' . $cleanHash . '%')->first();
+
+            if ($existingPhoto && Storage::disk('public')->exists($rutaCompleta)) {
+                //Archivo duplicado - Reutilizar imagen existente
+                $imageUrl = asset('storage/' . $existingPhoto->imagen_path);
+                $rutaFinal = $existingPhoto->imagen_path;
+            } else {
+                // Archivo nuevo - Guardarlo
+                $rutaFinal = $imagen->storeAs($rutaDestino, $nombreArchivo, 'public');
+                $imageUrl = asset('storage/' . $rutaFinal);
+            }
 
             // Crear registro en BD
             $fotografia = FotografiaPrenda::create([
@@ -180,7 +198,7 @@ class FotografiaPrendaController extends Controller
                 'oc' => $request->oc,
                 'descripcion' => $request->descripcion,
                 'tipo' => $request->tipo,
-                'imagen_path' => $rutaCompleta,
+                'imagen_path' => $rutaFinal,
                 'imagen_url' => $imageUrl,
                 'imagen_original_name' => $imagen->getClientOriginalName(),
                 'imagen_size' => $imagen->getSize(),
@@ -191,12 +209,14 @@ class FotografiaPrendaController extends Controller
                     'ip_address' => $request->ip(),
                     'user_agent' => $request->userAgent(),
                     'upload_timestamp' => time(),
-                    'origen_vista' => $request->origen_vista ?? 'unknown'
+                    'origen_vista' => $request->origen_vista ?? 'unknown',
+                    'hash_sha256' => $hashContent, // Guardar hash original
+                    'hash_filename' => $cleanHash  // Guardar hash limpio
                 ]
             ]);
 
             // Verificar que el archivo realmente existe
-            $fullPath = public_path('storage/' . $rutaCompleta);
+            $fullPath = public_path('storage/' . $rutaFinal);
             if (!file_exists($fullPath)) {
                 \Log::error('Archivo no encontrado: ' . $fullPath);
                 throw new \Exception('Archivo no se guardó correctamente');
@@ -204,9 +224,11 @@ class FotografiaPrendaController extends Controller
 
             \Log::info('Fotografía subida correctamente', [
                 'id' => $fotografia->id,
-                'path' => $rutaCompleta,
+                'hash' => $cleanHash,
+                'path' => $rutaFinal,
                 'url' => $imageUrl,
-                'file_exists' => file_exists($fullPath)
+                'file_exists' => file_exists($fullPath),
+                'is_duplicate' => isset($existingPhoto)
             ]);
 
             return response()->json([
@@ -220,8 +242,11 @@ class FotografiaPrendaController extends Controller
                     'descripcion' => $fotografia->descripcion,
                     'tipo' => $fotografia->tipo,
                     'imagen_url' => $imageUrl,
-                    'imagen_path' => $rutaCompleta,
-                    'fecha_subida' => $fotografia->created_at->format('d-m-Y H:i')
+                    'imagen_path' => $rutaFinal,
+                    'fecha_subida' => $fotografia->created_at->format('d-m-Y H:i'),
+                    'hash_filename' => $cleanHash,
+                    'created_at' => $fotografia->created_at,
+                    'is_duplicate' => isset($existingPhoto)
                 ]
             ]);
         } catch (\Exception $e) {
@@ -256,6 +281,10 @@ class FotografiaPrendaController extends Controller
         try {
             $fotografia = FotografiaPrenda::findOrFail($id);
 
+            //GUARDAR RUTA ANTERIOR PARA ELIMINACIÓN (DESPUÉS DEL PROCESAMIENTO)
+            $rutaAnterior = $fotografia->imagen_path;
+            $hashAnterior = isset($fotografia->metadatos['hash_filename']) ? $fotografia->metadatos['hash_filename'] : null;
+
             // Actualizar campos de texto
             $fotografia->fill($request->only([
                 'orden_sit',
@@ -265,23 +294,133 @@ class FotografiaPrendaController extends Controller
                 'tipo'
             ]));
 
-            // Si hay nueva imagen, reemplazar la anterior
+            // Si hay nueva imagen, procesarla
             if ($request->hasFile('imagen')) {
-                // Eliminar imagen anterior
-                $fotografia->eliminarImagenFisica();
+                \Log::info('Actualizando imagen', [
+                    'fotografia_id' => $id,
+                    'ruta_anterior' => $rutaAnterior,
+                    'hash_anterior' => $hashAnterior
+                ]);
 
                 $imagen = $request->file('imagen');
-                $nombreArchivo = time() . '_' . Str::random(10) . '.' . $imagen->getClientOriginalExtension();
-                $rutaDestino = 'fotografias/' . date('Y') . '/' . date('m');
-                $rutaCompleta = $imagen->storeAs($rutaDestino, $nombreArchivo, 'public');
 
+                //GENERAR NUEVO HASH ÚNICO (SIN ELIMINAR LA ANTERIOR AÚN)
+                $fileContent = file_get_contents($imagen->getPathname());
+                $hashContent = hash('sha256', $fileContent);
+                $base64Hash = base64_encode($hashContent);
+                $cleanHash = str_replace(['+', '/', '='], ['-', '_', ''], $base64Hash);
+                $cleanHash = substr($cleanHash, 0, 32);
+                $nombreArchivo = $cleanHash . '.jpeg';
+
+                $rutaDestino = 'fotografias/' . date('Y') . '/' . date('m');
+                $rutaNueva = $rutaDestino . '/' . $nombreArchivo;
+
+                \Log::info('Hash generado para nueva imagen', [
+                    'hash_anterior' => $hashAnterior,
+                    'hash_nuevo' => $cleanHash,
+                    'nombre_archivo' => $nombreArchivo,
+                    'ruta_nueva' => $rutaNueva
+                ]);
+
+                //VERIFICAR SI YA EXISTE IMAGEN CON MISMO HASH (pero diferente ID)
+                $existingPhoto = FotografiaPrenda::where('imagen_path', 'LIKE', '%' . $cleanHash . '%')
+                    ->where('id', '!=', $id)
+                    ->first();
+
+                if ($existingPhoto && Storage::disk('public')->exists($rutaNueva)) {
+                    //REUTILIZAR IMAGEN EXISTENTE
+                    $fotografia->imagen_path = $existingPhoto->imagen_path;
+                    $fotografia->imagen_url = $existingPhoto->imagen_url;
+                    $isReutilizada = true;
+
+                    \Log::info('Reutilizando imagen existente en actualización', [
+                        'nuevo_hash' => $cleanHash,
+                        'existing_id' => $existingPhoto->id,
+                        'ruta_reutilizada' => $existingPhoto->imagen_path
+                    ]);
+                } else {
+                    //GUARDAR NUEVA IMAGEN CON HASH
+                    $rutaCompleta = $imagen->storeAs($rutaDestino, $nombreArchivo, 'public');
                 $fotografia->imagen_path = $rutaCompleta;
+                    $fotografia->imagen_url = asset('storage/' . $rutaCompleta);
+                    $isReutilizada = false;
+
+                    \Log::info('Nueva imagen guardada en actualización', [
+                        'nuevo_hash' => $cleanHash,
+                        'nueva_ruta' => $rutaCompleta,
+                        'archivo_guardado' => Storage::disk('public')->exists($rutaCompleta)
+                    ]);
+                }
+
+                //ACTUALIZAR METADATOS CON NUEVO HASH
                 $fotografia->imagen_original_name = $imagen->getClientOriginalName();
                 $fotografia->imagen_size = $imagen->getSize();
                 $fotografia->imagen_mime_type = $imagen->getMimeType();
+
+                $metadatos = $fotografia->metadatos ?? [];
+                $metadatos['hash_sha256_anterior'] = $metadatos['hash_sha256'] ?? 'no_disponible';
+                $metadatos['hash_filename_anterior'] = $metadatos['hash_filename'] ?? 'no_disponible';
+                $metadatos['hash_sha256'] = $hashContent;
+                $metadatos['hash_filename'] = $cleanHash;
+                $metadatos['updated_at'] = now()->toISOString();
+                $metadatos['is_reutilizada'] = $isReutilizada;
+                $metadatos['update_reason'] = 'imagen_editada';
+
+                $fotografia->metadatos = $metadatos;
+
+                //GUARDAR CAMBIOS EN BD PRIMERO
+                $fotografia->save();
+
+                //AHORA SÍ ELIMINAR IMAGEN ANTERIOR (DESPUÉS DE GUARDAR LA NUEVA)
+                if ($rutaAnterior && $rutaAnterior !== $fotografia->imagen_path) {
+                    // Verificar si alguna otra fotografía usa la imagen anterior
+                    $otrosUsos = FotografiaPrenda::where('imagen_path', $rutaAnterior)
+                        ->where('id', '!=', $id)
+                        ->count();
+
+                    if ($otrosUsos === 0) {
+                        //ELIMINAR FÍSICAMENTE SI NO LA USA NADIE MÁS
+                        if (Storage::disk('public')->exists($rutaAnterior)) {
+                            Storage::disk('public')->delete($rutaAnterior);
+                            \Log::info('Imagen anterior eliminada', [
+                                'ruta_eliminada' => $rutaAnterior,
+                                'razon' => 'no_otros_usos'
+                            ]);
+                        }
+                    } else {
+                        \Log::info('Imagen anterior NO eliminada', [
+                            'ruta_conservada' => $rutaAnterior,
+                            'otros_usos' => $otrosUsos,
+                            'razon' => 'usada_por_otros_registros'
+                        ]);
+                    }
+                }
+
+                //VERIFICAR QUE EL ARCHIVO NUEVO EXISTA
+                $fullPath = public_path('storage/' . $fotografia->imagen_path);
+                if (!file_exists($fullPath)) {
+                    \Log::error('Archivo actualizado no encontrado: ' . $fullPath);
+                    throw new \Exception('La imagen actualizada no se guardó correctamente');
             }
 
-            $fotografia->save();
+                \Log::info('Fotografía actualizada correctamente', [
+                    'id' => $fotografia->id,
+                    'nueva_imagen' => true,
+                    'hash_anterior' => $hashAnterior,
+                    'hash_nuevo' => $cleanHash,
+                    'ruta_anterior' => $rutaAnterior,
+                    'ruta_nueva' => $fotografia->imagen_path,
+                    'archivo_existe' => file_exists($fullPath)
+                ]);
+            } else {
+                //SOLO ACTUALIZACIÓN DE CAMPOS SIN IMAGEN
+                $fotografia->save();
+
+                \Log::info('Fotografía actualizada sin cambio de imagen', [
+                    'id' => $fotografia->id,
+                    'campos_actualizados' => $request->only(['orden_sit', 'po', 'oc', 'descripcion', 'tipo'])
+                ]);
+            }
 
             return response()->json([
                 'success' => true,
@@ -294,14 +433,22 @@ class FotografiaPrendaController extends Controller
                     'descripcion' => $fotografia->descripcion,
                     'tipo' => $fotografia->tipo,
                     'imagen_url' => $fotografia->imagen_url,
-                    'fecha_subida' => $fotografia->created_at->format('d-m-Y H:i')
+                    'imagen_path' => $fotografia->imagen_path,
+                    'fecha_subida' => $fotografia->created_at->format('d-m-Y H:i'),
+                    'hash_filename' => isset($cleanHash) ? $cleanHash : ($fotografia->metadatos['hash_filename'] ?? 'sin_cambios'),
+                    'created_at' => $fotografia->created_at,
+                    'updated_at' => $fotografia->updated_at,
+                    'imagen_actualizada' => isset($rutaNueva)
                 ]
             ]);
         } catch (\Exception $e) {
-            \Log::error('Error actualizando fotografía: ' . $e->getMessage());
+            \Log::error('Error actualizando fotografía: ' . $e->getMessage(), [
+                'id' => $id,
+                'trace' => $e->getTraceAsString()
+            ]);
             return response()->json([
                 'success' => false,
-                'message' => 'Error al actualizar la fotografía'
+                'message' => 'Error al actualizar la fotografía: ' . $e->getMessage()
             ], 500);
         }
     }
@@ -386,6 +533,7 @@ class FotografiaPrendaController extends Controller
         try {
             $fotografiasCreadas = [];
             $errores = [];
+            $reutilizadas = 0;
 
             foreach ($request->fotografias as $index => $fotoData) {
                 try {
@@ -396,18 +544,32 @@ class FotografiaPrendaController extends Controller
                         $imagenBase64 = substr($imagenBase64, strpos($imagenBase64, ',') + 1);
                         $imagenBinaria = base64_decode($imagenBase64);
 
-                        // Generar nombre único
-                        $nombreArchivo = time() . '_' . $index . '_' . Str::random(8) . '.' . $extension;
+                        // Generar HASH único del contenido de la imagen
+                        $hashContent = hash('sha256', $imagenBinaria);
+                        $base64Hash = base64_encode($hashContent);
+                        $cleanHash = str_replace(['+', '/', '='], ['', '', ''], $base64Hash);
+                        $cleanHash = substr($cleanHash, 0, 32);
+                        $nombreArchivo = $cleanHash . '.jpeg';
+
                         $rutaDestino = 'fotografias/' . date('Y') . '/' . date('m');
                         $rutaCompleta = $rutaDestino . '/' . $nombreArchivo;
 
-                        // Crear directorio si no existe
-                        if (!Storage::disk('public')->exists($rutaDestino)) {
-                            Storage::disk('public')->makeDirectory($rutaDestino);
-                        }
+                        // Verificar si ya existe
+                        $existingPhoto = FotografiaPrenda::where('imagen_path', 'LIKE', '%' . $cleanHash . '%')->first();
 
-                        // Guardar imagen
-                        Storage::disk('public')->put($rutaCompleta, $imagenBinaria);
+                        if ($existingPhoto && Storage::disk('public')->exists($rutaCompleta)) {
+                            // Reutilizar imagen existente
+                            $rutaFinal = $existingPhoto->imagen_path;
+                            $reutilizadas++;
+                        } else {
+                            // Guardar nueva imagen
+                            if (!Storage::disk('public')->exists($rutaDestino)) {
+                                Storage::disk('public')->makeDirectory($rutaDestino);
+                            }
+
+                            Storage::disk('public')->put($rutaCompleta, $imagenBinaria);
+                            $rutaFinal = $rutaCompleta;
+                        }
 
                         // Crear registro
                         $fotografia = FotografiaPrenda::create([
@@ -416,12 +578,18 @@ class FotografiaPrendaController extends Controller
                             'oc' => $fotoData['oc'] ?? null,
                             'descripcion' => $fotoData['descripcion'],
                             'tipo' => $fotoData['tipo'],
-                            'imagen_path' => $rutaCompleta,
+                            'imagen_path' => $rutaFinal,
                             'imagen_original_name' => $fotoData['nombre'] ?? $nombreArchivo,
                             'imagen_size' => strlen($imagenBinaria),
                             'imagen_mime_type' => 'image/' . $extension,
                             'fecha_subida' => now(),
-                            'subido_por' => auth()->user()->name ?? 'Sistema'
+                            'subido_por' => auth()->user()->name ?? 'Sistema',
+                            'metadatos' => [
+                                'hash_sha256' => $hashContent,
+                                'hash_filename' => $cleanHash,
+                                'batch_index' => $index,
+                                'is_duplicate' => isset($existingPhoto)
+                            ]
                         ]);
 
                         $fotografiasCreadas[] = [
@@ -431,7 +599,9 @@ class FotografiaPrendaController extends Controller
                             'oc' => $fotografia->oc ?? '-',
                             'descripcion' => $fotografia->descripcion,
                             'tipo' => $fotografia->tipo,
-                            'imagen_url' => $fotografia->imagen_url
+                            'imagen_url' => $fotografia->imagen_url,
+                            'hash_filename' => $cleanHash,
+                            'is_duplicate' => isset($existingPhoto)
                         ];
                     } else {
                         $errores[] = "Imagen {$index}: Formato base64 inválido";
@@ -455,6 +625,42 @@ class FotografiaPrendaController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Error al subir las fotografías'
+            ], 500);
+        }
+    }
+
+    /*=========================================================================================================== */
+    // Limpiar imágenes huérfanas o las que no estan siendo usadas por ningún registro
+    public function limpiarImagenesHuerfanas()
+    {
+        try {
+            $imagenesEnBD = FotografiaPrenda::pluck('imagen_path')->filter()->unique();
+            $imagenesEnStorage = Storage::disk('public')->allFiles('fotografias');
+
+            $imagenesHuerfanas = array_diff($imagenesEnStorage, $imagenesEnBD->toArray());
+            $eliminadas = 0;
+
+            foreach ($imagenesHuerfanas as $imagen) {
+                if (Storage::disk('public')->exists($imagen)) {
+                    Storage::disk('public')->delete($imagen);
+                    $eliminadas++;
+                    \Log::info('Imagen huérfana eliminada: ' . $imagen);
+                }
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => "{$eliminadas} imagen(es) huérfana(s) eliminada(s)",
+                'data' => [
+                    'eliminadas' => $eliminadas,
+                    'imagenes_huerfanas' => $imagenesHuerfanas
+                ]
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Error limpiando imágenes huérfanas: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al limpiar imágenes huérfanas'
             ], 500);
         }
     }

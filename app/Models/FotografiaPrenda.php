@@ -95,10 +95,30 @@ class FotografiaPrenda extends Model
     // Método para eliminar imagen física
     public function eliminarImagenFisica()
     {
-        if ($this->imagen_path && Storage::disk('public')->exists($this->imagen_path)) {
-            return Storage::disk('public')->delete($this->imagen_path);
+        if ($this->imagen_path) {
+            // Verificar otros usos antes de eliminar
+            $otrosUsos = static::where('imagen_path', $this->imagen_path)
+                ->where('id', '!=', $this->id)
+                ->count();
+
+            if ($otrosUsos === 0 && Storage::disk('public')->exists($this->imagen_path)) {
+                Storage::disk('public')->delete($this->imagen_path);
+                \Log::info('Imagen física eliminada manualmente', [
+                    'id' => $this->id,
+                    'path' => $this->imagen_path
+                ]);
+                return true;
+            }
+
+            \Log::info('Imagen física NO eliminada', [
+                'id' => $this->id,
+                'path' => $this->imagen_path,
+                'otros_usos' => $otrosUsos,
+                'existe' => Storage::disk('public')->exists($this->imagen_path)
+            ]);
         }
-        return true;
+
+        return false;
     }
 
     // Event listeners
@@ -108,7 +128,29 @@ class FotografiaPrenda extends Model
 
         // Al eliminar el registro, eliminar también la imagen física
         static::deleting(function ($fotografia) {
-            $fotografia->eliminarImagenFisica();
+            if ($fotografia->imagen_path) {
+                // Verificar si alguna otra fotografía usa la misma imagen
+                $otrosUsos = static::where('imagen_path', $fotografia->imagen_path)
+                    ->where('id', '!=', $fotografia->id)
+                    ->count();
+
+                if ($otrosUsos === 0) {
+                    // Solo eliminar si no la usa nadie más
+                    if (Storage::disk('public')->exists($fotografia->imagen_path)) {
+                        Storage::disk('public')->delete($fotografia->imagen_path);
+                        \Log::info('Imagen eliminada al borrar registro', [
+                            'id' => $fotografia->id,
+                            'path' => $fotografia->imagen_path
+                        ]);
+                    }
+                } else {
+                    \Log::info('Imagen conservada al borrar registro', [
+                        'id' => $fotografia->id,
+                        'path' => $fotografia->imagen_path,
+                        'otros_usos' => $otrosUsos
+                    ]);
+                }
+            }
         });
     }
 }

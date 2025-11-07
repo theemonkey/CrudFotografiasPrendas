@@ -37,3 +37,5 @@ Route::prefix('api/fotografias')->group(function () {
 // Rutas adicionales de compatibilidad
 Route::post('/fotos/upload', [FotografiaPrendaController::class, 'store'])->name('fotos.upload');
 Route::post('/fotos/upload-multiple', [FotografiaPrendaController::class, 'storeMultiple'])->name('fotos.upload-multiple');
+Route::post('/fotografias/limpiar-huerfanas', [FotografiaPrendaController::class, 'limpiarImagenesHuerfanas'])
+    ->middleware('auth');

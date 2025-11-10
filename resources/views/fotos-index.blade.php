@@ -774,15 +774,83 @@
         }
     }
 
+  /*==========================================================================================================================*/
     function downloadImage() {
         const lightboxImage = document.getElementById('lightboxImage');
         if (lightboxImage && lightboxImage.src && lightboxImage.src !== '') {
+            //Obtener numero de orden sit para nombre de archivo
+            let ordenSit = null;
+            let fileName = 'imagen.jpg'; // Fallback
+
+            try {
+                // Método 1: Desde currentImageData global
+                if (window.currentImageData && window.currentImageData.ordenSit) {
+                    ordenSit = window.currentImageData.ordenSit;
+                }
+
+                // Método 2: Desde descripción del lightbox
+                if (!ordenSit) {
+                    const lightboxDescription = document.getElementById('lightboxDescription');
+                    if (lightboxDescription) {
+                        const descText = lightboxDescription.textContent;
+                        // Buscar número de 6+ dígitos (según orden SIT)
+                        const match = descText.match(/\b\d{6,}\b/);
+                        if (match) {
+                            ordenSit = match[0];
+                        }
+                    }
+                }
+
+                // Método 3: Desde la tabla (buscar fila visible actual)
+                if (!ordenSit) {
+                    const tableBody = document.getElementById('imagesTableBody');
+                    if (tableBody) {
+                        const visibleRows = tableBody.querySelectorAll('tr:not([style*="display: none"])');
+                        for (let row of visibleRows) {
+                            const img = row.querySelector('img');
+                            const ordenCell = row.querySelector('[data-column="orden-sit"]');
+
+                            // Si la imagen coincide con la del lightbox
+                            if (img && img.src === lightboxImage.src && ordenCell) {
+                                ordenSit = ordenCell.textContent.trim();
+                                break;
+                            }
+                        }
+                    }
+                }
+
+                //CONSTRUIR NOMBRE: imagen_[ordenSit].jpg
+                if (ordenSit && ordenSit !== '' && ordenSit !== 'N/A') {
+                    // Limpiar orden SIT (solo números)
+                    const cleanOrdenSit = ordenSit.replace(/[^0-9]/g, '');
+                    if (cleanOrdenSit) {
+                        fileName = `imagen_${cleanOrdenSit}.jpg`;
+                    }
+                } else {
+                    // Fallback con timestamp
+                    fileName = `imagen_${Date.now()}.jpg`;
+                }
+
+                console.log('Descarga con nombre personalizado:', fileName, 'OrdenSIT:', ordenSit);
+
+            } catch (error) {
+                console.warn('Error obteniendo orden SIT:', error);
+                fileName = `imagen_${Date.now()}.jpg`;
+            }
+
+            //Crear enlace de descarga
             const link = document.createElement('a');
             link.href = lightboxImage.src;
-            link.download = lightboxImage.alt || 'imagen.jpg';
+            link.download = fileName;
+            link.style.display = 'none';
+
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
+
+            console.log(`Descarga iniciada: ${fileName}`);
+        } else {
+            console.error('No hay imagen para descargar');
         }
     }
 

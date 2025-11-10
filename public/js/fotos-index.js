@@ -387,6 +387,25 @@ function initializeLightbox() {
 function openImageLightbox(imageUrl, alt, description, type) {
     console.log('Abriendo lightbox:', { imageUrl, alt, description, type });
 
+    //Extraer y guardar orden SIT para descarga
+    let ordenSit = null;
+
+    //Buscar orden SIT en diferentes fuentes
+    if (description && description.match(/\b\d{6,}\b/)) {
+        ordenSit = description.match(/\b\d{6,}\b/)[0];
+    } else if (alt && alt.match(/\b\d{6,}\b/)) {
+        ordenSit = alt.match(/\b\d{6,}\b/)[0];
+    }
+
+    //Guardar datos para descarga
+    window.currentImageData = {
+        imageUrl: imageUrl,
+        alt: alt,
+        description: description,
+        type: type,
+        ordenSit: ordenSit
+    };
+
     const lightbox = document.getElementById('imageLightbox');
     const lightboxImage = document.getElementById('lightboxImage');
     const lightboxDescription = document.getElementById('lightboxDescription');
@@ -421,18 +440,82 @@ function closeLightbox() {
     }
 }
 
+/*================================================================================================================== */
 function downloadImageFromLightbox() {
     const lightboxImage = document.getElementById('lightboxImage');
     if (lightboxImage && lightboxImage.src) {
+        const imageUrl = lightboxImage.src;
+
+        //Generar nombre basado en orden SIT
+        let fileName = 'imagen.jpg';
+
+        try {
+            //Obtener orden SIT del lightbox description o de datos actuales
+            let ordenSit = null;
+
+            //Metodo 1: Desde datos actuales si estan disponibles
+            if (currentImageData && currentImageData.ordenSit) {
+                ordenSit = currentImageData.ordenSit;
+            }
+
+            //Metodo 2: Desde elemento de descripcion del lightbox
+            if (!ordenSit) {
+                const lightboxDescription = document.getElementById('lightboxDescription');
+                if (lightboxDescription) {
+                    const descText = lightboxDescription.textContent;
+                    //Buscar patron numerico que podría ser orden SIT
+                    const match = descText.match(/\b\d{6,}\b/);
+                    if (match) {
+                        ordenSit = match[0];
+                    }
+                }
+            }
+
+            //Metodo 3: Desde la tabla (buscar fila visible actual)
+            if (!ordenSit) {
+                const tableBody = document.getElementById('imagesTableBody');
+                if (tableBody) {
+                    const firstVisibleRow = tableBody.querySelector('tr[style*="display: none"] ~ tr, tr:not([style*="display: none"])');
+                    if (firstVisibleRow) {
+                        const ordenCell = firstVisibleRow.querySelector('[data-column="orden-sit"]');
+                        if (ordenCell) {
+                            ordenSit = ordenCell.textContent.trim();
+                        }
+                    }
+                }
+            }
+
+            //Construir nombre ->> imagen_{ordenSit}.jpg
+            if (ordenSit && ordenSit !== '' && ordenSit !== 'N/A') {
+                // Limpiar orden SIT de caracteres especiales
+                const cleanOrdenSit = ordenSit.replace(/[^0-9]/g, '');
+                if (cleanOrdenSit) {
+                    fileName = `imagen_${cleanOrdenSit}.jpg`;
+                }
+            } else {
+                // Si no hay orden SIT, usar timestamp
+                fileName = `imagen_${Date.now()}.jpg`;
+            }
+
+            console.log('Nombre de descarga generado:', fileName, 'desde ordenSit:', ordenSit);
+        } catch (error) {
+            console.warn('Error al generar nombre de descarga:', error);
+            fileName = `imagen_${Date.now()}.jpg`;
+        }
+
+        //Crear descarga con nombre personalizado
         const link = document.createElement('a');
-        link.href = lightboxImage.src;
-        link.download = lightboxImage.alt || 'imagen.jpg';
+        link.href = imageUrl;
+        link.download = fileName;
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
+
+        console.log(`Descarga completada: ${fileName}`);
     }
 }
 
+/*======================================================================================================================== */
 function initializeSearch() {
     const searchInput = document.getElementById('searchInput');
     const searchButton = document.getElementById('searchButton');
@@ -2007,8 +2090,8 @@ function generateRealHistorialData(ordenSit, realImages, currentImage) {
 
 function updateSynchronizedProgressSteps(estados) {
     const stepMuestra = document.getElementById('stepMuestra');
-    const stepValidacion = document.getElementById('stepValidacion');
-    const stepFinal = document.getElementById('stepFinal');
+    const stepValidacion = document.getElementById('stepValidacionAC');
+    const stepFinal = document.getElementById('stepPrendaFinal');
 
     [stepMuestra, stepValidacion, stepFinal].forEach(step => {
         if (step) {

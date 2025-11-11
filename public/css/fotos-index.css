@@ -127,26 +127,61 @@
 }
 
 /* ================================================================
-   BOTONES DE ACCIÓN - MOBILE STACK
+   BOTONES DE ACCIÓNES - MOBILE STACK
    ================================================================ */
 
 .action-buttons {
-    display: flex;
-    flex-direction: column;
-    gap: var(--spacing-sm);
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+    gap: var(--spacing-xs) !important;
     margin-bottom: var(--spacing-md);
     width: 100%;
+    overflow-x: auto !important;
+    padding-bottom: 4px;
 }
 
 .action-buttons .btn {
-    width: 100%;
-    padding: 12px;
-    font-size: 14px;
+    min-width: 80px !important;
+    max-width: 120px !important;
+    padding: 8px 12px !important;
+    font-size: 12px !important;
     border-radius: var(--border-radius);
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: var(--spacing-sm);
+    gap: var(--spacing-xs);
+    white-space: nowrap !important;
+    flex-shrink: 0 !important;
+}
+
+/* ================================================================
+   COLUMNA DE ACCIONES EN TABLA - FORZAR ICONOS ACCIONES HORIZONTAL
+   ================================================================ */
+
+/* Para botones dentro de celdas de tabla */
+td[data-column="acciones"] {
+    min-width: 200px !important;
+    white-space: nowrap !important;
+    overflow-x: auto !important;
+    padding: 4px 8px !important;
+}
+
+td[data-column="acciones"] .btn {
+    padding: 4px 6px !important;
+    margin-right: 2px !important;
+    font-size: 11px !important;
+    min-width: auto !important;
+    flex-shrink: 0 !important;
+}
+
+/* Contenedor de botones en tabla */
+td[data-column="acciones"] .d-flex {
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+    gap: 2px !important;
+    align-items: center !important;
 }
 
 /* ================================================================
@@ -427,18 +462,6 @@
     margin-right: 2px;
 }
 
-.btn-pink {
-    background-color: #e91e63 !important;
-    border-color: #e91e63 !important;
-    color: white !important;
-}
-
-.btn-pink:hover {
-    background-color: #c2185b !important;
-    border-color: #c2185b !important;
-    color: white !important;
-}
-
 .btn-buscar {
     background-color: #fff;
     border: 1px solid #ced4da;
@@ -526,13 +549,13 @@
     }
 
     .action-buttons {
-        flex-direction: row;
-        flex-wrap: wrap;
+        flex-wrap: nowrap !important;   /*Fuerza horizontal*/
+        overflow-x: visible !important;
     }
 
     .action-buttons .btn {
-        flex: 1;
-        min-width: 120px;
+        min-width: 100px !important;
+        max-width: 130px !important;
     }
 
     .mobile-card-actions {
@@ -663,7 +686,7 @@
 }
 
 /* ================================================================
-   FILTRO TIPO FOTOGRAFÍA - ESTILOS MEJORADOS
+   DROPDOWN FILTRO TIPO FOTOGRAFÍA - ESTILOS MEJORADOS
    ================================================================ */
 
 /*  DROPDOWN mejorado */
@@ -786,7 +809,7 @@
 
 /* INDICADOR de filtro activo */
 #filterStatusIndicator {
-    background: linear-gradient(90deg, #e3f2fd, #bbdefb) !important;
+    background: #bbdefb !important;
     border-radius: 4px !important;
     margin: 4px 8px !important;
     padding: 6px 8px !important;
@@ -877,13 +900,13 @@
 }
 
 .step-muestra {
-    background: linear-gradient(135deg, #17a2b8, #20c997);
+    background: #17a2b8;
 }
 .step-validacion {
-    background: linear-gradient(135deg, #ffc107, #fd7e14);
+    background: #ffc107;
 }
 .step-final {
-    background: linear-gradient(135deg, #28a745, #20c997);
+    background: #28a745;
 }
 
 
@@ -974,15 +997,15 @@
 }
 
 .status-muestra {
-    background: linear-gradient(135deg, #17a2b8, #20c997);
+    background: #17a2b8;
 }
 
 .status-validacion {
-    background: linear-gradient(135deg, #ffc107, #fd7e14);
+    background: #ffc107;
 }
 
 .status-final {
-    background: linear-gradient(135deg, #28a745, #20c997);
+    background: #28a745;
 }
 
 /* Contenedores de fotografías */
@@ -992,7 +1015,7 @@
     flex-wrap: wrap;
     min-height: 100px;
     padding: 16px;
-    background: linear-gradient(145deg, #f8f9fa, #e9ecef);
+    background: #f8f9fa;
     border-radius: 12px;
     border: 2px dashed #dee2e6;
     transition: all 0.3s ease;
@@ -1000,7 +1023,7 @@
 
 .photos-container:hover {
     border-color: #adb5bd;
-    background: linear-gradient(145deg, #e9ecef, #f8f9fa);
+    background: #e9ecef;
 }
 
 /* Items de fotografías */
@@ -1161,7 +1184,7 @@
     left: 0;
     right: 0;
     bottom: 0;
-    background: linear-gradient(45deg, transparent 49%, rgba(255,255,255,0.1) 50%, transparent 51%);
+    background: none;
     pointer-events: none;
     opacity: 0;
     transition: opacity 0.3s ease;
@@ -1174,18 +1197,6 @@
 /* ================================================================
    ESTILOS EXTRAS - BOTONES Y BADGES
    ================================================================ */
-.btn-pink {
-    background-color: #e91e63 !important;
-    border-color: #e91e63 !important;
-    color: white !important;
-}
-
-.btn-pink:hover {
-    background-color: #c2185b !important;
-    border-color: #c2185b !important;
-    color: white !important;
-}
-
 /* Botones de acciones con hover */
 .btn-delete:hover,
 .btn-edit:hover,
@@ -1420,7 +1431,7 @@
 
 #newPhotoPreview .border {
     border: 2px dashed #007bff !important;
-    background: linear-gradient(45deg, #f8f9fa, #e9ecef);
+    background: #e9ecef;
     padding: 8px;
 }
 

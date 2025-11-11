@@ -1041,11 +1041,11 @@
             console.error(`Timeout: Solo se procesaron ${processedCount}/${validFiles.length} archivos`);
 
             if (imageDataArray.length > 0) {
-                showNotification(`Solo se procesaron ${imageDataArray.length} de ${validFiles.length} archivos`, 'warning');
+                //showNotification(`Solo se procesaron ${imageDataArray.length} de ${validFiles.length} archivos`, 'warning');
                 imageDataArray.sort((a, b) => a.index - b.index);
                 showBatchImageModal(imageDataArray, uploadBtn);
             } else {
-                showNotification('Timeout: No se pudo procesar ningún archivo', 'error');
+                //showNotification('Timeout: No se pudo procesar ningún archivo', 'error');
                 setUploadState(uploadBtn, 'normal');
             }
         }
@@ -1068,7 +1068,7 @@ function showBatchImageModal(imageDataArray, uploadBtn) {
     const modalEl = document.getElementById('imageDataModal');
     if (!modalEl) {
         console.error('Modal no encontrado');
-        showNotification('Error del sistema: Modal no disponible', 'error');
+        //showNotification('Error del sistema: Modal no disponible', 'error');
         setUploadState(uploadBtn, 'normal');
         return;
     }
@@ -1134,7 +1134,7 @@ function showBatchImageModal(imageDataArray, uploadBtn) {
             for (let i = 0; i < imageDataArray.length; i++) {
                 const imageData = imageDataArray[i];
 
-                showNotification(`Guardando imagen ${i + 1} de ${imageDataArray.length}...`, 'info', 1000);
+                //showNotification(`Guardando imagen ${i + 1} de ${imageDataArray.length}...`, 'info', 1000);
 
                 try {
                     // Convertir base64 a File
@@ -1217,7 +1217,7 @@ function showBatchImageModal(imageDataArray, uploadBtn) {
                     ? `${savedImages.length} imagen(es) subida(s) a orden ${ordenSitActual}`
                     : `${savedImages.length} de ${imageDataArray.length} imagen(es) subida(s)`;
 
-                showNotification(mensaje, savedImages.length === imageDataArray.length ? 'success' : 'warning', 4000);
+                //showNotification(mensaje, savedImages.length === imageDataArray.length ? 'success' : 'warning', 4000);
 
             } else {
                 throw new Error('No se pudo guardar ninguna imagen');
@@ -1254,7 +1254,7 @@ function addSimpleInfo(imageCount) {
         const modalBody = document.querySelector('#imageDataModal .modal-body');
         if (modalBody) {
             modalBody.insertAdjacentElement('afterbegin', infoContainer);
-            console.log('[FOTOS-INDEX] Info container creado');
+            console.log('Info container creado');
         }
     }
 
@@ -1777,7 +1777,7 @@ function uploadToBackendIndex(formData) {
         //VALIDACIÓN MEJORADA DE URL
         if (!fotografiaData.imagen_url && !fotografiaData.url) {
             console.error('Imagen sin URL válida:', fotografiaData);
-            showNotification('Error: Imagen recibida sin URL válida', 'error');
+            //showNotification('Error: Imagen recibida sin URL válida', 'error');
             return;
         }
 
@@ -1855,14 +1855,14 @@ function uploadToBackendIndex(formData) {
 
         const row = button.closest('tr');
         if (!row) {
-            showNotification('Error: No se encontró la fila', 'error');
+            //showNotification('Error: No se encontró la fila', 'error');
             return;
         }
 
         // Extraer datos usando la función de fotos-index.js
         const imageData = extractImageDataFromRow(row);
         if (!imageData) {
-            showNotification('Error: No se pudieron extraer los datos de la imagen', 'error');
+            //showNotification('Error: No se pudieron extraer los datos de la imagen', 'error');
             return;
         }
 

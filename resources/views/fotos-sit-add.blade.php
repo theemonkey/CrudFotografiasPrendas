@@ -242,7 +242,7 @@
 
         ordenSitCard.style.display = 'block';
 
-        showNotification(`Orden ${primeraFoto.orden_sit} encontrada con ${totalFotos} fotografía(s)`, 'success', 2000);
+        //showNotification(`Orden ${primeraFoto.orden_sit} encontrada con ${totalFotos} fotografía(s)`, 'success', 2000);
     }
 
     //NUEVA FUNCIÓN: Mostrar orden nueva
@@ -581,7 +581,7 @@
                     console.error(`Timeout: Solo se procesaron ${processedCount}/${validFiles.length} archivos`);
 
                     if (imageDataArray.length > 0) {
-                        showNotification(`Solo se procesaron ${imageDataArray.length} de ${validFiles.length} archivos`, 'warning');
+                        //showNotification(`Solo se procesaron ${imageDataArray.length} de ${validFiles.length} archivos`, 'warning');
                         imageDataArray.sort((a, b) => a.index - b.index);
                         showBatchImageModal(imageDataArray, uploadBtn);
                     } else {
@@ -1017,7 +1017,7 @@
             prendaPreview.onclick = () => openLightbox(
                 imageData.url,
                 imageData.descripcion,
-                imageData.tipoFotografia
+                imageData.tipo
             );
 
             console.log('Vista previa actualizada');
@@ -1028,10 +1028,10 @@
             descripcion.textContent = imageData.descripcion;
         }
 
-        if (tipoOrden && imageData.tipoFotografia) {
-            tipoOrden.textContent = imageData.tipoFotografia;
+        if (tipoOrden && imageData.tipo) {
+            tipoOrden.textContent = imageData.tipo;
             tipoOrden.className = "badge badge-color-personalizado";
-            tipoSeleccionado = imageData.tipoFotografia;
+            tipoSeleccionado = imageData.tipo;
         }
 
         //  SINCRONIZACIÓN: Asegurar que los datos incluyan timestamps y metadatos para historial

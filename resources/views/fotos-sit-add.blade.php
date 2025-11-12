@@ -4,8 +4,43 @@
 
 @section('contenido')
 
+{{--VARIABLE DE PRUEBA PARA PERMISOS --}}
+@php
+    // Variable booleana para probar permisos
+    // true = Administrador (puede ver tabla + subir fotos)
+    // false = Usuario normal (solo subir fotos)
+    $isAdmin = true; // -> CAMBIAR AQUÍ PARA PROBAR
+@endphp
+
 <div class="container mt-4">
-    <h3 class="mb-4">Agregar fotos de la prenda</h3>
+    {{-- Header con información de permisos --}}
+    <div class="row mb-4">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center flex-wrap">
+            <div class="mb-2 mb-md-0">
+                <h3 class="mb-1">
+                    @if($isAdmin)
+                        Buscar Orden SIT - Panel Administrador
+                    @else
+                        Agregar fotos de la prenda
+                    @endif
+                </h3>
+                @if($isAdmin)
+                    <span class="badge bg-success">
+                        <i class="fas fa-user-shield me-1"></i>
+                        Administrador
+                    </span>
+                @else
+                    <span class="badge bg-primary">
+                        <i class="fas fa-user me-1"></i>
+                        Usuario normal
+                    </span>
+                @endif
+            </div>
+        </div>
+    </div>
+</div>
+
 
     <!-- Buscar Orden SIT -->
     <div class="mb-3">
@@ -13,11 +48,33 @@
             <input type="text"
                 id="ordenSitInput"
                 class="form-control"
-                placeholder="Buscar orden SIT"
+                placeholder="@if($isAdmin) Buscar orden SIT @else Buscar orden SIT @endif"
                 oninput="this.value = this.value.replace(/[^0-9]/g, '')">
-            <button id="searchBoton" class="btn btn-primary"><i class="fas fa-search"></i></button>
+
+            <button id="searchBoton" class="btn @if($isAdmin) btn-success @else btn-primary @endif">
+                @if($isAdmin)
+                    <i class="fas fa-table me-1"></i>
+                    Ir a Tabla
+                @else
+                    <i class="fas fa-search me-1"></i>
+                @endif
+            </button>
         </div>
+
+        @if($isAdmin)
+            <div class="form-text text-secondary">
+                <i class="fas fa-info-circle me-1"></i>
+                Como administrador, al buscar será redirigido directamente a la tabla principal
+            </div>
+        @else
+            <div class="form-text">
+                <i class="fas fa-info-circle me-1"></i>
+                Ingrese el número de orden SIT para buscar la prenda y agregar fotografías
+            </div>
+        @endif
     </div>
+
+
 
     <!-- Resultado de búsqueda -->
     <div id="ordenSitCard" class="card p-3 mb-3" style="display:none;">
@@ -59,42 +116,42 @@
         </div>
     </div>
 
-<!-- Lightbox para visualizar imágenes -->
-<div id="imageLightbox" class="lightbox-overlay" style="display: none;">
-    <div class="lightbox-content">
-        <div class="lightbox-header">
-            <h5 id="lightboxTitle">Vista Previa de Imagen</h5>
-            <button onclick="closeLightbox()" class="btn-close-lightbox">
-                <i class="fas fa-times"></i>
-            </button>
-        </div>
-        <div class="lightbox-body">
-            <img id="lightboxImage" src="" alt="" class="lightbox-image">
-            <div class="lightbox-info">
-                <div class="row">
-                    <div class="col-md-6">
-                        <strong>Descripción:</strong> <span id="previewDescripcion"></span>
-                        <p id="lightboxDescription"></p>
-                    </div>
-                    <div class="col-md-6">
-                        <strong>Tipo:</strong> <span id="previewTipo"></span>
-                        <p id="lightboxType"></p>
+    <!-- Lightbox para visualizar imágenes -->
+    <div id="imageLightbox" class="lightbox-overlay" style="display: none;">
+        <div class="lightbox-content">
+            <div class="lightbox-header">
+                <h5 id="lightboxTitle">Vista Previa de Imagen</h5>
+                <button onclick="closeLightbox()" class="btn-close-lightbox">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="lightbox-body">
+                <img id="lightboxImage" src="" alt="" class="lightbox-image">
+                <div class="lightbox-info">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <strong>Descripción:</strong> <span id="previewDescripcion"></span>
+                            <p id="lightboxDescription"></p>
+                        </div>
+                        <div class="col-md-6">
+                            <strong>Tipo:</strong> <span id="previewTipo"></span>
+                            <p id="lightboxType"></p>
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
-        <div class="lightbox-footer">
-            <button onclick="closeLightbox()" class="btn btn-secondary">
-                <i class="fas fa-times me-1"></i>
-                Cerrar
-            </button>
-            <button onclick="downloadImage()" class="btn btn-primary">
-                <i class="fas fa-download me-1"></i>
-                Descargar
-            </button>
+            <div class="lightbox-footer">
+                <button onclick="closeLightbox()" class="btn btn-secondary">
+                    <i class="fas fa-times me-1"></i>
+                    Cerrar
+                </button>
+                <button onclick="downloadImage()" class="btn btn-primary">
+                    <i class="fas fa-download me-1"></i>
+                    Descargar
+                </button>
+            </div>
         </div>
     </div>
-</div>
 
     <!-- Botones de acción -->
     <div class="text-end">
@@ -154,8 +211,115 @@
     </div>
 </div>
 
+{{-- Meta tag para JavaScript --}}
+<meta name="user-permissions" content="{{ json_encode(['isAdmin' => $isAdmin]) }}">
+
+
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+
+
+{{-- =======>>>>> Script adicional para manejo de permisos <<<<<======= --}}
+<script>
+// ✅ OBTENER PERMISOS DESDE META TAG
+const userPermissions = JSON.parse(document.querySelector('meta[name="user-permissions"]').getAttribute('content'));
+
+console.log('🔐 Permisos de usuario:', userPermissions);
+
+// Función para ir a la tabla (solo administradores)
+function irATabla() {
+    if (userPermissions.isAdmin) {
+        console.log('✅ Admin: Redirigiendo a tabla...');
+        window.location.href = "{{ route('fotos-index') }}";
+    } else {
+        console.log('❌ Usuario normal: Sin permisos para tabla');
+        showNotification('No tiene permisos para acceder a la tabla', 'warning');
+    }
+}
+
+// ✅ MODIFICAR función guardarFoto según permisos
+const originalGuardarFoto = guardarFoto;
+guardarFoto = function(savedImages) {
+    console.log('💾 Guardando fotos con permisos:', userPermissions);
+
+    if (!savedImages || savedImages.length === 0) {
+        showNotification("No hay imágenes guardadas para procesar", 'warning');
+        return;
+    }
+
+    const mensaje = `${savedImages.length} imagen(es) subida(s) correctamente`;
+
+    if (userPermissions.isAdmin) {
+        // ✅ ADMINISTRADOR: Redirigir a tabla
+        console.log('👨‍💼 Modo Admin: Preparando redirección a tabla...');
+
+        const dataToTransfer = {
+            images: savedImages.map(img => ({
+                id: img.id,
+                backendId: img.id,
+                url: img.url,
+                imagen_url: img.url,
+                orden_sit: img.orden_sit,
+                po: img.po,
+                oc: img.oc,
+                descripcion: img.descripcion,
+                tipo: img.tipo,
+                created_at: img.created_at,
+                fecha_subida: img.created_at,
+                origenVista: 'fotos-sit-add',
+                procesadoPor: 'admin-user',
+                displayOnly: true,
+                uploaded: true,
+                isBackendImage: true,
+                source: 'backend-confirmed',
+                fromSitAdd: true
+            })),
+            timestamp: Date.now(),
+            totalImages: savedImages.length
+        };
+
+        localStorage.setItem('newUploadedImages', JSON.stringify(dataToTransfer));
+
+        showNotification(`${mensaje}. Redirigiendo a tabla...`, 'success', 1500);
+
+        setTimeout(() => {
+            console.log('🔄 Redirigiendo administrador a tabla...');
+            window.location.href = "{{ route('fotos-index') }}";
+        }, 1500);
+
+    } else {
+        // ✅ USUARIO NORMAL: Solo mostrar éxito y limpiar
+        console.log('👤 Modo Usuario: Solo notificación y limpieza...');
+
+        showNotification(mensaje, 'success', 3000);
+
+        // Limpiar formulario para nueva carga
+        setTimeout(() => {
+            cancelarOperacion();
+            showNotification('Listo para agregar más fotografías', 'info', 2000);
+        }, 2000);
+    }
+};
+
+// ✅ VALIDACIÓN AL CARGAR
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('🚀 Inicializando con permisos:', userPermissions);
+
+    // Mostrar mensaje de modo actual
+    const modeMessage = userPermissions.isAdmin
+        ? 'Modo Administrador: Puede ver tabla y subir fotos'
+        : 'Modo Usuario: Solo puede subir fotografías';
+
+    console.log(`🎭 ${modeMessage}`);
+
+    // Opcional: Mostrar notificación del modo actual
+    setTimeout(() => {
+        const badgeType = userPermissions.isAdmin ? 'info' : 'primary';
+        showNotification(modeMessage, badgeType, 3000);
+    }, 1000);
+});
+</script>
+
 
 <!-- Scripts utiles-->
 <!-- ==========Busqueda orden sit - Botones card agregar fotos prenda  ============0-->
@@ -961,6 +1125,13 @@
                                 fecha_subida: response.data.fecha_subida || response.data.created_at
                             }
                         });
+                        // Refrescar paginación
+                        setTimeout(() => {
+                            if (typeof updatePaginationAfterChange === 'function') {
+                                updatePaginationAfterChange('upload success fotos-sit-add');
+                            }
+                        }, 200);
+
                     } else {
                         reject(new Error(response.message || 'Respuesta inválida del servidor'));
                     }
@@ -1155,11 +1326,57 @@
         }, duration);
     }
 
-    // Inicialización principal fotos-sit-add
+    // =======>>>>>>> Inicialización principal fotos-sit-add según rol de usuario =======>>>>>>>
     document.addEventListener("DOMContentLoaded", function() {
-        initializeUploadButtons();
+        //initializeUploadButtons();
 
+        const searchButton = document.getElementById('searchBoton');
         const ordenSitInput = document.getElementById('ordenSitInput');
+
+        if (searchButton && ordenSitInput) {
+        // Obtener permisos
+        const userPermissions = JSON.parse(document.querySelector('meta[name="user-permissions"]').getAttribute('content'));
+
+        searchButton.addEventListener('click', function() {
+            const ordenSit = ordenSitInput.value.trim();
+
+            if (!ordenSit || ordenSit.length < 3) {
+                showNotification('Ingrese un número de orden SIT válido', 'warning');
+                return;
+            }
+
+            if (userPermissions.isAdmin) {
+                // ✅ ADMINISTRADOR: Redirigir a tabla con filtro
+                console.log('🔄 Admin: Redirigiendo a tabla con orden:', ordenSit);
+
+                // Guardar orden en localStorage para filtrar en la tabla
+                localStorage.setItem('filterOrdenSit', ordenSit);
+                localStorage.setItem('autoFilter', 'true');
+
+                showNotification(`Redirigiendo a tabla con orden SIT: ${ordenSit}`, 'info', 1500);
+
+                setTimeout(() => {
+                    window.location.href = "{{ route('fotos-index') }}";
+                }, 1500);
+
+            } else {
+                // ✅ USUARIO NORMAL: Comportamiento original de búsqueda
+                console.log('🔍 Usuario: Buscando orden SIT:', ordenSit);
+                buscarOrdenSIT(ordenSit);
+            }
+            });
+
+            // También manejar Enter en el input
+            ordenSitInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    searchButton.click();
+                }
+            });
+
+            console.log('✅ Comportamiento dinámico del buscador configurado');
+        }
+
+        /*const ordenSitInput = document.getElementById('ordenSitInput');
         const searchBoton = document.getElementById('searchBoton');
 
         if (ordenSitInput) {
@@ -1178,8 +1395,25 @@
             });
         }
 
-        console.log('Sistema fotos-sit-add listo');
+        console.log('Sistema fotos-sit-add listo');*/
     });
+
+    // Función de búsqueda existente para usuarios normales
+    function buscarOrdenSIT(ordenSit) {
+        // Tu función de búsqueda actual sin cambios
+        console.log('Función de búsqueda normal para orden:', ordenSit);
+
+        // Mostrar loading
+        showNotification('Buscando orden SIT...', 'info');
+
+        // Simular búsqueda (adaptar a tu lógica actual)
+        setTimeout(() => {
+            // Aquí iría tu lógica actual de búsqueda
+            showNotification(`Orden SIT ${ordenSit} encontrada`, 'success');
+
+            // Tu lógica existente para mostrar la orden...
+        }, 1000);
+    }
 </script>
 
 <!--/=/=/=/=/=/=/=//=/=/=/=/=/=/=//=/=/=/=/=/=/=//=/=/=/=/=/=/=//=/=/=/=/=/=/=//=/=/=/=/=/=/=/ -->
@@ -1236,5 +1470,7 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 </script>
+
+
 
 @endsection

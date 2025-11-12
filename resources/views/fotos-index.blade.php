@@ -4,6 +4,73 @@
 
 @section('contenido')
 
+
+{{--MISMA VARIABLE DE PRUEBA PARA CONSISTENCIA --}}
+@php
+    // Variable booleana para probar permisos
+    // true = Administrador (puede ver tabla + subir fotos)
+    // false = Usuario normal (solo subir fotos)
+    $isAdmin = true; // -> MISMA QUE EN fotos-sit-add.blade.php
+@endphp
+
+{{--VERIFICACIÓN DE PERMISOS --}}
+@if(!$isAdmin)
+    <div class="container mt-4">
+        <div class="alert alert-warning border border-warning rounded-3 text-center py-5">
+            <div class="mb-4">
+                <i class="fas fa-exclamation-triangle fa-4x text-warning"></i>
+            </div>
+            <h4 class="fw-bold mb-3">Acceso Restringido</h4>
+            <p class="mb-4 text-muted">
+                Los usuarios normales solo pueden subir fotografías.<br>
+                No tiene permisos para ver la tabla de datos.
+            </p>
+            <div class="d-flex justify-content-center gap-3 flex-wrap">
+                <a href="{{ route('fotos-sit-add') }}" class="btn btn-primary btn-lg">
+                    <i class="fas fa-camera me-2"></i>
+                    Ir a Subir Fotos
+                </a>
+                <button class="btn btn-outline-secondary btn-lg" onclick="history.back()">
+                    <i class="fas fa-arrow-left me-2"></i>
+                    Volver
+                </button>
+            </div>
+        </div>
+
+        {{-- Información adicional --}}
+        <div class="row mt-4">
+            <div class="col-md-4">
+                <div class="card border-primary">
+                    <div class="card-body text-center">
+                        <i class="fas fa-user fa-2x text-primary mb-3"></i>
+                        <h6>Usuario Normal</h6>
+                        <small class="text-muted">Solo subida de fotos</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card border-success">
+                    <div class="card-body text-center">
+                        <i class="fas fa-user-shield fa-2x text-success mb-3"></i>
+                        <h6>Administrador</h6>
+                        <small class="text-muted">Acceso completo</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card border-info">
+                    <div class="card-body text-center">
+                        <i class="fas fa-info-circle fa-2x text-info mb-3"></i>
+                        <h6>Cambiar Modo</h6>
+                        <small class="text-muted">Editar variable $isAdmin</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+@else
+
+
 <!-- Contenido de pagina -->
 <div class="row mb-4">
     <div class="col-12">
@@ -231,29 +298,6 @@
                     </table>
                 </div>
 
-                <!-- =========>>>> Paginacion <<<<<<============= -->
-                <div class="d-flex justify-content-between align-items-center mt-3" id="paginationContainer">
-                    <!-- Información de registros-->
-                    <div class="pagination-info">
-                        <span class="text-muted" id="paginationInfo">
-                            Mostrando registros del <span id="startRecord">1</span> al <span id="endRecord">0</span>
-                            de un total de <span id="totalRecords">0</span></span>
-
-                        <!-- Selector de registros por pagina-->
-                        <div class="d-inline-block ms-3">
-                            <select class="form-select form-select-sm d-inline-block w-auto" id="recordsPerPage">
-                                <option value="10">10 por página</option>
-                                <option value="25">25 por página</option>
-                                <option value="50">50 por página</option>
-                            </select>
-                        </div>
-                    </div>
-                    <nav id="paginationNav">
-                        <ul class="pagination mb-0" id="paginationList">
-                            <!-- Elementos generados dinámicamente-->
-                        </ul>
-                    </nav>
-                </div>
             </div>
         </div>
     </div>
@@ -631,6 +675,8 @@
     </div>
 </div>
 
+@endif
+
 <!-- Meta tag para el usuario actual (para detección automática) -->
 <meta name="current-user" content="{{ auth()->user()->name ?? 'Usuario Sistema' }}">
 
@@ -638,6 +684,91 @@
 <script src="{{ asset('js/fotos-index.js') }}"></script>
 
 <script src="{{ asset('js/pagination.js') }}"></script>
+
+
+<script>
+// Auto-aplicar filtro si viene desde búsqueda de administrador
+document.addEventListener('DOMContentLoaded', function() {
+    // Verificar si hay un filtro automático pendiente
+    const autoFilter = localStorage.getItem('autoFilter');
+    const filterOrdenSit = localStorage.getItem('filterOrdenSit');
+
+    if (autoFilter === 'true' && filterOrdenSit) {
+        console.log('🎯 Auto-aplicando filtro para orden SIT:', filterOrdenSit);
+
+        // Mostrar notificación de filtro aplicado
+        setTimeout(() => {
+            showNotification(`Filtro aplicado: Orden SIT ${filterOrdenSit}`, 'success', 3000);
+        }, 1000);
+
+        // Aplicar filtro automáticamente
+        setTimeout(() => {
+            applyAutoFilter(filterOrdenSit);
+        }, 1500);
+
+        // Limpiar localStorage
+        localStorage.removeItem('autoFilter');
+        localStorage.removeItem('filterOrdenSit');
+    }
+});
+
+// Función para aplicar filtro automático
+function applyAutoFilter(ordenSit) {
+    console.log('Aplicando filtro automático para:', ordenSit);
+
+    // Aplicar en el campo de búsqueda global si existe
+    const searchInput = document.getElementById('searchInput');
+    if (searchInput) {
+        searchInput.value = ordenSit;
+
+        // Disparar evento de búsqueda si tienes función de búsqueda
+        if (typeof searchRecords === 'function') {
+            searchRecords();
+        }
+    }
+
+    // O aplicar filtro directo en la tabla
+    const tableBody = document.getElementById('imagesTableBody');
+    if (tableBody) {
+        const rows = tableBody.querySelectorAll('tr[data-image-id]');
+        let visibleCount = 0;
+
+        rows.forEach(row => {
+            const ordenSitCell = row.querySelector('[data-column="orden-sit"]');
+            const ordenSitValue = ordenSitCell ? ordenSitCell.textContent.trim() : '';
+
+            if (ordenSitValue.includes(ordenSit)) {
+                row.style.display = '';
+                row.style.backgroundColor = '#fff3cd'; // Destacar filas encontradas
+                visibleCount++;
+            } else {
+                row.style.display = 'none';
+            }
+        });
+
+        // Actualizar paginación después del filtro
+        setTimeout(() => {
+            if (typeof refreshPagination === 'function') {
+                refreshPagination();
+            }
+        }, 500);
+
+        console.log(`Filtro aplicado: ${visibleCount} resultados para orden ${ordenSit}`);
+
+        // Quitar destacado después de unos segundos
+        setTimeout(() => {
+            rows.forEach(row => {
+                if (row.style.display !== 'none') {
+                    row.style.backgroundColor = '';
+                }
+            });
+        }, 5000);
+    }
+}
+</script>
+
+
+
 
 <script>
     // === Funcion crear filas de imagen ===
@@ -1212,6 +1343,13 @@ function showBatchImageModal(imageDataArray, uploadBtn) {
 
                 console.log(`Procesamiento completado: ${savedImages.length}/${imageDataArray.length} imágenes guardadas`);
 
+                // Refrescar paginación
+                setTimeout(() => {
+                    if (typeof manualRefreshPagination === 'function') {
+                        manualRefreshPagination();
+                    }
+                }, (savedImages.length * 200) + 500);
+
                 // Mostrar resultado
                 const mensaje = savedImages.length === imageDataArray.length
                     ? `${savedImages.length} imagen(es) subida(s) a orden ${ordenSitActual}`
@@ -1330,6 +1468,13 @@ function uploadToBackendIndex(formData) {
             },
             success: function(response) {
                 if (response.success && response.data) {
+                    //Refrescar paginación
+                    setTimeout(() => {
+                        if (typeof manualRefreshPagination === 'function') {
+                            manualRefreshPagination();
+                        }
+                    }, 200);
+
                     resolve({
                         success: true,
                         data: response.data
@@ -1423,6 +1568,15 @@ function uploadToBackendIndex(formData) {
                 success: function(response) {
                     if (response.success && response.data) {
                         console.log('Imagen subida desde fotos-index:', response.data);
+
+                        //Refrescar paginación
+                        setTimeout(() => {
+                            if (typeof manualRefreshPagination === 'function') {
+                                manualRefreshPagination();
+                            }
+                        }, 200);
+
+
                         resolve(response.data);
                     } else {
                         reject(new Error(response.message || 'Respuesta inválida del servidor'));
@@ -1624,32 +1778,6 @@ function uploadToBackendIndex(formData) {
         if (imageData.isDefaultImage) {
             console.log('Se usó imagen por defecto para:', imageData.descripcion);
         }
-
-        // Al final, refrescar paginación
-        setTimeout(() => {
-            if (window.refreshPagination) {
-                window.refreshPagination();
-                // Opcional: ir a la última página para ver la imagen recién agregada
-                setTimeout(() => {
-                    if (window.goToLastPage) {
-                        window.goToLastPage();
-                    }
-                }, 200);
-            }
-        }, 300);
-
-        // Al final de la función, después de agregar la fila
-        setTimeout(() => {
-            // Refrescar filtros predictivos
-            if (typeof refreshPredictiveFiltersData === 'function') {
-                refreshPredictiveFiltersData();
-            }
-
-            // Refrescar paginación
-            if (window.refreshPagination) {
-                window.refreshPagination();
-            }
-        }, 500);
     }
 
     function setUploadState(button, state) {
@@ -1838,12 +1966,12 @@ function uploadToBackendIndex(formData) {
             row.style.transform = 'translateY(0)';
         }, 100);
 
-        // Refrescar filtros
+        // Refrescar paginacion
         setTimeout(() => {
-            if (window.refreshPagination) {
-                window.refreshPagination();
+            if (typeof manualRefreshPagination === 'function') {
+                manualRefreshPagination();
             }
-        }, 100);
+        }, 300);
 
         console.log('Fila agregada correctamente sin duplicación');
     }

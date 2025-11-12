@@ -869,6 +869,12 @@ function performImageDeletion(imageData, row) {
                             row.remove();
                             console.log('Fila eliminada del DOM');
 
+                            if (typeof manualRefreshPagination === 'function') {
+                                setTimeout(() => {
+                                    manualRefreshPagination();
+                                }, 100);
+                            }
+
                             // Actualizar filtros si existen
                             if (typeof refreshPredictiveFiltersData === 'function') {
                                 refreshPredictiveFiltersData();
@@ -1812,6 +1818,12 @@ function saveImageChanges() {
 
         // Actualizar datos para el lightbox
         updateLightboxData(newTipo, newDescripcion, finalImageSrc);
+
+        setTimeout(() => {
+            if (typeof manualRefreshPagination === 'function') {
+                manualRefreshPagination();
+            }
+        }, 300);
 
         // Cerrar modal
         const modal = bootstrap.Modal.getInstance(document.getElementById('editImageModal'));
@@ -3444,10 +3456,7 @@ function saveEditChanges() {
             refreshPredictiveFiltersData();
         }
 
-        // Refrescar paginación
-        if (window.refreshPagination) {
-            window.refreshPagination();
-        }
+
 
         console.log('Filtros actualizados después de edición');
     }, 300);
@@ -3471,6 +3480,197 @@ document.addEventListener('DOMContentLoaded', function () {
         saveChangesBtn.addEventListener('click', saveEditChanges);
     }
 });
+
+
+// ========================================================================
+// INTEGRACIÓN DE PAGINACIÓN CON FUNCIONES EXISTENTES
+// ========================================================================
+
+// ===== FUNCIÓN PARA ACTUALIZAR PAGINACIÓN DESPUÉS DE CAMBIOS =====
+function updatePaginationAfterChange(action = 'unknown') {
+    console.log(`Actualizando paginación después de: ${action}`);
+
+    // Verificar si el sistema de paginación existe
+    if (typeof refreshPagination === 'function') {
+        setTimeout(() => {
+            refreshPagination();
+        }, 300); // Delay para asegurar que el DOM se haya actualizado
+    } else {
+        console.warn('Sistema de paginación no disponible');
+    }
+}
+
+// ===== INTERCEPTAR FUNCIÓN DE AGREGAR IMAGEN =====
+// Buscar la función existente que agrega filas a la tabla y modificarla
+if (typeof addImageToTable === 'function') {
+    const originalAddImageToTable = addImageToTable;
+
+    window.addImageToTable = function (...args) {
+        console.log('Agregando imagen a tabla...');
+
+        // Llamar función original
+        const result = originalAddImageToTable.apply(this, args);
+
+        // Actualizar paginación
+        updatePaginationAfterChange('agregar imagen');
+
+        return result;
+    };
+} else {
+    console.log('Función addImageToTable no encontrada, buscando alternativas...');
+}
+
+// ===== INTERCEPTAR FUNCIONES DE ELIMINACIÓN =====
+if (typeof deleteImageFromTable === 'function') {
+    const originalDeleteImageFromTable = deleteImageFromTable;
+
+    window.deleteImageFromTable = function (...args) {
+        console.log('Eliminando imagen de tabla...');
+
+        // Llamar función original
+        const result = originalDeleteImageFromTable.apply(this, args);
+
+        // Actualizar paginación
+        updatePaginationAfterChange('eliminar imagen');
+
+        return result;
+    };
+}
+
+// ===== OBSERVER PARA DETECTAR CAMBIOS EN LA TABLA =====
+function setupTableObserver() {
+    const tableBody = document.getElementById('imagesTableBody');
+    if (!tableBody) {
+        console.warn('No se pudo configurar observer - tabla no encontrada');
+        return;
+    }
+
+    // Configurar MutationObserver
+    const observer = new MutationObserver(function (mutations) {
+        let shouldUpdate = false;
+
+        mutations.forEach(function (mutation) {
+            // Detectar si se agregaron o eliminaron filas
+            if (mutation.type === 'childList') {
+                const addedNodes = Array.from(mutation.addedNodes);
+                const removedNodes = Array.from(mutation.removedNodes);
+
+                const hasRowChanges = addedNodes.some(node =>
+                    node.nodeType === 1 && node.tagName === 'TR' && node.hasAttribute('data-image-id')
+                ) || removedNodes.some(node =>
+                    node.nodeType === 1 && node.tagName === 'TR' && node.hasAttribute('data-image-id')
+                );
+
+                if (hasRowChanges) {
+                    shouldUpdate = true;
+                    console.log('Observer detectó cambios en filas de la tabla');
+                }
+            }
+        });
+
+        if (shouldUpdate) {
+            updatePaginationAfterChange('observer - cambios en DOM');
+        }
+    });
+
+    // Iniciar observación
+    observer.observe(tableBody, {
+        childList: true,
+        subtree: false
+    });
+
+    console.log('Observer de tabla configurado');
+
+    // Guardar referencia global para poder desactivarlo si es necesario
+    window.tableObserver = observer;
+}
+
+// ===== INTERCEPTAR AJAX SUCCESS EN SUBIDA DE IMÁGENES =====
+function interceptAjaxSuccess() {
+    // Interceptar llamadas AJAX exitosas que agreguen imágenes
+    const originalAjax = $.ajax;
+
+    $.ajax = function (options) {
+        const originalSuccess = options.success;
+
+        // Interceptar solo llamadas relacionadas con fotografías
+        if (options.url && (options.url.includes('fotografia') || options.url.includes('/api/'))) {
+            options.success = function (data, textStatus, jqXHR) {
+                console.log('AJAX exitoso detectado para fotografías');
+
+                // Llamar callback original
+                if (originalSuccess) {
+                    originalSuccess.call(this, data, textStatus, jqXHR);
+                }
+
+                // Actualizar paginación después de éxito
+                setTimeout(() => {
+                    updatePaginationAfterChange('ajax success');
+                }, 500);
+            };
+        }
+
+        return originalAjax.call(this, options);
+    };
+
+    console.log('Interceptor AJAX configurado');
+}
+
+// ===== FUNCIÓN MANUAL PARA REFRESCAR PAGINACIÓN =====
+window.manualRefreshPagination = function () {
+    console.log('Refrescando paginación manualmente...');
+
+    const tableBody = document.getElementById('imagesTableBody');
+    if (tableBody) {
+        const rows = tableBody.querySelectorAll('tr[data-image-id]');
+        console.log(`Filas detectadas: ${rows.length}`);
+
+        if (typeof refreshPagination === 'function') {
+            refreshPagination();
+        } else {
+            console.warn('Función refreshPagination no disponible');
+        }
+    } else {
+        console.warn('Tabla no encontrada');
+    }
+};
+
+// ===== FUNCIÓN PARA CONTAR FILAS ACTUALES =====
+window.countCurrentRows = function () {
+    const tableBody = document.getElementById('imagesTableBody');
+    if (tableBody) {
+        const rows = tableBody.querySelectorAll('tr[data-image-id]');
+        console.log(`Total de filas actuales: ${rows.length}`);
+
+        const visibleRows = Array.from(rows).filter(row =>
+            window.getComputedStyle(row).display !== 'none'
+        );
+        console.log(`Filas visibles: ${visibleRows.length}`);
+
+        return {
+            total: rows.length,
+            visible: visibleRows.length
+        };
+    }
+    return { total: 0, visible: 0 };
+};
+
+// ===== INICIALIZACIÓN DE INTEGRACIONES =====
+$(document).ready(function () {
+    console.log('Configurando integraciones de paginación...');
+
+    // Configurar observer con delay
+    setTimeout(() => {
+        setupTableObserver();
+    }, 2000);
+
+    // Configurar interceptor AJAX
+    interceptAjaxSuccess();
+
+    console.log('Integraciones de paginación configuradas');
+});
+
+console.log('Integración de paginación cargada');
 
 // ===== HACER FUNCIONES GLOBALES =====
 window.handleFileUpload = handleFileUpload;

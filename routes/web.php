@@ -39,3 +39,39 @@ Route::post('/fotos/upload', [FotografiaPrendaController::class, 'store'])->name
 Route::post('/fotos/upload-multiple', [FotografiaPrendaController::class, 'storeMultiple'])->name('fotos.upload-multiple');
 Route::post('/fotografias/limpiar-huerfanas', [FotografiaPrendaController::class, 'limpiarImagenesHuerfanas'])
     ->middleware('auth');
+
+
+// Rutas simples para pruebas
+/*Route::get('/fotos-sit-add', function () {
+    return view('fotos-sit-add');
+})->name('fotos-sit-add');
+
+Route::get('/fotos-index', function () {
+    return view('fotos-index');
+})->name('fotos-index');
+
+// Ruta por defecto
+Route::get('/', function () {
+    return redirect()->route('fotos-sit-add');
+});
+
+// APIs básicas para funcionamiento
+Route::post('/api/fotografias', function () {
+    return response()->json([
+        'success' => true,
+        'data' => [
+            'id' => rand(1000, 9999),
+            'imagen_url' => 'https://picsum.photos/400/600',
+            'orden_sit' => request('orden_sit'),
+            'po' => request('po'),
+            'oc' => request('oc'),
+            'descripcion' => request('descripcion'),
+            'tipo' => request('tipo'),
+            'created_at' => now()
+        ]
+    ]);
+});
+
+Route::get('/api/fotografias', function () {
+    return response()->json(['success' => true, 'data' => []]);
+});*/

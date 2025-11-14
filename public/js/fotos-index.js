@@ -3655,23 +3655,6 @@ window.countCurrentRows = function () {
     return { total: 0, visible: 0 };
 };
 
-// ===== INICIALIZACIÓN DE INTEGRACIONES =====
-$(document).ready(function () {
-    console.log('Configurando integraciones de paginación...');
-
-    // Configurar observer con delay
-    setTimeout(() => {
-        setupTableObserver();
-    }, 2000);
-
-    // Configurar interceptor AJAX
-    interceptAjaxSuccess();
-
-    console.log('Integraciones de paginación configuradas');
-});
-
-console.log('Integración de paginación cargada');
-
 // ===== HACER FUNCIONES GLOBALES =====
 window.handleFileUpload = handleFileUpload;
 window.saveEditChanges = saveEditChanges;

@@ -4,76 +4,32 @@
 
 @section('contenido')
 
-{{--VARIABLE DE PRUEBA PARA PERMISOS --}}
-@php
-    // Variable booleana para probar permisos
-    // true = Administrador (puede ver tabla + subir fotos)
-    // false = Usuario normal (solo subir fotos)
-    $isAdmin = true; // -> CAMBIAR AQUÍ PARA PROBAR
-@endphp
+
+{{--INDICADOR DE ROL --}}
+<script>
+    const isAdmin = false; // false -> usuario normal, true -> administrador
+</script>
 
 <div class="container mt-4">
     {{-- Header con información de permisos --}}
-    <div class="row mb-4">
-    <div class="col-12">
-        <div class="d-flex justify-content-between align-items-center flex-wrap">
-            <div class="mb-2 mb-md-0">
-                <h3 class="mb-1">
-                    @if($isAdmin)
-                        Buscar Orden SIT - Panel Administrador
-                    @else
-                        Agregar fotos de la prenda
-                    @endif
-                </h3>
-                @if($isAdmin)
-                    <span class="badge bg-success">
-                        <i class="fas fa-user-shield me-1"></i>
-                        Administrador
-                    </span>
-                @else
-                    <span class="badge bg-primary">
-                        <i class="fas fa-user me-1"></i>
-                        Usuario normal
-                    </span>
-                @endif
-            </div>
-        </div>
-    </div>
-</div>
-
+   <h3 class="mb-3">Agregar fotos de la prenda</h3>
 
     <!-- Buscar Orden SIT -->
     <div class="mb-3">
-        <div class="input-group">
+       <div class="input-group">
             <input type="text"
                 id="ordenSitInput"
                 class="form-control"
-                placeholder="@if($isAdmin) Buscar orden SIT @else Buscar orden SIT @endif"
+                placeholder="Buscar orden SIT"
                 oninput="this.value = this.value.replace(/[^0-9]/g, '')">
 
-            <button id="searchBoton" class="btn @if($isAdmin) btn-success @else btn-primary @endif">
-                @if($isAdmin)
-                    <i class="fas fa-table me-1"></i>
-                    Ir a Tabla
-                @else
-                    <i class="fas fa-search me-1"></i>
-                @endif
+            <button id="limpiarBoton" class="btn btn-outline-danger" style="display: none;">
+                <i class="fas fa-times"></i>
             </button>
+
+            <button id="searchBoton" class="btn btn-primary"><i class="fas fa-search"></i></button>
         </div>
-
-        @if($isAdmin)
-            <div class="form-text text-secondary">
-                <i class="fas fa-info-circle me-1"></i>
-                Como administrador, al buscar será redirigido directamente a la tabla principal
-            </div>
-        @else
-            <div class="form-text">
-                <i class="fas fa-info-circle me-1"></i>
-                Ingrese el número de orden SIT para buscar la prenda y agregar fotografías
-            </div>
-        @endif
     </div>
-
 
 
     <!-- Resultado de búsqueda -->
@@ -153,10 +109,22 @@
         </div>
     </div>
 
-    <!-- Botones de acción -->
-    <div class="text-end">
-        <button type="button" class="btn btn-secondary" onclick="cancelarOperacion()">Cancelar</button>
-        <!--<button type="button" class="btn btn-primary" onclick="guardarFoto()">Guardar</button>-->
+</div>
+
+{{-- AGREGAR MINI CARD DE HISTORIAL --}}
+<div id="historialFotosCard" class="card p-3 mb-3" style="display:none;">
+    <h6 class="mb-3">
+        <i class="fas fa-history me-2 text-muted"></i>
+        Historial de fotos cargadas
+    </h6>
+
+    <div id="historialContainer" class="row g-2">
+        <!-- Aquí se mostrarán las miniaturas dinámicamente -->
+    </div>
+
+    <div id="historialEmpty" class="text-center text-muted py-3" style="display: block;">
+        <i class="fas fa-camera me-2"></i>
+        No hay fotos cargadas para esta orden
     </div>
 </div>
 
@@ -181,7 +149,7 @@
             <select class="form-select" id="tipoFotografiaSelect" required>
               <option value="" disabled selected>Seleccione un tipo</option>
               <option value="Muestra">Muestra</option>
-              <option value="Validación AC">Validación AC</option>
+              <option value="Validacion AC">Validación AC</option>
               <option value="Prenda Final">Prenda Final</option>
             </select>
           </div>
@@ -211,114 +179,9 @@
     </div>
 </div>
 
-{{-- Meta tag para JavaScript --}}
-<meta name="user-permissions" content="{{ json_encode(['isAdmin' => $isAdmin]) }}">
-
-
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
 
-
-{{-- =======>>>>> Script adicional para manejo de permisos <<<<<======= --}}
-<script>
-// ✅ OBTENER PERMISOS DESDE META TAG
-const userPermissions = JSON.parse(document.querySelector('meta[name="user-permissions"]').getAttribute('content'));
-
-console.log('🔐 Permisos de usuario:', userPermissions);
-
-// Función para ir a la tabla (solo administradores)
-function irATabla() {
-    if (userPermissions.isAdmin) {
-        console.log('✅ Admin: Redirigiendo a tabla...');
-        window.location.href = "{{ route('fotos-index') }}";
-    } else {
-        console.log('❌ Usuario normal: Sin permisos para tabla');
-        showNotification('No tiene permisos para acceder a la tabla', 'warning');
-    }
-}
-
-// ✅ MODIFICAR función guardarFoto según permisos
-const originalGuardarFoto = guardarFoto;
-guardarFoto = function(savedImages) {
-    console.log('💾 Guardando fotos con permisos:', userPermissions);
-
-    if (!savedImages || savedImages.length === 0) {
-        showNotification("No hay imágenes guardadas para procesar", 'warning');
-        return;
-    }
-
-    const mensaje = `${savedImages.length} imagen(es) subida(s) correctamente`;
-
-    if (userPermissions.isAdmin) {
-        // ✅ ADMINISTRADOR: Redirigir a tabla
-        console.log('👨‍💼 Modo Admin: Preparando redirección a tabla...');
-
-        const dataToTransfer = {
-            images: savedImages.map(img => ({
-                id: img.id,
-                backendId: img.id,
-                url: img.url,
-                imagen_url: img.url,
-                orden_sit: img.orden_sit,
-                po: img.po,
-                oc: img.oc,
-                descripcion: img.descripcion,
-                tipo: img.tipo,
-                created_at: img.created_at,
-                fecha_subida: img.created_at,
-                origenVista: 'fotos-sit-add',
-                procesadoPor: 'admin-user',
-                displayOnly: true,
-                uploaded: true,
-                isBackendImage: true,
-                source: 'backend-confirmed',
-                fromSitAdd: true
-            })),
-            timestamp: Date.now(),
-            totalImages: savedImages.length
-        };
-
-        localStorage.setItem('newUploadedImages', JSON.stringify(dataToTransfer));
-
-        showNotification(`${mensaje}. Redirigiendo a tabla...`, 'success', 1500);
-
-        setTimeout(() => {
-            console.log('🔄 Redirigiendo administrador a tabla...');
-            window.location.href = "{{ route('fotos-index') }}";
-        }, 1500);
-
-    } else {
-        // ✅ USUARIO NORMAL: Solo mostrar éxito y limpiar
-        console.log('👤 Modo Usuario: Solo notificación y limpieza...');
-
-        showNotification(mensaje, 'success', 3000);
-
-        // Limpiar formulario para nueva carga
-        setTimeout(() => {
-            cancelarOperacion();
-            showNotification('Listo para agregar más fotografías', 'info', 2000);
-        }, 2000);
-    }
-};
-
-// ✅ VALIDACIÓN AL CARGAR
-document.addEventListener('DOMContentLoaded', function() {
-    console.log('🚀 Inicializando con permisos:', userPermissions);
-
-    // Mostrar mensaje de modo actual
-    const modeMessage = userPermissions.isAdmin
-        ? 'Modo Administrador: Puede ver tabla y subir fotos'
-        : 'Modo Usuario: Solo puede subir fotografías';
-
-    console.log(`🎭 ${modeMessage}`);
-
-    // Opcional: Mostrar notificación del modo actual
-    setTimeout(() => {
-        const badgeType = userPermissions.isAdmin ? 'info' : 'primary';
-        showNotification(modeMessage, badgeType, 3000);
-    }, 1000);
-});
-</script>
 
 
 <!-- Scripts utiles-->
@@ -364,22 +227,56 @@ document.addEventListener('DOMContentLoaded', function() {
                     if (fotografias.length > 0) {
                         //ORDEN EXISTE - Mostrar datos existentes
                         const primeraFoto = fotografias[0];
-                        mostrarOrdenExistente(primeraFoto, fotografias.length);
+
+                        //Comportamiento según ROL
+                        if (isAdmin) {
+                            //Redirección directa a tabla
+                            redirectToTableAdmin(primeraFoto.orden_sit);
+                        } else {
+                            //Usuario normal -> mostrar interfaz de subida
+                            mostrarOrdenExistente(primeraFoto, fotografias.length);
+                        }
                     } else {
-                        //ORDEN NO EXISTE - Permitir crear nueva
-                        mostrarOrdenNueva(value);
+                        //ORDEN NO EXISTE
+                        if (isAdmin) {
+                            //Redirección directa a tabla
+                            redirectToTableAdmin(value);
+                        } else {
+                            //Usuario normal -> permitir crear nueva orden
+                            mostrarOrdenNueva(value);
+                        }
                     }
                 } else {
                     console.error('Error en respuesta:', response.message);
+
+                    if (isAdmin) {
+                        //Redirección directa a tabla
+                        redirectToTableAdmin(value);
+                    } else {
                     mostrarOrdenNueva(value); // Fallback a nueva orden
                 }
+              }
             },
             error: function(xhr, status, error) {
                 console.error('Error buscando orden:', error);
-                //FALLBACK: Permitir crear nueva orden
-                mostrarOrdenNueva(value);
+
+                if (isAdmin) {
+                    //Redirección directa a tabla
+                    redirectToTableAdmin(value);
+                } else {
+                    mostrarOrdenNueva(value); // Fallback a nueva orden
+                }
             }
         });
+    }
+
+    //===>> Función redirección para administradores <<===
+    function redirectToTableAdmin(ordenSit) {
+        showNotification(`Redirigiendo a la tabla de la orden ${ordenSit}...`, 'info', 1500);
+
+        setTimeout(() => {
+                 window.location.href = `{{ route('fotos-index') }}?orden_sit=${encodeURIComponent(ordenSit)}&admin_access=true`;
+        }, 1500);
     }
 
     //NUEVA FUNCIÓN: Mostrar orden existente
@@ -389,6 +286,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const descripcion = document.getElementById('descripcion');
         const prendaPreview = document.getElementById('prendaPreview');
         const ordenSitCard = document.getElementById('ordenSitCard');
+        const limpiarBoton = document.getElementById('limpiarBoton');
 
         // Llenar datos existentes
         ordenSitValue.textContent = primeraFoto.orden_sit;
@@ -405,6 +303,16 @@ document.addEventListener('DOMContentLoaded', function() {
         );
 
         ordenSitCard.style.display = 'block';
+
+        // AGREGAR: Mostrar botón X
+        if (limpiarBoton) {
+            limpiarBoton.style.display = 'inline-block';
+        }
+
+        // AGREGAR: Mostrar historial si hay imágenes
+        if (uploadedImages.length > 0) {
+            mostrarHistorialCard();
+        }
 
         //showNotification(`Orden ${primeraFoto.orden_sit} encontrada con ${totalFotos} fotografía(s)`, 'success', 2000);
     }
@@ -433,6 +341,17 @@ document.addEventListener('DOMContentLoaded', function() {
 
         ordenSitCard.style.display = 'block';
 
+        // AGREGAR: Mostrar botón X
+        const limpiarBoton = document.getElementById('limpiarBoton');
+        if (limpiarBoton) {
+            limpiarBoton.style.display = 'inline-block';
+        }
+
+        // AGREGAR: Mostrar historial si hay imágenes
+        if (uploadedImages.length > 0) {
+            mostrarHistorialCard();
+        }
+
         //showNotification(`Nueva orden ${numeroOrden} lista para fotografías`, 'info', 2000);
     }
 
@@ -446,7 +365,8 @@ document.addEventListener('DOMContentLoaded', function() {
         if (tipo === "Validación AC") { tipoOrden.className = "badge badge-color-personalizado"; }
     }
 
-   // Guardar y redirigir a fotos-index
+    /*=========================================================================================*/
+   // Guardar y no redirigir a usuarios normales
     function guardarFoto(savedImages) {
         console.log('Iniciando guardado automático...', savedImages);
 
@@ -455,10 +375,24 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
 
-        //PREPARAR datos para mostrar (No subir de nuevo a la tabla)
+        //Comportamiento según ROL
+        if (isAdmin) {
+            //ADMIN: Guardar y redirigir a tabla
+            guardarYRedirigirAdmin(savedImages);
+        } else {
+            //USUARIO NORMAL: Solo mostrar confirmación, No redirigir
+            guardarUsuarioNormal(savedImages);
+        }
+    }
+
+    /*=========================================================================================*/
+    //Función para ADMINISTRADORES
+    function guardarYRedirigirAdmin(savedImages) {
+
+        //PREPARAR datos
         const dataToTransfer = {
             images: savedImages.map(img => ({
-                //Datos del backend real (ya subido)
+                //Datos del backend (ya subido)
                 id: img.id,
                 backendId: img.id,
                 url: img.url,
@@ -470,8 +404,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 tipo: img.tipo,
                 created_at: img.created_at,
                 fecha_subida: img.created_at,
-
-                //MARCADORES DE CONTROL
                 origenVista: 'fotos-sit-add',
                 procesadoPor: 'fotos-sit-add',
                 displayOnly: true,        //Solo para mostrar
@@ -484,18 +416,55 @@ document.addEventListener('DOMContentLoaded', function() {
             totalImages: savedImages.length
         };
 
-        //GUARDAR para mostrar en fotos-index
         localStorage.setItem('newUploadedImages', JSON.stringify(dataToTransfer));
 
         //REDIRECCIÓN AUTOMÁTICA
-        //showNotification(`${savedImages.length} imagen(es) guardadas. Redirigiendo...`, 'success', 1500);
+        showNotification(`${savedImages.length} imagen(es) guardadas. Redirigiendo...`, 'success', 1500);
 
         setTimeout(() => {
-            console.log('Redirigiendo a fotos-index...');
-            window.location.href = "{{ route('fotos-index') }}";
+            const ordenSit = document.getElementById('ordenSitValue').textContent || 'N/A';
+            window.location.href = `{{ route('fotos-index') }}?orden_sit=${encodeURIComponent(ordenSit)}&admin_access=true`;
         }, 1500);
     }
 
+    /*=========================================================================================*/
+    //Función para USUARIOS NORMALES
+    function guardarUsuarioNormal(savedImages) {
+        console.log('👤 USUARIO NORMAL: Guardando sin redirigir');
+
+        // Mostrar confirmación sin redirección
+        showNotification(
+            `${savedImages.length} imagen(es) guardada(s) correctamente. Puede continuar subiendo más fotos.`,
+            'success',
+            4000
+        );
+
+        // Actualizar historial de fotos
+        mostrarHistorialCard();
+
+        // Actualizar la interfaz para permitir más subidas
+        resetUploadInterface();
+
+        console.log('Usuario puede continuar subiendo fotos a la misma orden');
+    }
+
+    /*=========================================================================================*/
+    //Función para RESETEAR interfaz (usuario normal)
+    function resetUploadInterface() {
+        // Limpiar inputs de archivo
+        const fileInputs = document.querySelectorAll('input[type="file"]');
+        fileInputs.forEach(input => input.value = '');
+
+        // Resetear estado de botones
+        const uploadButtons = document.querySelectorAll('.upload-btn');
+        uploadButtons.forEach(btn => {
+            btn.classList.remove('uploading', 'active');
+        });
+
+        console.log('Interfaz lista para más uploads');
+    }
+
+    /*=========================================================================================*/
     // Lightbox functions
     function openLightbox(imageUrl, description, type) {
         console.log('Abriendo lightbox:', { imageUrl, description, type });
@@ -806,7 +775,7 @@ document.addEventListener('DOMContentLoaded', function() {
             //CONFIGURAR NUEVO EVENT LISTENER
             newSaveBtn.addEventListener('click', async function handleBatchSave() {
                 const descripcionVal = descripcionInput ? descripcionInput.value.trim() : '';
-                const tipoFotografia = tipoSelect ? tipoSelect.value : '';
+                const tipoFotografia = tipoSelect ? tipoSelect.value.trim() : '';
 
                 // Validación
                 if (!descripcionVal || !tipoFotografia) {
@@ -920,9 +889,20 @@ document.addEventListener('DOMContentLoaded', function() {
                         }
 
                         // Guardado automático y redirección
-                        setTimeout(() => {
-                            guardarFoto(savedImages);
-                        }, 1000);
+                        if (isAdmin) {
+                            //ADMIN: Guardar y redirigir
+                            setTimeout(() => {
+                                guardarFoto(savedImages);
+                            }, 1000);
+                        } else {
+                            //USUARIO NORMAL: Solo guardar sin redirigir
+                            agregarImagenesHistorial(savedImages);
+
+                            setTimeout(() => {
+                                guardarUsuarioNormal(savedImages);
+                            }, 1000);
+                        }
+
 
                     } else {
                         throw new Error('No se pudo guardar ninguna imagen');
@@ -1326,58 +1306,208 @@ document.addEventListener('DOMContentLoaded', function() {
         }, duration);
     }
 
-    // =======>>>>>>> Inicialización principal fotos-sit-add según rol de usuario =======>>>>>>>
-    document.addEventListener("DOMContentLoaded", function() {
-        //initializeUploadButtons();
+    /*=======================================================================================================================*/
+    // ===>>> Funciones para el manejo del mini card de historial de imagenes cargadas
 
-        const searchButton = document.getElementById('searchBoton');
-        const ordenSitInput = document.getElementById('ordenSitInput');
+    function mostrarHistorialCard() {
+        const historialCard = document.getElementById('historialFotosCard');
+        if (historialCard && uploadedImages.length > 0) {
+            historialCard.style.display = 'block';
+            actualizarHistorialVisual();
+        } else if (historialCard && uploadedImages.length === 0) {
+            historialCard.style.display = 'none';
+        }
+    }
 
-        if (searchButton && ordenSitInput) {
-        // Obtener permisos
-        const userPermissions = JSON.parse(document.querySelector('meta[name="user-permissions"]').getAttribute('content'));
+    function limpiarHistorialVisual() {
+        const historialContainer = document.getElementById('historialContainer');
+        const historialEmpty = document.getElementById('historialEmpty');
 
-        searchButton.addEventListener('click', function() {
-            const ordenSit = ordenSitInput.value.trim();
-
-            if (!ordenSit || ordenSit.length < 3) {
-                showNotification('Ingrese un número de orden SIT válido', 'warning');
-                return;
-            }
-
-            if (userPermissions.isAdmin) {
-                // ✅ ADMINISTRADOR: Redirigir a tabla con filtro
-                console.log('🔄 Admin: Redirigiendo a tabla con orden:', ordenSit);
-
-                // Guardar orden en localStorage para filtrar en la tabla
-                localStorage.setItem('filterOrdenSit', ordenSit);
-                localStorage.setItem('autoFilter', 'true');
-
-                showNotification(`Redirigiendo a tabla con orden SIT: ${ordenSit}`, 'info', 1500);
-
-                setTimeout(() => {
-                    window.location.href = "{{ route('fotos-index') }}";
-                }, 1500);
-
-            } else {
-                // ✅ USUARIO NORMAL: Comportamiento original de búsqueda
-                console.log('🔍 Usuario: Buscando orden SIT:', ordenSit);
-                buscarOrdenSIT(ordenSit);
-            }
-            });
-
-            // También manejar Enter en el input
-            ordenSitInput.addEventListener('keypress', function(e) {
-                if (e.key === 'Enter') {
-                    searchButton.click();
-                }
-            });
-
-            console.log('✅ Comportamiento dinámico del buscador configurado');
+        if (historialContainer) {
+            historialContainer.innerHTML = '';
         }
 
-        /*const ordenSitInput = document.getElementById('ordenSitInput');
+        if (historialEmpty) {
+            historialEmpty.style.display = 'block';
+        }
+    }
+
+    function actualizarHistorialVisual() {
+        const historialContainer = document.getElementById('historialContainer');
+        const historialEmpty = document.getElementById('historialEmpty');
+
+        if (!historialContainer) return;
+
+        // Limpiar contenido anterior
+        historialContainer.innerHTML = '';
+
+        if (uploadedImages.length === 0) {
+            if (historialEmpty) {
+                historialEmpty.style.display = 'block';
+            }
+            return;
+        }
+
+        // Ocultar mensaje vacío
+        if (historialEmpty) {
+            historialEmpty.style.display = 'none';
+        }
+
+        // Crear miniaturas para cada imagen
+        uploadedImages.forEach((imagen, index) => {
+            const miniCard = crearMiniaturaImagen(imagen, index);
+            historialContainer.appendChild(miniCard);
+        });
+
+        console.log(`Historial actualizado: ${uploadedImages.length} imágenes`);
+    }
+
+   function crearMiniaturaImagen(imagen, index) {
+    const col = document.createElement('div');
+    col.className = 'col-6 col-md-4 col-lg-3';
+
+    col.innerHTML = `
+        <div class="card position-relative shadow-sm h-100" data-image-index="${index}">
+            <div class="position-relative">
+                <img src="${imagen.url}"
+                    class="card-img-top"
+                    style="height: 120px; object-fit: cover; cursor: pointer;"
+                    onclick="abrirLightboxHistorial('${imagen.url}', '${imagen.descripcion}', '${imagen.tipo}')"
+                    alt="${imagen.descripcion}">
+
+                <!-- Botón eliminar en esquina superior derecha -->
+                <button class="btn btn-danger btn-sm position-absolute top-0 end-0 m-1"
+                        style="padding: 2px 6px; font-size: 10px; z-index: 2;"
+                        onclick="eliminarImagenHistorial(${index}, event)"
+                        title="Eliminar imagen">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </div>
+
+            <div class="card-body p-2">
+                <p class="card-text small mb-1 text-truncate" title="Orden SIT: ${imagen.orden_sit}">
+                    <strong>Orden SIT:</strong> ${imagen.orden_sit}
+                </p>
+                <p class="card-text small mb-1 text-truncate" title="Tipo: ${imagen.tipo}">
+                    <strong>Tipo:</strong> ${imagen.tipo}
+                </p>
+                <p class="card-text small mb-1 text-truncate" title="Descripción: ${imagen.descripcion}">
+                    <strong>Descripción:</strong> ${imagen.descripcion}
+                </p>
+            </div>
+        </div>
+    `;
+
+    return col;
+}
+
+    function abrirLightboxHistorial(url, descripcion, tipo) {
+        console.log('🖼️ Abriendo lightbox desde historial:', { url, descripcion, tipo });
+        openLightbox(url, descripcion, tipo);
+    }
+
+    function eliminarImagenHistorial(index, event) {
+        event.stopPropagation(); // Evitar que se abra el lightbox
+
+        if (index < 0 || index >= uploadedImages.length) {
+            console.error('Índice inválido:', index);
+            return;
+        }
+
+        const imagen = uploadedImages[index];
+
+        // Confirmar eliminación
+        if (confirm(`¿Eliminar esta imagen?\n${imagen.descripcion}`)) {
+            console.log(`🗑️ Eliminando imagen ${index + 1}: ${imagen.descripcion}`);
+
+            // Eliminar del backend si tiene ID
+            if (imagen.id) {
+                eliminarImagenBackend(imagen.id, index);
+            } else {
+                // Solo eliminar del array local
+                eliminarImagenLocal(index);
+            }
+        }
+    }
+
+    function eliminarImagenBackend(imagenId, localIndex) {
+        console.log(`🗑️ Eliminando imagen del backend: ID ${imagenId}`);
+
+        $.ajax({
+            url: `/api/fotografias/${imagenId}`,
+            type: 'DELETE',
+            headers: {
+                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content'),
+                'Accept': 'application/json'
+            },
+            success: function(response) {
+                console.log('✅ Imagen eliminada del backend:', response);
+
+                // Eliminar del array local
+                eliminarImagenLocal(localIndex);
+
+                showNotification('Imagen eliminada correctamente', 'success', 2000);
+            },
+            error: function(xhr, status, error) {
+                console.error('❌ Error eliminando imagen:', error);
+
+                // Aún así, eliminar del array local como fallback
+                eliminarImagenLocal(localIndex);
+
+                showNotification('Imagen eliminada localmente (error en servidor)', 'warning', 3000);
+            }
+        });
+    }
+
+    function eliminarImagenLocal(index) {
+        console.log(`🗑️ Eliminando imagen local en índice ${index}`);
+
+        // Eliminar del array
+        uploadedImages.splice(index, 1);
+
+        // Actualizar interfaz
+        actualizarHistorialVisual();
+
+        // Ocultar historial si no hay imágenes
+        if (uploadedImages.length === 0) {
+            const historialCard = document.getElementById('historialFotosCard');
+            if (historialCard) {
+                historialCard.style.display = 'none';
+            }
+        }
+
+        console.log(`✅ Imagen eliminada. Quedan ${uploadedImages.length} imágenes`);
+    }
+
+    // ✅ AGREGAR función para prevenir duplicados:
+    function agregarImagenesHistorial(nuevasImagenes) {
+        console.log('📸 Agregando imágenes al historial...', nuevasImagenes);
+
+        nuevasImagenes.forEach(imagen => {
+            // ✅ VERIFICAR si ya existe por ID
+            const existeId = uploadedImages.find(img => img.id === imagen.id);
+            const existeUrl = uploadedImages.find(img => img.url === imagen.url);
+
+            if (!existeId && !existeUrl) {
+                uploadedImages.push(imagen);
+                console.log(`✅ Imagen agregada: ID ${imagen.id}`);
+            } else {
+                console.log(`⚠️ Imagen duplicada omitida: ID ${imagen.id}`);
+            }
+        });
+
+        console.log(`📊 Total imágenes en historial: ${uploadedImages.length}`);
+    }
+
+    /*========================================================================================================================*/
+
+    // ====>>>>> Inicialización principal fotos-sit-add
+    document.addEventListener("DOMContentLoaded", function() {
+        initializeUploadButtons();
+
+        const ordenSitInput = document.getElementById('ordenSitInput');
         const searchBoton = document.getElementById('searchBoton');
+        const limpiarBoton = document.getElementById('limpiarBoton');
 
         if (ordenSitInput) {
             ordenSitInput.addEventListener('keypress', function(e) {
@@ -1395,25 +1525,16 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         }
 
-        console.log('Sistema fotos-sit-add listo');*/
+        // AGREGAR: Event listener para botón X
+        if (limpiarBoton) {
+            limpiarBoton.addEventListener('click', function(e) {
+                e.preventDefault();
+                limpiarOperacion();
+            });
+        }
+
+        console.log('Sistema fotos-sit-add listo');
     });
-
-    // Función de búsqueda existente para usuarios normales
-    function buscarOrdenSIT(ordenSit) {
-        // Tu función de búsqueda actual sin cambios
-        console.log('Función de búsqueda normal para orden:', ordenSit);
-
-        // Mostrar loading
-        showNotification('Buscando orden SIT...', 'info');
-
-        // Simular búsqueda (adaptar a tu lógica actual)
-        setTimeout(() => {
-            // Aquí iría tu lógica actual de búsqueda
-            showNotification(`Orden SIT ${ordenSit} encontrada`, 'success');
-
-            // Tu lógica existente para mostrar la orden...
-        }, 1000);
-    }
 </script>
 
 <!--/=/=/=/=/=/=/=//=/=/=/=/=/=/=//=/=/=/=/=/=/=//=/=/=/=/=/=/=//=/=/=/=/=/=/=//=/=/=/=/=/=/=/ -->
@@ -1422,8 +1543,8 @@ document.addEventListener('DOMContentLoaded', function() {
 // FUNCIONALIDAD BOTÓN CANCELAR - fotos-sit-add
 // ================================================================================================
 
-function cancelarOperacion() {
-    console.log('Cancelando operación...');
+function limpiarOperacion() {
+    console.log('🔄 Limpiando operación...');
 
     // 1. Limpiar inputs de archivo
     const fileInputs = document.querySelectorAll('input[type="file"]');
@@ -1435,13 +1556,24 @@ function cancelarOperacion() {
         ordenSitInput.value = '';
     }
 
-    // 3. Ocultar el card de resultados
+    // 3. Ocultar cards
     const ordenSitCard = document.getElementById('ordenSitCard');
+    const historialCard = document.getElementById('historialFotosCard');
+    const limpiarBoton = document.getElementById('limpiarBoton');
+
     if (ordenSitCard) {
         ordenSitCard.style.display = 'none';
     }
 
-    // 4. Limpiar variables globales si existen
+    if (historialCard) {
+        historialCard.style.display = 'none';
+    }
+
+    if (limpiarBoton) {
+        limpiarBoton.style.display = 'none';
+    }
+
+    // 4. Limpiar variables globales
     if (typeof uploadedImages !== 'undefined') {
         uploadedImages = [];
     }
@@ -1452,11 +1584,15 @@ function cancelarOperacion() {
         tipoSeleccionado = null;
     }
 
-    // 5. Limpiar localStorage de imágenes
+    // 5. Limpiar localStorage
     localStorage.removeItem('newUploadedImages');
     localStorage.removeItem('uploadedImages');
 
-    console.log('Operación cancelada. Listo para empezar de nuevo.');
+    // 6. Limpiar historial visual
+    limpiarHistorialVisual();
+
+    showNotification('Operación cancelada. Listo para empezar de nuevo', 'info', 2000);
+    console.log('Operación limpiada correctamente');
 }
 
 // Configurar el botón al cargar la página

@@ -1076,8 +1076,60 @@ function extractEditImageData(row) {
         const descripcionCell = row.querySelector('[data-column="descripcion"]');
         const tipoCell = row.querySelector('[data-column="tipo-fotografia"]');
 
+
+        //MEJORAR captura del ID - múltiples métodos
+        let imageId = null;
+
+        // Método 1: data-image-id del tr
+        if (row.dataset.imageId) {
+            imageId = row.dataset.imageId;
+            console.log('ID capturado del data-image-id:', imageId);
+        }
+
+        // Método 2: data-backend-id si existe
+        if (!imageId && row.dataset.backendId) {
+            imageId = row.dataset.backendId;
+            console.log('ID capturado del data-backend-id:', imageId);
+        }
+
+        // Método 3: buscar en atributos del botón editar
+        if (!imageId) {
+            const editButton = row.querySelector('button[onclick*="editImage"], button[onclick*="editBackendImage"]');
+            if (editButton) {
+                const onclickAttr = editButton.getAttribute('onclick');
+                // Buscar patrones como editBackendImage(123, this)
+                const backendMatch = onclickAttr.match(/editBackendImage\((\d+),/);
+                if (backendMatch) {
+                    imageId = backendMatch[1];
+                    console.log('ID capturado del onclick editBackendImage:', imageId);
+                }
+            }
+        }
+
+        // Método 4: buscar en data attributes de la imagen
+        if (!imageId && img) {
+            if (img.dataset.imageId) {
+                imageId = img.dataset.imageId;
+                console.log('ID capturado del img data-image-id:', imageId);
+            }
+        }
+
+        //LIMPIAR ID si contiene prefijos
+        if (imageId && imageId.startsWith('backend_')) {
+            imageId = imageId.replace('backend_', '');
+            console.log('ID limpiado:', imageId);
+        }
+
+        //LOG detallado de captura de ID
+        console.log('Captura de ID detallada:', {
+            'row.dataset.imageId': row.dataset.imageId,
+            'row.dataset.backendId': row.dataset.backendId,
+            'img.dataset.imageId': img ? img.dataset.imageId : 'N/A',
+            'ID_FINAL': imageId
+        });
+
         return {
-            id: row.dataset.imageId || 'temp_' + Date.now(),
+            id: imageId || 'temp_' + Date.now(),
             imageUrl: img ? img.src : '',
             imageAlt: img ? img.alt : '',
             ordenSit: ordenSitCell ? ordenSitCell.textContent.trim() : '',
@@ -1099,6 +1151,15 @@ function populateEditModal(imageData) {
     const modalImage = document.getElementById('editModalImage');
     modalImage.src = imageData.imageUrl;
     originalImageSrc = imageData.imageUrl;
+
+    //ASEGURAR que el ID se guarde correctamente
+    const imageIdInput = document.getElementById('editImageId');
+    imageIdInput.value = imageData.id;
+
+    //LOG del ID que se está guardando
+    console.log('ID guardado en editImageId:', imageIdInput.value);
+    console.log('Es imagen de backend?', imageData.isBackendImage);
+    console.log('Backend ID:', imageData.backendId);
 
     // Campos del formulario
     document.getElementById('editImageId').value = imageData.id;
@@ -1334,6 +1395,11 @@ function initializeCropTool() {
             // Convertir recorte a base64 permanente
             const croppedBase64 = canvas.toDataURL('image/jpeg', 0.9);
             document.getElementById('editModalImage').src = croppedBase64;
+
+            //ASEGURAR que los flags estén correctos
+            hasImageBeenCropped = true;
+            console.log('Flag hasImageBeenCropped establecido a TRUE');
+            console.log('Imagen recortada generada:', croppedBase64.substring(0, 50) + '...');
 
             // ===== Actualizar Imagen en tabla inmediatamente =====
             if (currentEditingRow) {
@@ -1797,50 +1863,93 @@ function saveImageChanges() {
     saveBtn.classList.add('loading');
     saveBtn.disabled = true;
 
-    // Determinar qué imagen usar
-    let finalImageSrc = document.getElementById('editModalImage').src;
-    let hasNewImages = selectedPhotos.length > 0;
+    // Verificar si viene del historial de fotos cargadas (fotos-sit-add.blade)
+    if (currentImageData && currentImageData.isFromHistorial) {
+        console.log('Guardando cambios desde historial...');
 
-    // Simular guardado
-    setTimeout(() => {
-        // Si hay múltiples fotos nuevas, crear nuevas filas
-        if (hasNewImages && selectedPhotos.length > 1) {
-            createAdditionalRows(selectedPhotos.slice(1), newTipo, newDescripcion);
-        }
+        // Actualizar datos en el array de uploadedImages
+        const historialIndex = currentImageData.historialIndex;
+        if (historialIndex >= 0 && historialIndex < uploadedImages.length) {
+            uploadedImages[historialIndex].tipo = newTipo;
+            uploadedImages[historialIndex].descripcion = newDescripcion;
 
-        // Actualizar la fila actual
-        updateTableRow(currentEditingRow, {
-            tipo_fotografia: newTipo,
-            descripcion: newDescripcion,
-            nueva_imagen: finalImageSrc !== originalImageSrc,
-            imagen_src: finalImageSrc
-        });
-
-        // Actualizar datos para el lightbox
-        updateLightboxData(newTipo, newDescripcion, finalImageSrc);
-
-        setTimeout(() => {
-            if (typeof manualRefreshPagination === 'function') {
-                manualRefreshPagination();
+            // Si hay nueva imagen
+            const finalImageSrc = document.getElementById('editModalImage').src;
+            if (finalImageSrc !== originalImageSrc) {
+                uploadedImages[historialIndex].url = finalImageSrc;
             }
-        }, 300);
 
-        // Cerrar modal
-        const modal = bootstrap.Modal.getInstance(document.getElementById('editImageModal'));
-        modal.hide();
-
-        //let message = 'Cambios guardados correctamente';
-        if (hasNewImages && selectedPhotos.length > 1) {
-            message += ` (${selectedPhotos.length} fotos procesadas)`;
+            console.log('Imagen actualizada en historial:', uploadedImages[historialIndex]);
         }
 
-        // Reset variables
-        resetEditVariables();
+        //ACTUALIZAR VISUALMENTE EL HISTORIAL
+        setTimeout(() => {
+            actualizarHistorialVisual();
 
-        // Reset botón
-        saveBtn.classList.remove('loading');
-        saveBtn.disabled = false;
-    }, 1500);
+            //MOSTRAR SUCCESS CON SWEETALERT
+            Swal.fire({
+                icon: 'success',
+                title: 'Cambios guardados',
+                text: 'La información se actualizó correctamente',
+                timer: 2000,
+                showConfirmButton: false
+            });
+
+            // Cerrar modal
+            const modal = bootstrap.Modal.getInstance(document.getElementById('editImageModal'));
+            modal.hide();
+
+            // Reset variables
+            resetEditVariables();
+        }, 500);
+
+    } else { // Comportamiento para Tabla
+
+        // Determinar qué imagen usar
+        let finalImageSrc = document.getElementById('editModalImage').src;
+        let hasNewImages = selectedPhotos.length > 0;
+
+        // Simular guardado
+        setTimeout(() => {
+            // Si hay múltiples fotos nuevas, crear nuevas filas
+            if (hasNewImages && selectedPhotos.length > 1) {
+                createAdditionalRows(selectedPhotos.slice(1), newTipo, newDescripcion);
+            }
+
+            // Actualizar la fila actual
+            updateTableRow(currentEditingRow, {
+                tipo_fotografia: newTipo,
+                descripcion: newDescripcion,
+                nueva_imagen: finalImageSrc !== originalImageSrc,
+                imagen_src: finalImageSrc
+            });
+
+            // Actualizar datos para el lightbox
+            updateLightboxData(newTipo, newDescripcion, finalImageSrc);
+
+            setTimeout(() => {
+                if (typeof manualRefreshPagination === 'function') {
+                    manualRefreshPagination();
+                }
+            }, 300);
+
+            // Cerrar modal
+            const modal = bootstrap.Modal.getInstance(document.getElementById('editImageModal'));
+            modal.hide();
+
+            //let message = 'Cambios guardados correctamente';
+            if (hasNewImages && selectedPhotos.length > 1) {
+                message += ` (${selectedPhotos.length} fotos procesadas)`;
+            }
+
+            // Reset variables
+            resetEditVariables();
+
+            // Reset botón
+            saveBtn.classList.remove('loading');
+            saveBtn.disabled = false;
+        }, 1500);
+    }
 }
 
 // Actualizar datos para el lightbox
@@ -3404,7 +3513,67 @@ function saveEditChanges() {
         return;
     }
 
-    // Actualizar celdas de texto
+    //MEJORAR detección de imagen nueva
+    const modalImage = document.getElementById('editModalImage');
+    const imagenActual = modalImage ? modalImage.src : null;
+
+    // ✅ DETECCIÓN MÁS ESPECÍFICA para recortes e imágenes nuevas
+    let hayNuevaImagen = false;
+    let imagenParaEnviar = null;
+
+    if (imagenActual && originalImageSrc) {
+        // Caso 1: Imagen recortada (base64)
+        if (imagenActual.startsWith('data:') && imagenActual !== originalImageSrc) {
+            hayNuevaImagen = true;
+            imagenParaEnviar = imagenActual;
+            console.log('🖼️ DETECTADA: Imagen recortada (base64)');
+        }
+        // Caso 2: Imagen subida nueva (base64)
+        else if (imagenActual.startsWith('data:') && originalImageSrc.startsWith('http')) {
+            hayNuevaImagen = true;
+            imagenParaEnviar = imagenActual;
+            console.log('🖼️ DETECTADA: Imagen nueva subida');
+        }
+        // Caso 3: Cambio de URL
+        else if (imagenActual !== originalImageSrc) {
+            hayNuevaImagen = true;
+            imagenParaEnviar = imagenActual;
+            console.log('🖼️ DETECTADA: Cambio de imagen URL');
+        }
+        // Caso 4: Flag de recorte activo
+        else if (hasImageBeenCropped && imagenActual.startsWith('data:')) {
+            hayNuevaImagen = true;
+            imagenParaEnviar = imagenActual;
+            console.log('🖼️ DETECTADA: Flag hasImageBeenCropped activo');
+        }
+    }
+
+    console.log('🖼️ Estado de imagen CORREGIDO:', {
+        hayNuevaImagen: hayNuevaImagen,
+        imagenActual: imagenActual ? imagenActual.substring(0, 50) + '...' : 'null',
+        originalSrc: originalImageSrc ? originalImageSrc.substring(0, 50) + '...' : 'null',
+        hasImageBeenCropped: hasImageBeenCropped,
+        imagenParaEnviar: imagenParaEnviar ? 'SÍ (base64)' : 'NO'
+    });
+
+    // Obtener ID para backend update
+    const imageId = document.getElementById('editImageId').value;
+
+    // Si tiene ID numérico, actualizar en backend
+    if (imageId && !imageId.startsWith('temp_') && !isNaN(parseInt(imageId))) {
+        console.log('🔄 Actualizando en backend...');
+
+        // ✅ USAR FUNCIÓN UNIFICADA - con detección corregida
+        if (hayNuevaImagen && imagenParaEnviar) {
+            console.log('📸 Enviando CON IMAGEN al backend');
+            actualizarEnBackend(imageId, nuevoTipo, nuevaDescripcion, imagenParaEnviar);
+        } else {
+            console.log('📝 Enviando SOLO TEXTO al backend');
+            actualizarEnBackend(imageId, nuevoTipo, nuevaDescripcion);
+        }
+    }
+
+    // Actualizar celdas de texto (resto del código igual)
     const tipoCell = currentEditingRow.querySelector('[data-column="tipo-fotografia"]');
     const descripcionCell = currentEditingRow.querySelector('[data-column="descripcion"]');
 
@@ -3416,53 +3585,276 @@ function saveEditChanges() {
         descripcionCell.textContent = nuevaDescripcion;
     }
 
+    // Actualizar imagen en tabla si cambió
     const tableImage = currentEditingRow.querySelector('img');
+    if (tableImage && hayNuevaImagen && imagenParaEnviar) {
+        console.log('🔄 Actualizando imagen en tabla...');
 
-    if (tableImage) {
-        console.log('Imagen actual en tabla:', tableImage.src.substring(0, 50) + '...');
+        const newImage = tableImage.cloneNode(true);
+        newImage.src = imagenParaEnviar; // Usar imagen recortada/nueva
+        newImage.removeAttribute('onclick');
 
-        // Solo actualizar el event listener con datos finales
-        const finalImageUrl = tableImage.src; // Ya es base64
+        newImage.addEventListener('click', function (e) {
+            e.preventDefault();
+            e.stopPropagation();
+            openImageLightbox(imagenParaEnviar, nuevaDescripcion, nuevaDescripcion, nuevoTipo);
+        });
 
-        // Recrear event listener con datos finales
+        tableImage.parentNode.replaceChild(newImage, tableImage);
+        console.log('✅ Imagen en tabla actualizada con recorte/nueva imagen');
+
+    } else if (tableImage) {
+        // Solo actualizar event listener sin cambiar imagen
         const newImage = tableImage.cloneNode(true);
         newImage.removeAttribute('onclick');
 
         newImage.addEventListener('click', function (e) {
             e.preventDefault();
             e.stopPropagation();
-            openImageLightbox(finalImageUrl, nuevaDescripcion, nuevaDescripcion, nuevoTipo);
+            openImageLightbox(tableImage.src, nuevaDescripcion, nuevaDescripcion, nuevoTipo);
         });
 
         tableImage.parentNode.replaceChild(newImage, tableImage);
-        console.log('Event listener final actualizado');
+        console.log('✅ Event listener actualizado sin cambio de imagen');
     }
 
-    // Cerrar modal y limpiar campos
+    // Cerrar modal y limpiar campos (resto igual)
     const modal = bootstrap.Modal.getInstance(document.getElementById('editImageModal'));
     if (modal) {
         modal.hide();
     }
 
-    // Limpiar variables
     resetEditVariables();
 
-    // Refrescar filtros después de edición exitosa
     setTimeout(() => {
         console.log('Actualizando filtros después de edición...');
-
-        // Refrescar datos de filtros predictivos
         if (typeof refreshPredictiveFiltersData === 'function') {
             refreshPredictiveFiltersData();
         }
-
-
-
         console.log('Filtros actualizados después de edición');
     }, 300);
 
     console.log('Edición completada exitosamente');
 }
+/*======================================================================================================================= */
+// ===>>> Función Simple para actualizar en backend
+
+//FUNCIÓN UNIFICADA actualizarEnBackend (texto + imagen):
+
+function actualizarEnBackend(imageId, nuevoTipo, nuevaDescripcion, imagenBase64 = null) {
+    console.log('🌐 INICIANDO actualizarEnBackend UNIFICADA con parámetros:', {
+        imageId: imageId,
+        nuevoTipo: nuevoTipo,
+        nuevaDescripcion: nuevaDescripcion,
+        tieneImagen: !!imagenBase64
+    });
+
+    // ✅ VALIDAR que el ID sea válido para backend
+    if (!imageId || imageId.startsWith('temp_') || isNaN(parseInt(imageId))) {
+        console.warn('⚠️ ID no válido para backend:', imageId);
+        showNotification('Esta imagen no puede actualizarse en servidor (imagen local)', 'info', 3000);
+        return;
+    }
+
+    // ✅ VALIDAR campos requeridos
+    if (!nuevoTipo || !nuevaDescripcion.trim()) {
+        console.error('❌ Campos requeridos faltantes:', { nuevoTipo, nuevaDescripcion });
+        showNotification('Tipo y descripción son obligatorios', 'error');
+        return;
+    }
+
+    // ✅ DETERMINAR si es actualización con imagen o solo texto
+    const tieneImagenNueva = imagenBase64 && imagenBase64.startsWith('data:');
+
+    if (tieneImagenNueva) {
+        console.log('📸 Procesando actualización CON IMAGEN...');
+        procesarConImagen();
+    } else {
+        console.log('📝 Procesando actualización SOLO TEXTO...');
+        procesarSoloTexto();
+    }
+
+    // ✅ FUNCIÓN INTERNA para procesar SOLO TEXTO
+    function procesarSoloTexto() {
+        const formData = new FormData();
+        formData.append('tipo', nuevoTipo.trim());
+        formData.append('descripcion', nuevaDescripcion.trim());
+        formData.append('_method', 'PUT');
+        formData.append('_token', $('meta[name="csrf-token"]').attr('content'));
+
+        // ✅ LOG del FormData
+        console.log('📋 FormData TEXTO:');
+        for (let pair of formData.entries()) {
+            console.log(`  ${pair[0]}: "${pair[1]}"`);
+        }
+
+        enviarAlServidor(formData, 'texto-solo');
+    }
+
+    // ✅ FUNCIÓN INTERNA para procesar CON IMAGEN
+    function procesarConImagen() {
+        // Convertir base64 a blob
+        fetch(imagenBase64)
+            .then(res => res.blob())
+            .then(blob => {
+                const formData = new FormData();
+
+                // ✅ AGREGAR imagen como archivo
+                const imagenFile = new File([blob], `imagen_editada_${Date.now()}.jpg`, {
+                    type: 'image/jpeg'
+                });
+                formData.append('imagen', imagenFile);
+
+                // ✅ AGREGAR campos de texto
+                formData.append('tipo', nuevoTipo.trim());
+                formData.append('descripcion', nuevaDescripcion.trim());
+                formData.append('_method', 'PUT');
+                formData.append('_token', $('meta[name="csrf-token"]').attr('content'));
+
+                // ✅ LOG del FormData
+                console.log('📋 FormData CON IMAGEN:');
+                for (let pair of formData.entries()) {
+                    if (pair[1] instanceof File) {
+                        console.log(`  ${pair[0]}: File(${pair[1].name}, ${(pair[1].size / 1024).toFixed(2)}KB)`);
+                    } else {
+                        console.log(`  ${pair[0]}: "${pair[1]}"`);
+                    }
+                }
+
+                enviarAlServidor(formData, 'con-imagen');
+            })
+            .catch(error => {
+                console.error('❌ Error convirtiendo imagen:', error);
+                showNotification('Error procesando la imagen', 'error');
+
+                // ✅ FALLBACK: Enviar solo texto
+                console.log('🔄 Fallback: Enviando solo texto...');
+                procesarSoloTexto();
+            });
+    }
+
+    // ✅ FUNCIÓN INTERNA para enviar al servidor (COMÚN para ambos casos)
+    function enviarAlServidor(formData, tipo) {
+        const endpoint = `/api/fotografias/${imageId}`;
+        console.log(`🎯 Enviando ${tipo} al endpoint:`, endpoint);
+
+        // ✅ MOSTRAR loading si es con imagen
+        if (tipo === 'con-imagen') {
+            showNotification('Procesando imagen y guardando cambios...', 'info', 1000);
+        }
+
+        $.ajax({
+            url: endpoint,
+            type: 'POST',
+            data: formData,
+            processData: false,
+            contentType: false,
+            timeout: tipo === 'con-imagen' ? 60000 : 30000, // Más tiempo para imágenes
+            headers: {
+                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content'),
+                'Accept': 'application/json',
+                'X-Origen-Edicion': `fotos-index-unificada-${tipo}`,
+                'X-Debug-ImageId': imageId,
+                'X-Has-New-Image': tieneImagenNueva ? 'true' : 'false'
+            },
+            beforeSend: function (xhr) {
+                console.log(`🚀 Enviando request ${tipo}...`);
+            },
+            success: function (response) {
+                console.log(`✅ SUCCESS ${tipo} - Response:`, response);
+
+                // ✅ PROCESAR respuesta según el tipo
+                if (tipo === 'con-imagen') {
+                    procesarSuccessConImagen(response);
+                } else {
+                    procesarSuccessTexto(response);
+                }
+            },
+            error: function (xhr, status, error) {
+                console.error(`❌ ERROR ${tipo}:`, {
+                    status: xhr.status,
+                    responseText: xhr.responseText,
+                    error: error
+                });
+
+                procesarError(xhr, tipo);
+            }
+        });
+    }
+
+    // Procesar éxito con imagen
+    function procesarSuccessConImagen(response) {
+        // ✅ VERIFICAR si hay nuevo path de imagen
+        let nuevoImagenPath = null;
+        if (response.data && response.data.imagen_url) {
+            nuevoImagenPath = response.data.imagen_url;
+        } else if (response.data && response.data.imagen_path) {
+            nuevoImagenPath = response.data.imagen_path;
+        } else if (response.imagen_url) {
+            nuevoImagenPath = response.imagen_url;
+        }
+
+        console.log('📸 Nuevo path de imagen en BD:', nuevoImagenPath);
+
+        if (nuevoImagenPath) {
+            showNotification('Imagen y datos actualizados correctamente en BD', 'success', 3000);
+            console.log('✅ Nueva imagen guardada en BD con path:', nuevoImagenPath);
+        } else {
+            console.warn('⚠️ No se recibió nuevo path de imagen');
+            showNotification('Datos guardados, pero sin confirmación de nueva imagen', 'warning', 3000);
+        }
+    }
+
+    // ✅ FUNCIÓN INTERNA para procesar SUCCESS solo texto
+    function procesarSuccessTexto(response) {
+        if (response && (response.success || response.data)) {
+            console.log('✅ Actualización de texto exitosa en BD');
+            showNotification('Cambios guardados en base de datos', 'success', 2000);
+        } else {
+            console.warn('⚠️ Response estructura inválida:', response);
+            showNotification('Respuesta del servidor inválida', 'warning', 3000);
+        }
+    }
+
+    // ✅ FUNCIÓN INTERNA para procesar errores (COMÚN)
+    function procesarError(xhr, tipo) {
+        let errorMessage = 'Error actualizando en servidor';
+
+        try {
+            if (xhr.status === 422) {
+                errorMessage = 'Error de validación de datos';
+                if (xhr.responseJSON && xhr.responseJSON.errors) {
+                    const errors = Object.values(xhr.responseJSON.errors).flat();
+                    errorMessage += ': ' + errors.join(', ');
+                }
+            } else if (xhr.status === 404) {
+                errorMessage = `Imagen no encontrada en servidor (ID: ${imageId})`;
+            } else if (xhr.status === 413) {
+                errorMessage = 'La imagen es demasiado grande para el servidor';
+            } else if (xhr.status === 500) {
+                errorMessage = 'Error interno del servidor';
+                if (tipo === 'con-imagen') {
+                    errorMessage += ' procesando imagen';
+                }
+            } else if (xhr.responseJSON && xhr.responseJSON.message) {
+                errorMessage = xhr.responseJSON.message;
+            }
+        } catch (parseError) {
+            console.error('Error parseando respuesta de error:', parseError);
+        }
+
+        showNotification(`Error: ${errorMessage}`, 'error', 5000);
+
+        // ✅ FALLBACK específico según el tipo
+        if (tipo === 'con-imagen' && imagenBase64) {
+            console.log('🔄 Fallback con imagen: Intentando solo texto...');
+            procesarSoloTexto();
+        } else {
+            console.log('Los cambios se mantienen localmente');
+        }
+    }
+}
+/*======================================================================================================================= */
 
 // =====>>>>>>>>>>> EVENT LISTENERS PARA FUNCIONES NUEVAS(handleFileUpload - SavedEditChanges) =====>>>>>>>>>
 document.addEventListener('DOMContentLoaded', function () {
@@ -3474,10 +3866,10 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    // Event listener para botón de guardar cambios (si no existe)
-    const saveChangesBtn = document.getElementById('saveChangesBtn');
-    if (saveChangesBtn && !saveChangesBtn.onclick) {
-        saveChangesBtn.addEventListener('click', saveEditChanges);
+    const saveBtn = document.getElementById('saveChangesBtn');
+
+    if (saveBtn) {
+        saveBtn.addEventListener('click', saveEditChanges);
     }
 });
 

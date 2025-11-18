@@ -7,7 +7,7 @@
 
 {{--INDICADOR DE ROL --}}
 <script>
-    const isAdmin = false; // false -> usuario normal, true -> administrador
+    const isAdmin = true; // false -> usuario normal, true -> administrador
 </script>
 
 <div class="container mt-4">
@@ -165,7 +165,6 @@
   </div>
 </div>
 
-
 <!-- ======= Toast Container para notificaciones Toast ======= -->
 <div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 11000;">
     <div id="notificationToast" class="toast align-items-center border-0" role="alert" aria-live="assertive" aria-atomic="true">
@@ -181,7 +180,6 @@
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
-
 
 
 <!-- Scripts utiles-->
@@ -1375,13 +1373,24 @@
                     onclick="abrirLightboxHistorial('${imagen.url}', '${imagen.descripcion}', '${imagen.tipo}')"
                     alt="${imagen.descripcion}">
 
-                <!-- Botón eliminar en esquina superior derecha -->
-                <button class="btn btn-danger btn-sm position-absolute top-0 end-0 m-1"
-                        style="padding: 2px 6px; font-size: 10px; z-index: 2;"
-                        onclick="eliminarImagenHistorial(${index}, event)"
-                        title="Eliminar imagen">
-                    <i class="fas fa-trash"></i>
-                </button>
+               <!-- Botones de acción en esquina superior derecha -->
+                <div class="position-absolute top-0 end-0 m-1" style="z-index: 2;">
+                    <!-- Botón eliminar -->
+                    <button class="btn btn-danger btn-sm mb-1 d-block"
+                            style="padding: 2px 6px; font-size: 10px;"
+                            onclick="eliminarImagenHistorial(${index}, event)"
+                            title="Eliminar imagen">
+                        <i class="fas fa-trash"></i>
+                    </button>
+
+                    <!-- Botón editar -->
+                    <button class="btn btn-warning btn-sm d-block"
+                            style="padding: 2px 6px; font-size: 10px;"
+                            onclick="editarImagenHistorial(${index}, event)"
+                            title="Editar información">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                </div>
             </div>
 
             <div class="card-body p-2">
@@ -1402,7 +1411,7 @@
 }
 
     function abrirLightboxHistorial(url, descripcion, tipo) {
-        console.log('🖼️ Abriendo lightbox desde historial:', { url, descripcion, tipo });
+        console.log('Abriendo lightbox desde historial:', { url, descripcion, tipo });
         openLightbox(url, descripcion, tipo);
     }
 
@@ -1416,22 +1425,46 @@
 
         const imagen = uploadedImages[index];
 
-        // Confirmar eliminación
-        if (confirm(`¿Eliminar esta imagen?\n${imagen.descripcion}`)) {
-            console.log(`🗑️ Eliminando imagen ${index + 1}: ${imagen.descripcion}`);
+        // Confirmar eliminación mediante SweetAlert
+        Swal.fire({
+            title: '¿Eliminar esta imagen?',
+            text: imagen.descripcion,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#dc3545',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: 'Sí, eliminar',
+            cancelButtonText: 'Cancelar',
+            reverseButtons: true,
+            focusCancel: true
+        }).then((result) => {
+            if (result.isConfirmed) {
+                console.log(`Eliminando imagen ${index + 1}: ${imagen.descripcion}`);
 
-            // Eliminar del backend si tiene ID
-            if (imagen.id) {
-                eliminarImagenBackend(imagen.id, index);
-            } else {
-                // Solo eliminar del array local
-                eliminarImagenLocal(index);
+                // MOSTRAR LOADING SIMPLE
+                Swal.fire({
+                    title: 'Eliminando...',
+                    allowOutsideClick: false,
+                    allowEscapeKey: false,
+                    showConfirmButton: false,
+                    didOpen: () => {
+                        Swal.showLoading();
+                    }
+                });
+
+                // Eliminar del backend si tiene ID
+                if (imagen.id) {
+                    eliminarImagenBackend(imagen.id, index);
+                } else {
+                    // Solo eliminar del array local
+                    eliminarImagenLocal(index);
+                }
             }
-        }
+        });
     }
 
     function eliminarImagenBackend(imagenId, localIndex) {
-        console.log(`🗑️ Eliminando imagen del backend: ID ${imagenId}`);
+        console.log(`Eliminando imagen del backend: ID ${imagenId}`);
 
         $.ajax({
             url: `/api/fotografias/${imagenId}`,
@@ -1441,26 +1474,40 @@
                 'Accept': 'application/json'
             },
             success: function(response) {
-                console.log('✅ Imagen eliminada del backend:', response);
+                console.log('Imagen eliminada del backend:', response);
 
                 // Eliminar del array local
                 eliminarImagenLocal(localIndex);
 
-                showNotification('Imagen eliminada correctamente', 'success', 2000);
+                // Mostrar success con SweetAlert
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Eliminada',
+                    text: 'Imagen eliminada correctamente',
+                    timer: 2000,
+                    showConfirmButton: false
+                });
             },
             error: function(xhr, status, error) {
-                console.error('❌ Error eliminando imagen:', error);
+                console.error('Error eliminando imagen:', error);
 
                 // Aún así, eliminar del array local como fallback
                 eliminarImagenLocal(localIndex);
 
-                showNotification('Imagen eliminada localmente (error en servidor)', 'warning', 3000);
+                // Mostrar warning con SweetAlert
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Eliminada localmente',
+                    text: 'La imagen se eliminó localmente (error en servidor)',
+                    timer: 3000,
+                    showConfirmButton: false
+                });
             }
         });
     }
 
     function eliminarImagenLocal(index) {
-        console.log(`🗑️ Eliminando imagen local en índice ${index}`);
+        console.log(`Eliminando imagen local en índice ${index}`);
 
         // Eliminar del array
         uploadedImages.splice(index, 1);
@@ -1476,27 +1523,283 @@
             }
         }
 
-        console.log(`✅ Imagen eliminada. Quedan ${uploadedImages.length} imágenes`);
+        console.log(`Imagen eliminada. Quedan ${uploadedImages.length} imágenes`);
     }
 
-    // ✅ AGREGAR función para prevenir duplicados:
+    /*==========================================================================================================================*/
+    // Función para modal de edición en historial de fotos cargadas
+
+    function editarImagenHistorial(index, event) {
+        event.stopPropagation(); // Evitar que se abra el lightbox
+
+        if (index < 0 || index >= uploadedImages.length) {
+            console.error('Índice inválido:', index);
+            return;
+        }
+
+        const imagen = uploadedImages[index];
+        console.log('Editando imagen del historial:', imagen);
+
+        // Modal de edición para fotos cargadas
+        mostrarModalEdicionHistorial(imagen, index);
+    }
+
+    function mostrarModalEdicionHistorial(imagen, index) {
+    // Crear contenido HTML del modal
+    const modalHTML = `
+        <div class="modal fade" id="editHistorialModal" tabindex="-1" aria-labelledby="editHistorialModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="editHistorialModalLabel">
+                            <i class="fas fa-edit me-2"></i>
+                            Editar Información de la Fotografía
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+
+                    <div class="modal-body">
+                        <div class="row">
+                            <!-- Columna izquierda - Imagen -->
+                            <div class="col-md-5">
+                                <div class="text-center mb-3">
+                                    <h6>Vista Previa</h6>
+                                    <div class="image-preview-container">
+                                        <img id="historialModalImage"
+                                             src="${imagen.url}"
+                                             alt="${imagen.descripcion}"
+                                             class="img-fluid rounded border"
+                                             style="max-height: 200px; cursor: pointer;"
+                                             onclick="openLightbox('${imagen.url}', '${imagen.descripcion}', '${imagen.tipo}')">
+                                    </div>
+                                </div>
+
+                                <!-- Información de solo lectura -->
+                                <div class="bg-light p-3 rounded">
+                                    <h6 class="mb-2">Información de la Fotografía</h6>
+                                    <div class="mb-2">
+                                        <strong>Orden SIT:</strong>
+                                        <span class="text-primary">${imagen.orden_sit}</span>
+                                    </div>
+                                    <div class="mb-0">
+                                        <strong>Fecha:</strong>
+                                        <span>${new Date(imagen.created_at).toLocaleDateString('es-ES')}</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Columna derecha - Formulario -->
+                            <div class="col-md-7">
+                                <form id="editHistorialForm">
+                                    <div class="mb-3">
+                                        <label for="historialTipoFotografia" class="form-label">
+                                            <strong>Tipo de Fotografía</strong>
+                                        </label>
+                                        <select class="form-select" id="historialTipoFotografia" required>
+                                            <option value="Muestra" ${imagen.tipo === 'MUESTRA' ? 'selected' : ''}>Muestra</option>
+                                            <option value="Validacion AC" ${imagen.tipo === 'VALIDACION AC' || imagen.tipo === 'VALIDACIÓN AC' ? 'selected' : ''}>Validación AC</option>
+                                            <option value="Prenda Final" ${imagen.tipo === 'PRENDA FINAL' ? 'selected' : ''}>Prenda Final</option>
+                                        </select>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label for="historialDescripcion" class="form-label">
+                                            <strong>Descripción</strong>
+                                        </label>
+                                        <textarea class="form-control"
+                                                  id="historialDescripcion"
+                                                  rows="3"
+                                                  required
+                                                  placeholder="Descripción de la fotografía">${imagen.descripcion}</textarea>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                            <i class="fas fa-times me-1"></i>
+                            Cancelar
+                        </button>
+                        <button type="button" class="btn btn-primary" id="guardarHistorialBtn" onclick="guardarCambiosHistorial(${index})">
+                            <i class="fas fa-save me-1"></i>
+                            Guardar Cambios
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+
+    //INSERTAR modal en el DOM
+    const existingModal = document.getElementById('editHistorialModal');
+    if (existingModal) {
+        existingModal.remove();
+    }
+
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+
+    //MOSTRAR modal
+    const modal = new bootstrap.Modal(document.getElementById('editHistorialModal'));
+    modal.show();
+
+    console.log('Modal de edición de historial abierto');
+}
+
+//FUNCIÓN PARA GUARDAR CAMBIOS DEL HISTORIAL
+function guardarCambiosHistorial(index) {
+    const nuevoTipo = document.getElementById('historialTipoFotografia').value;
+    const nuevaDescripcion = document.getElementById('historialDescripcion').value.trim();
+    const historialImage = document.getElementById('historialModalImage');
+
+    // Validar campos
+    if (!nuevoTipo || !nuevaDescripcion) {
+        showNotification('Por favor complete todos los campos', 'warning');
+        return;
+    }
+
+    const imagen = uploadedImages[index];
+
+    // Mostrar loading
+    const guardarBtn = document.getElementById('guardarHistorialBtn');
+    const originalText = guardarBtn.innerHTML;
+    guardarBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Guardando...';
+    guardarBtn.disabled = true;
+
+     const updateData = {
+        tipo: nuevoTipo.toUpperCase(),
+        descripcion: nuevaDescripcion,
+        hasNewImage: false
+    };
+
+    //Crear FormData para envío al backend
+    const formData = new FormData();
+    formData.append('tipo', updateData.tipo);
+    formData.append('descripcion', updateData.descripcion);
+    formData.append('_method', 'PUT');
+
+    //Enviar al backend
+    enviarCambiosBackend(imagen.id, formData, index, updateData);
+}
+
+/*=========================================================================================================================*/
+function enviarCambiosBackend(imagenId, formData, localIndex, updateData) {
+    console.log(`Enviando cambios al backend para imagen ID: ${imagenId}`);
+
+    //Agregar método PUT
+    formData.append('_method', 'PUT');
+    formData.append('_token', $('meta[name="csrf-token"]').attr('content'));
+
+    $.ajax({
+        url: `/api/fotografias/${imagenId}`,
+        type: 'POST',
+        data: formData,
+        processData: false,
+        contentType: false,
+        timeout: 30000,
+        headers: {
+            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content'),
+            'Accept': 'application/json',
+            'X-Origen-Edicion': 'historial-fotos-sit-add'
+        },
+        success: function(response) {
+            console.log('Cambios guardados en backend:', response);
+
+            //ACTUALIZAR datos locales
+            if (localIndex >= 0 && localIndex < uploadedImages.length) {
+                uploadedImages[localIndex].tipo = updateData.tipo;
+                uploadedImages[localIndex].descripcion = updateData.descripcion;
+
+                console.log('Datos locales actualizados:', uploadedImages[localIndex]);
+            }
+
+            //ACTUALIZAR historial visual
+            actualizarHistorialVisual();
+
+            // Success
+            mostrarEstadoGuardado(true);
+
+            //Cerrar modal luego de éxito
+            setTimeout(() => {
+                cerrarModalEdicion();
+            }, 1500);
+
+        },
+        error: function(xhr, status, error) {
+            console.error('Error guardando cambios:', {
+                status: xhr.status,
+                responseText: xhr.responseText,
+                error: error
+            });
+
+            let errorMessage = 'Error guardando cambios en el servidor';
+
+            if (xhr.responseJSON && xhr.responseJSON.message) {
+                errorMessage = xhr.responseJSON.message;
+            } else if (xhr.status === 422) {
+                errorMessage = 'Error de validación: Verifique los datos';
+            } else if (xhr.status === 404) {
+                errorMessage = 'Imagen no encontrada en el servidor';
+            }
+
+            showNotification(`Error: ${errorMessage}`, 'error', 5000);
+        }
+    });
+}
+
+/*=========================================================================================================================*/
+//===>>> Funciónes auxiliares
+function mostrarEstadoGuardado(success) {
+    const guardarBtn = document.getElementById('guardarHistorialBtn');
+
+    if (guardarBtn) {
+        guardarBtn.innerHTML = '<i class="fas fa-check me-1"></i>Guardado';
+        guardarBtn.disabled = true;
+        guardarBtn.classList.add('btn-success');
+        guardarBtn.classList.remove('btn-primary');
+    }
+
+    showNotification('Cambios guardados correctamente', 'success', 2000);
+}
+
+function cerrarModalEdicion() {
+    const modal = bootstrap.Modal.getInstance(document.getElementById('editHistorialModal'));
+    if (modal) {
+        modal.hide();
+    }
+
+    // Limpiar modal del DOM
+    setTimeout(() => {
+        const modalElement = document.getElementById('editHistorialModal');
+        if (modalElement) {
+            modalElement.remove();
+        }
+    }, 500);
+
+    console.log('Modal de edición cerrado');
+}
+
+    /*=====================================================================================================================*/
+
+    //AGREGAR función para prevenir duplicados:
     function agregarImagenesHistorial(nuevasImagenes) {
-        console.log('📸 Agregando imágenes al historial...', nuevasImagenes);
+        console.log('Agregando imágenes al historial...', nuevasImagenes);
 
         nuevasImagenes.forEach(imagen => {
-            // ✅ VERIFICAR si ya existe por ID
+            //VERIFICAR si ya existe por ID
             const existeId = uploadedImages.find(img => img.id === imagen.id);
             const existeUrl = uploadedImages.find(img => img.url === imagen.url);
 
             if (!existeId && !existeUrl) {
                 uploadedImages.push(imagen);
-                console.log(`✅ Imagen agregada: ID ${imagen.id}`);
+                console.log(`Imagen agregada: ID ${imagen.id}`);
             } else {
-                console.log(`⚠️ Imagen duplicada omitida: ID ${imagen.id}`);
+                console.log(`Imagen duplicada omitida: ID ${imagen.id}`);
             }
         });
 
-        console.log(`📊 Total imágenes en historial: ${uploadedImages.length}`);
+        console.log(`Total imágenes en historial: ${uploadedImages.length}`);
     }
 
     /*========================================================================================================================*/
@@ -1544,7 +1847,7 @@
 // ================================================================================================
 
 function limpiarOperacion() {
-    console.log('🔄 Limpiando operación...');
+    console.log('Limpiando operación...');
 
     // 1. Limpiar inputs de archivo
     const fileInputs = document.querySelectorAll('input[type="file"]');
@@ -1606,7 +1909,4 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 </script>
-
-
-
 @endsection

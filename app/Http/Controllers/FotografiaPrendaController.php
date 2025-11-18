@@ -330,7 +330,6 @@ class FotografiaPrendaController extends Controller
                 if ($existingPhoto && Storage::disk('public')->exists($rutaNueva)) {
                     //REUTILIZAR IMAGEN EXISTENTE
                     $fotografia->imagen_path = $existingPhoto->imagen_path;
-                    $fotografia->imagen_url = $existingPhoto->imagen_url;
                     $isReutilizada = true;
 
                     \Log::info('Reutilizando imagen existente en actualización', [
@@ -341,8 +340,7 @@ class FotografiaPrendaController extends Controller
                 } else {
                     //GUARDAR NUEVA IMAGEN CON HASH
                     $rutaCompleta = $imagen->storeAs($rutaDestino, $nombreArchivo, 'public');
-                $fotografia->imagen_path = $rutaCompleta;
-                    $fotografia->imagen_url = asset('storage/' . $rutaCompleta);
+                    $fotografia->imagen_path = $rutaCompleta;
                     $isReutilizada = false;
 
                     \Log::info('Nueva imagen guardada en actualización', [

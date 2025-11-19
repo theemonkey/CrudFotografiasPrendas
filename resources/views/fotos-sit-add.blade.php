@@ -7,7 +7,7 @@
 
 {{--INDICADOR DE ROL --}}
 <script>
-    const isAdmin = true; // false -> usuario normal, true -> administrador
+    const isAdmin = false; // false -> usuario normal, true -> administrador
 </script>
 
 <div class="container mt-4">
@@ -36,23 +36,18 @@
     <div id="ordenSitCard" class="card p-3 mb-3" style="display:none;">
         <div class="row align-items-center">
             <div class="row align-items-center">
-                <div class="col-md-4 text-center">
-                    <!-- Miniatura más grande -->
-                    <img id="prendaPreview"
-                        src="https://picsum.photos/id/535/400/600"
-                        alt="Prenda"
-                        class="img-thumbnail"
-                        style="max-width:200px; min-width:150px; height:auto; cursor:pointer; object-fit:cover; border-radius:8px;"
-                        onclick="openLightbox(this.src, tipoSeleccionado)">
+                <div class="col-md-4">
+                    <div id="prendaPreview" class="preview-container">
+                        <!-- El placeholder se insertará aquí via JavaScript (function mostrarPlaceholderImagen)-->
+                    </div>
                 </div>
                 <div class="col-md-8">
                     <p class="mb-1"><strong>Orden SIT:</strong> <span id="ordenSitValue"></span></p>
                     <p class="mb-1"><strong>Tipo:</strong> <span id="tipoOrden"></span></p>
-                    <p class="mb-1"><strong>Descripción:</strong> <span id="descripcion"></span></p>
+                    <p class="mb-3"><strong>Descripción:</strong> <span id="descripcion"></span></p>
 
                 <!-- Subir imágenes -->
                     <div class="mb-3">
-                        <label class="text-muted mb-3">Subir Imágenes</label>
                         <div class="upload-buttons d-flex gap-2">
                             <div class="upload-btn" id="cameraUpload" title="Tomar foto con cámara">
                                 <i class="fas fa-camera"></i>
@@ -204,7 +199,6 @@
         const value = ordenSitInput.value.trim();
 
         if (value === "") {
-            showNotification("Ingrese un número de orden", "warning");
             return;
         }
 
@@ -270,8 +264,6 @@
 
     //===>> Función redirección para administradores <<===
     function redirectToTableAdmin(ordenSit) {
-        showNotification(`Redirigiendo a la tabla de la orden ${ordenSit}...`, 'info', 1500);
-
         setTimeout(() => {
                  window.location.href = `{{ route('fotos-index') }}?orden_sit=${encodeURIComponent(ordenSit)}&admin_access=true`;
         }, 1500);
@@ -329,13 +321,8 @@
         tipoOrden.className = "badge bg-primary";
         descripcion.textContent = "Agregue fotografías para esta orden";
 
-        // Imagen por defecto
-        prendaPreview.src = "https://picsum.photos/id/535/400/600";
-        prendaPreview.onclick = () => openLightbox(
-            "https://picsum.photos/id/535/400/600",
-            "Nueva orden",
-            "NUEVA"
-        );
+        // Placeholder de bootstraap
+        mostrarPlaceholderImagen(prendaPreview);
 
         ordenSitCard.style.display = 'block';
 
@@ -349,10 +336,38 @@
         if (uploadedImages.length > 0) {
             mostrarHistorialCard();
         }
-
-        //showNotification(`Nueva orden ${numeroOrden} lista para fotografías`, 'info', 2000);
     }
 
+    /*=====================================================================================================*/
+    //====>>>> Función para manejar el placeholder:
+    function mostrarPlaceholderImagen(contenedor) {
+        if (!contenedor) return;
+
+        // Crear placeholder de bootstrap
+        const placeholderHTML = `
+            <div class="placeholder-container d-flex align-items-center justify-content-center bg-light border rounded h-100"
+                style="min-height: 200px; width: 100%; border-style: dashed !important; border-width: 2px !important; border-color: #dee2e6 !important;">
+                <div class="text-center text-muted">
+                    <div class="mb-3">
+                        <i class="fas fa-camera display-1" style="opacity: 0.4; color: #6c757d;"></i>
+                    </div>
+                    <h5 class="mb-2" style="color: #6c757d; font-weight: 500;">
+                        Agregar Imagen
+                    </h5>
+                    <p class="small mb-0" style="color: #adb5bd;">
+                        Use los botones "Cámara" o "Archivo" para subir
+                    </p>
+                </div>
+            </div>
+        `;
+
+        // Insertar placeholder en el contenedor
+        contenedor.innerHTML = placeholderHTML;
+        contenedor.className = 'preview-container';
+
+    }
+
+    /*=====================================================================================================*/
     // Cambiar estado
     function setTipoFoto(tipo) {
         tipoSeleccionado = tipo;
@@ -428,22 +443,18 @@
     /*=========================================================================================*/
     //Función para USUARIOS NORMALES
     function guardarUsuarioNormal(savedImages) {
-        console.log('👤 USUARIO NORMAL: Guardando sin redirigir');
-
         // Mostrar confirmación sin redirección
-        showNotification(
+        /*showNotification(
             `${savedImages.length} imagen(es) guardada(s) correctamente. Puede continuar subiendo más fotos.`,
             'success',
             4000
-        );
+        );*/
 
         // Actualizar historial de fotos
         mostrarHistorialCard();
 
         // Actualizar la interfaz para permitir más subidas
         resetUploadInterface();
-
-        console.log('Usuario puede continuar subiendo fotos a la misma orden');
     }
 
     /*=========================================================================================*/
@@ -458,15 +469,11 @@
         uploadButtons.forEach(btn => {
             btn.classList.remove('uploading', 'active');
         });
-
-        console.log('Interfaz lista para más uploads');
     }
 
     /*=========================================================================================*/
     // Lightbox functions
     function openLightbox(imageUrl, description, type) {
-        console.log('Abriendo lightbox:', { imageUrl, description, type });
-
         const lightbox = document.getElementById('imageLightbox');
         const lightboxImage = document.getElementById('lightboxImage');
         const previewDescripcion = document.getElementById('previewDescripcion');
@@ -486,8 +493,6 @@
 
             lightbox.style.display = 'flex';
             document.body.style.overflow = 'hidden';
-
-            console.log('Lightbox abierto correctamente');
         } else {
             console.error('No se encontraron elementos del lightbox');
         }
@@ -498,7 +503,6 @@
         if (lightbox) {
             lightbox.style.display = 'none';
             document.body.style.overflow = '';
-            console.log('Lightbox cerrado');
         }
     }
 
@@ -511,7 +515,6 @@
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
-            console.log('Descarga iniciada');
         }
     }
 
@@ -557,8 +560,7 @@
 
         // Drag and drop functionality
         initializeDragAndDrop();
-
-        console.log('Sistema de subida inicializado');
+        //console.log('Sistema de subida inicializado');
     }
 
     function handleImageUpload(files, source) {
@@ -567,7 +569,7 @@
             return;
         }
 
-        console.log(` Subiendo ${files.length} archivo(s) desde ${source}`);
+        //console.log(` Subiendo ${files.length} archivo(s) desde ${source}`);
 
         // Validar archivos
         const validFiles = Array.from(files).filter(file => {
@@ -593,8 +595,6 @@
 
     }
         function processMultipleImageAtOnce(files, source) {
-            console.log(`Procesando ${files.length} imágenes en lote...`);
-
             //VALIDAR archivos antes de procesar
             const validFiles = Array.from(files).filter(file => {
                 if (!file.type.startsWith('image/')) {
@@ -612,8 +612,6 @@
                 showNotification('No hay archivos válidos para procesar', 'warning');
                 return;
             }
-
-            console.log(`${validFiles.length} archivos válidos de ${files.length} total`);
 
             // Mostrar estado de carga
             const uploadBtn = source === 'camera'
@@ -635,7 +633,7 @@
                 const reader = new FileReader();
 
                 reader.onload = function(e) {
-                    console.log(`Archivo ${index + 1}/${validFiles.length} leído: ${file.name}`);
+                    //console.log(`Archivo ${index + 1}/${validFiles.length} leído: ${file.name}`);
 
                     const imageData = {
                         id: 'temp_' + Date.now() + '_' + index,
@@ -651,24 +649,21 @@
                     imageDataArray.push(imageData);
                     processedCount++;
 
-                    console.log(`Progreso: ${processedCount}/${validFiles.length}`);
+                    //console.log(`Progreso: ${processedCount}/${validFiles.length}`);
 
                     //VERIFICAR SI TODOS LOS ARCHIVOS ESTÁN PROCESADOS
                     if (processedCount === validFiles.length) {
-                        console.log('Todos los archivos procesados');
-
                         if (imageDataArray.length > 0) {
                             //ORDENAR por índice para mantener orden original
                             imageDataArray.sort((a, b) => a.index - b.index);
 
-                            console.log(`Orden de imágenes confirmado: ${imageDataArray.map(img => img.name).join(', ')}`);
+                            //console.log(`Orden de imágenes confirmado: ${imageDataArray.map(img => img.name).join(', ')}`);
 
                             // Pequeño delay para asegurar que todo esté listo
                             setTimeout(() => {
                                 showBatchImageModal(imageDataArray, uploadBtn);
                             }, 200);
                         } else {
-                            console.error('No se procesaron imágenes válidas');
                             showNotification('No se pudo procesar ningún archivo válido', 'error');
                             setUploadState(uploadBtn, 'normal');
                         }
@@ -676,7 +671,6 @@
                 };
 
                 reader.onerror = function(error) {
-                    console.error(`Error leyendo archivo ${index + 1} (${file.name}):`, error);
                     showNotification(`Error leyendo ${file.name}`, 'error', 2000);
 
                     hasErrors = true;
@@ -685,8 +679,6 @@
                     //CONTINUAR AUNQUE HAYA ERRORES
                     if (processedCount === validFiles.length) {
                         if (imageDataArray.length > 0) {
-                            console.log(`Procesamiento completado con errores. ${imageDataArray.length} imágenes válidas.`);
-
                             // Ordenar y mostrar las imágenes que sí se procesaron
                             imageDataArray.sort((a, b) => a.index - b.index);
 
@@ -694,7 +686,6 @@
                                 showBatchImageModal(imageDataArray, uploadBtn);
                             }, 200);
                         } else {
-                            console.error('No se pudo procesar ningún archivo');
                             showNotification('No se pudo procesar ningún archivo', 'error');
                             setUploadState(uploadBtn, 'normal');
                         }
@@ -702,15 +693,13 @@
                 };
 
                 //INICIAR LECTURA CON LOG
-                console.log(`Iniciando lectura del archivo ${index + 1}: ${file.name} (${(file.size / 1024 / 1024).toFixed(2)}MB)`);
+                //console.log(`Iniciando lectura del archivo ${index + 1}: ${file.name} (${(file.size / 1024 / 1024).toFixed(2)}MB)`);
                 reader.readAsDataURL(file);
             });
 
             //TIMEOUT DE SEGURIDAD
             setTimeout(() => {
                 if (processedCount < validFiles.length) {
-                    console.error(`Timeout: Solo se procesaron ${processedCount}/${validFiles.length} archivos`);
-
                     if (imageDataArray.length > 0) {
                         //showNotification(`Solo se procesaron ${imageDataArray.length} de ${validFiles.length} archivos`, 'warning');
                         imageDataArray.sort((a, b) => a.index - b.index);
@@ -725,20 +714,14 @@
 
         // ================= FUNCIÓN: Modal para lote de imágenes ===================
         function showBatchImageModal(imageDataArray, uploadBtn) {
-            console.log(`Abriendo modal para ${imageDataArray.length} imágenes`);
-
             //VALIDACIÓN ADICIONAL
             if (!imageDataArray || imageDataArray.length === 0) {
-                console.error('No hay imágenes para procesar en modal');
-                showNotification('No hay imágenes para procesar', 'warning');
                 setUploadState(uploadBtn, 'normal');
                 return;
             }
 
             const modalEl = document.getElementById('imageDataModal');
              if (!modalEl) {
-                console.error('Modal no encontrado');
-                showNotification('Error del sistema: Modal no disponible', 'error');
                 setUploadState(uploadBtn, 'normal');
                 return;
             }
@@ -824,7 +807,6 @@
                              formData.append('batch_index', i.toString());
                             formData.append('batch_total', imageDataArray.length.toString());
 
-                            console.log(`FormData para imagen ${i + 1}:`);
                             for (let pair of formData.entries()) {
                                 if (pair[1] instanceof File) {
                                     console.log(`${pair[0]}: File(${pair[1].name}, ${pair[1].size} bytes, ${pair[1].type})`);
@@ -860,7 +842,6 @@
                             }
 
                         } catch (imageError) {
-                            console.error(`Error procesando imagen ${i + 1}:`, imageError);
                             showNotification(`Error en imagen ${i + 1}: ${imageError.message}`, 'error', 2000);
                             // Continuar con las siguientes imágenes
 
@@ -876,8 +857,6 @@
 
                         // Actualizar vista previa con la primera imagen subida
                         updateCardPreview(savedImages[0]);
-
-                        console.log(`Procesamiento completado: ${savedImages.length}/${imageDataArray.length} imágenes guardadas`);
 
                         // Mostrar resultado
                         if (savedImages.length === imageDataArray.length) {
@@ -907,7 +886,6 @@
                     }
 
                 } catch (error) {
-                    console.error('Error durante el procesamiento:', error);
                     showNotification(`Error general: ${error.message}`, 'error', 5000);
                 } finally {
                     //CLEANUP
@@ -936,7 +914,6 @@
                 const modalBody = document.querySelector('#imageDataModal .modal-body');
                 if (modalBody) {
                     modalBody.insertAdjacentElement('afterbegin', infoContainer);
-                    console.log('Info container creado');
                 }
             }
 
@@ -954,7 +931,6 @@
         `;
 
         infoContainer.innerHTML = infoHTML;
-        console.log(`Info mostrada para ${imageCount} imágenes`);
     }
 
     // Agregar cleanup automático cuando se cierre el modal:
@@ -966,7 +942,6 @@
                 const infoContainer = document.getElementById('modalSimpleInfo');
                 if (infoContainer) {
                     infoContainer.remove();
-                    console.log('Info container limpiado');
                 }
             });
         }
@@ -975,8 +950,6 @@
 /*=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>*/
     function uploadSingleImage(file) {
         return new Promise((resolve, reject) => {
-            console.log('Procesando archivo:', file.name);
-
             //CREAR FormData para enviar al backend
             const formData = new FormData();
             formData.append('imagen', file);
@@ -1046,10 +1019,7 @@
     //NUEVA FUNCIÓN: Subir al backend
     function uploadToBackend(formData) {
         return new Promise((resolve, reject) => {
-            console.log('Subiendo imagen al backend...');
-
             //VERIFICAR datos antes del envío
-            console.log('FormData contents:');
             for (let pair of formData.entries()) {
                 console.log(`${pair[0]}: ${pair[1]}`);
             }
@@ -1160,34 +1130,46 @@
     function updateCardPreview(imageData) {
         console.log('Actualizando vista previa del card:', imageData);
 
+        const prendaPreview = document.getElementById('prendaPreview');
+
         // Actualizar la imagen de vista previa en el card
         if (prendaPreview && imageData.url) {
-            prendaPreview.src = imageData.url;
-            prendaPreview.onclick = () => openLightbox(
-                imageData.url,
-                imageData.descripcion,
-                imageData.tipo
-            );
+            const imageHTML = `
+                 <img src="${imageData.url}"
+                    alt="${imageData.descripcion}"
+                    class="img-fluid rounded border"
+                    style="max-height: 200px; width: 100%; object-fit: cover; cursor: pointer;"
+                    onclick="openLightbox('${imageData.url}', '${imageData.descripcion}', '${imageData.tipo}')"
+                    title="Click para ver en grande">
+            `;
 
-            console.log('Vista previa actualizada');
+            // Reemplazar placeholder con imagen
+            prendaPreview.innerHTML = imageHTML;
+            prendaPreview.className = 'preview-container';
+        } else {
+            console.error('No se pudo actualizar vista previa:', {
+                prendaPreviewExists: !!prendaPreview,
+                imageDataUrl: imageData?.url
+            });
         }
 
         // Actualizar información mostrada
-        if (descripcion && imageData.descripcion) {
-            descripcion.textContent = imageData.descripcion;
+        const descripcionElement = document.getElementById('descripcion');
+        const tipoOrdenElement = document.getElementById('tipoOrden');
+
+        if (descripcionElement && imageData.descripcion) {
+            descripcionElement.textContent = imageData.descripcion;
         }
 
-        if (tipoOrden && imageData.tipo) {
-            tipoOrden.textContent = imageData.tipo;
-            tipoOrden.className = "badge badge-color-personalizado";
+        if (tipoOrdenElement && imageData.tipo) {
+            tipoOrdenElement.textContent = imageData.tipo;
+            tipoOrdenElement.className = "badge badge-color-personalizado";
             tipoSeleccionado = imageData.tipo;
         }
 
         //  SINCRONIZACIÓN: Asegurar que los datos incluyan timestamps y metadatos para historial
         imageData.uploadTimestamp = new Date().toISOString();
         imageData.source = 'fotos-sit-add';
-
-        console.log('Datos de imagen preparados para historial:', imageData);
     }
 
     function setUploadState(button, state) {
@@ -1249,15 +1231,12 @@
 
     // =====>>>>>> Función para mostrar notificaciones ======>>>>>
     function showNotification(message, type = 'info', duration = 4000) {
-        console.log(`Notificación: ${message} (${type})`);
-
         const toastEl = document.getElementById('notificationToast');
         const toastMessage = document.getElementById('toastMessage');
         const toastIcon = document.getElementById('toastIcon');
 
         if (!toastEl || !toastMessage || !toastIcon) {
             // Fallback a console si no hay elementos de toast
-            console.log(`NOTIFICACIÓN: ${message}`);
             return;
         }
 
@@ -1356,8 +1335,6 @@
             const miniCard = crearMiniaturaImagen(imagen, index);
             historialContainer.appendChild(miniCard);
         });
-
-        console.log(`Historial actualizado: ${uploadedImages.length} imágenes`);
     }
 
    function crearMiniaturaImagen(imagen, index) {
@@ -1411,7 +1388,6 @@
 }
 
     function abrirLightboxHistorial(url, descripcion, tipo) {
-        console.log('Abriendo lightbox desde historial:', { url, descripcion, tipo });
         openLightbox(url, descripcion, tipo);
     }
 
@@ -1419,7 +1395,6 @@
         event.stopPropagation(); // Evitar que se abra el lightbox
 
         if (index < 0 || index >= uploadedImages.length) {
-            console.error('Índice inválido:', index);
             return;
         }
 
@@ -1464,8 +1439,6 @@
     }
 
     function eliminarImagenBackend(imagenId, localIndex) {
-        console.log(`Eliminando imagen del backend: ID ${imagenId}`);
-
         $.ajax({
             url: `/api/fotografias/${imagenId}`,
             type: 'DELETE',
@@ -1474,8 +1447,6 @@
                 'Accept': 'application/json'
             },
             success: function(response) {
-                console.log('Imagen eliminada del backend:', response);
-
                 // Eliminar del array local
                 eliminarImagenLocal(localIndex);
 
@@ -1489,8 +1460,6 @@
                 });
             },
             error: function(xhr, status, error) {
-                console.error('Error eliminando imagen:', error);
-
                 // Aún así, eliminar del array local como fallback
                 eliminarImagenLocal(localIndex);
 
@@ -1507,8 +1476,6 @@
     }
 
     function eliminarImagenLocal(index) {
-        console.log(`Eliminando imagen local en índice ${index}`);
-
         // Eliminar del array
         uploadedImages.splice(index, 1);
 
@@ -1522,8 +1489,6 @@
                 historialCard.style.display = 'none';
             }
         }
-
-        console.log(`Imagen eliminada. Quedan ${uploadedImages.length} imágenes`);
     }
 
     /*==========================================================================================================================*/
@@ -1533,13 +1498,10 @@
         event.stopPropagation(); // Evitar que se abra el lightbox
 
         if (index < 0 || index >= uploadedImages.length) {
-            console.error('Índice inválido:', index);
             return;
         }
 
         const imagen = uploadedImages[index];
-        console.log('Editando imagen del historial:', imagen);
-
         // Modal de edición para fotos cargadas
         mostrarModalEdicionHistorial(imagen, index);
     }
@@ -1643,8 +1605,6 @@
     //MOSTRAR modal
     const modal = new bootstrap.Modal(document.getElementById('editHistorialModal'));
     modal.show();
-
-    console.log('Modal de edición de historial abierto');
 }
 
 //FUNCIÓN PARA GUARDAR CAMBIOS DEL HISTORIAL
@@ -1685,8 +1645,6 @@ function guardarCambiosHistorial(index) {
 
 /*=========================================================================================================================*/
 function enviarCambiosBackend(imagenId, formData, localIndex, updateData) {
-    console.log(`Enviando cambios al backend para imagen ID: ${imagenId}`);
-
     //Agregar método PUT
     formData.append('_method', 'PUT');
     formData.append('_token', $('meta[name="csrf-token"]').attr('content'));
@@ -1704,14 +1662,10 @@ function enviarCambiosBackend(imagenId, formData, localIndex, updateData) {
             'X-Origen-Edicion': 'historial-fotos-sit-add'
         },
         success: function(response) {
-            console.log('Cambios guardados en backend:', response);
-
             //ACTUALIZAR datos locales
             if (localIndex >= 0 && localIndex < uploadedImages.length) {
                 uploadedImages[localIndex].tipo = updateData.tipo;
                 uploadedImages[localIndex].descripcion = updateData.descripcion;
-
-                console.log('Datos locales actualizados:', uploadedImages[localIndex]);
             }
 
             //ACTUALIZAR historial visual
@@ -1759,8 +1713,6 @@ function mostrarEstadoGuardado(success) {
         guardarBtn.classList.add('btn-success');
         guardarBtn.classList.remove('btn-primary');
     }
-
-    showNotification('Cambios guardados correctamente', 'success', 2000);
 }
 
 function cerrarModalEdicion() {
@@ -1776,16 +1728,12 @@ function cerrarModalEdicion() {
             modalElement.remove();
         }
     }, 500);
-
-    console.log('Modal de edición cerrado');
 }
 
     /*=====================================================================================================================*/
 
     //AGREGAR función para prevenir duplicados:
     function agregarImagenesHistorial(nuevasImagenes) {
-        console.log('Agregando imágenes al historial...', nuevasImagenes);
-
         nuevasImagenes.forEach(imagen => {
             //VERIFICAR si ya existe por ID
             const existeId = uploadedImages.find(img => img.id === imagen.id);
@@ -1798,8 +1746,6 @@ function cerrarModalEdicion() {
                 console.log(`Imagen duplicada omitida: ID ${imagen.id}`);
             }
         });
-
-        console.log(`Total imágenes en historial: ${uploadedImages.length}`);
     }
 
     /*========================================================================================================================*/
@@ -1835,8 +1781,6 @@ function cerrarModalEdicion() {
                 limpiarOperacion();
             });
         }
-
-        console.log('Sistema fotos-sit-add listo');
     });
 </script>
 
@@ -1847,8 +1791,6 @@ function cerrarModalEdicion() {
 // ================================================================================================
 
 function limpiarOperacion() {
-    console.log('Limpiando operación...');
-
     // 1. Limpiar inputs de archivo
     const fileInputs = document.querySelectorAll('input[type="file"]');
     fileInputs.forEach(input => input.value = '');
@@ -1876,7 +1818,13 @@ function limpiarOperacion() {
         limpiarBoton.style.display = 'none';
     }
 
-    // 4. Limpiar variables globales
+    // 4. Resetear la vista previa al placeholder
+    const prendaPreview = document.getElementById('prendaPreview');
+    if (prendaPreview) {
+        mostrarPlaceholderImagen(prendaPreview);
+    }
+
+    // 5. Limpiar variables globales
     if (typeof uploadedImages !== 'undefined') {
         uploadedImages = [];
     }
@@ -1887,15 +1835,12 @@ function limpiarOperacion() {
         tipoSeleccionado = null;
     }
 
-    // 5. Limpiar localStorage
+    // 6. Limpiar localStorage
     localStorage.removeItem('newUploadedImages');
     localStorage.removeItem('uploadedImages');
 
-    // 6. Limpiar historial visual
+    // 7. Limpiar historial visual
     limpiarHistorialVisual();
-
-    showNotification('Operación cancelada. Listo para empezar de nuevo', 'info', 2000);
-    console.log('Operación limpiada correctamente');
 }
 
 // Configurar el botón al cargar la página
@@ -1904,7 +1849,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const cancelButton = document.querySelector('.btn-secondary');
     if (cancelButton && cancelButton.textContent.includes('Cancelar')) {
         cancelButton.onclick = cancelarOperacion;
-        console.log('Botón cancelar configurado');
+
     }
 });
 

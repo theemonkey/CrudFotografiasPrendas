@@ -14,10 +14,7 @@ let paginationSystem = {
 
 // ===== INICIALIZAR PAGINACIÓN SIMPLE =====
 function initializeSimplePagination() {
-    console.log('Inicializando paginación simple...');
-
     if (paginationSystem.isInitialized) {
-        console.log('Paginación ya inicializada');
         return;
     }
 
@@ -31,27 +28,23 @@ function initializeSimplePagination() {
     const recordsSelect = document.getElementById('recordsPerPageSelect');
     if (recordsSelect) {
         recordsSelect.value = paginationSystem.itemsPerPage.toString();
-        console.log(`Selector sincronizado con ${paginationSystem.itemsPerPage} registros por página`);
     }
 
     // Actualizar paginación inicial
     updatePagination();
 
     paginationSystem.isInitialized = true;
-    console.log('Paginación simple inicializada correctamente');
 }
 
 // ===== CREAR CONTROLES DE PAGINACIÓN =====
 function createPaginationControls() {
     const tableContainer = document.querySelector('.table-responsive');
     if (!tableContainer) {
-        console.warn('Contenedor de tabla no encontrado');
         return;
     }
 
     // Verificar si ya existen los controles
     if (document.getElementById('paginationControls')) {
-        console.log('Controles de paginación ya existen');
         return;
     }
 
@@ -85,7 +78,6 @@ function createPaginationControls() {
 
     // Insertar después de la tabla
     tableContainer.insertAdjacentHTML('afterend', paginationHTML);
-    console.log('Controles de paginación creados');
 }
 
 // ===== CONFIGURAR EVENT LISTENERS =====
@@ -98,7 +90,6 @@ function setupPaginationListeners() {
 
         recordsSelect.addEventListener('change', function (e) {
             const newValue = parseInt(e.target.value);
-            console.log(`Cambiando registros por página de ${paginationSystem.itemsPerPage} a: ${newValue}`);
 
             paginationSystem.itemsPerPage = newValue;
             paginationSystem.currentPage = 1; //Resetear a página 1
@@ -108,8 +99,6 @@ function setupPaginationListeners() {
                 updatePagination();
             }, 50);
         });
-
-        console.log(`Event listener configurado - Valor inicial: ${recordsSelect.value}`);
     } else {
         console.warn('Selector de registros por página no encontrado');
     }
@@ -119,7 +108,6 @@ function setupPaginationListeners() {
 function getAvailableRows() {
     const tableBody = document.getElementById('imagesTableBody');
     if (!tableBody) {
-        console.warn('Tabla no encontrada');
         return [];
     }
 
@@ -158,12 +146,10 @@ function getAvailableRows() {
 // ===== ACTUALIZAR PAGINACIÓN =====
 function updatePagination() {
     if (paginationSystem.isUpdating) {
-        console.log('Paginación ya actualizándose, omitiendo...');
         return;
     }
 
     paginationSystem.isUpdating = true;
-    console.log('Actualizando paginación...');
 
     verifySelectConsistency();
 
@@ -182,7 +168,6 @@ function updatePagination() {
         paginationSystem.totalPages = 0;
     } else {
         if (paginationSystem.currentPage > paginationSystem.totalPages) {
-            console.log(`Ajustando página de ${paginationSystem.currentPage} a ${paginationSystem.totalPages}`);
             paginationSystem.currentPage = paginationSystem.totalPages;
         }
 
@@ -209,8 +194,6 @@ function updatePagination() {
                 paginationSystem.totalItems - ((paginationSystem.currentPage - 1) * paginationSystem.itemsPerPage));
 
             if (visibleRows.length !== expectedVisible) {
-                console.warn(`INCONSISTENCIA: Se esperaban ${expectedVisible} filas visibles pero hay ${visibleRows.length}`);
-                console.log('Ejecutando verificación automática...');
                 if (window.verifyPagination) {
                     window.verifyPagination();
                 }
@@ -219,8 +202,6 @@ function updatePagination() {
     }, 100);
 
     paginationSystem.isUpdating = false;
-
-    console.log(`Paginación actualizada: Página ${paginationSystem.currentPage}/${paginationSystem.totalPages} - ${paginationSystem.totalItems} elementos visibles`);
 }
 
 // ===== MOSTRAR FILAS DE LA PÁGINA ACTUAL =====
@@ -230,8 +211,6 @@ function showCurrentPageRows() {
 
     const startIndex = (paginationSystem.currentPage - 1) * paginationSystem.itemsPerPage;
     const endIndex = startIndex + paginationSystem.itemsPerPage;
-
-    console.log(`Mostrando página ${paginationSystem.currentPage}: filas ${startIndex + 1} a ${Math.min(endIndex, paginationSystem.totalItems)}`);
 
     //PASO 1: RESET - Limpiar todas las filas de paginación anterior
     const allRows = tableBody.querySelectorAll('tr[data-image-id]');
@@ -287,7 +266,6 @@ function updatePaginationInfo() {
     const totalRecords = document.getElementById('totalRecords');
 
     if (!startRecord || !endRecord || !totalRecords) {
-        console.warn('Elementos de información de paginación no encontrados');
         return;
     }
 
@@ -298,15 +276,12 @@ function updatePaginationInfo() {
     startRecord.textContent = start;
     endRecord.textContent = end;
     totalRecords.textContent = paginationSystem.totalItems;
-
-    console.log(`Info actualizada: ${start} a ${end} de ${paginationSystem.totalItems}`);
 }
 
 // ===== ACTUALIZAR NAVEGACIÓN =====
 function updatePaginationNavigation() {
     const paginationNav = document.getElementById('paginationNav');
     if (!paginationNav) {
-        console.warn('Navegación de paginación no encontrada');
         return;
     }
 
@@ -393,10 +368,7 @@ function goToPage(pageNumber) {
 
 // ===== REFRESCAR PAGINACIÓN (PARA USO EXTERNO) =====
 function refreshPagination() {
-    console.log('Refrescando paginación externamente...');
-
     if (paginationSystem.isUpdating) {
-        console.log('Sistema actualizándose, programando refresh...');
         setTimeout(() => {
             refreshPagination();
         }, 500);
@@ -426,12 +398,9 @@ window.refreshPagination = refreshPagination;
 // ===== INICIALIZACIÓN =====
 document.addEventListener('DOMContentLoaded', function () {
     setTimeout(() => {
-        console.log('Verificando inicialización de paginación...');
 
         const tableBody = document.getElementById('imagesTableBody');
         const rows = tableBody ? tableBody.querySelectorAll('tr[data-image-id]') : [];
-
-        console.log(`Filas encontradas para paginación: ${rows.length}`);
 
         if (rows.length > 0) {
             initializeSimplePagination();
@@ -442,8 +411,6 @@ document.addEventListener('DOMContentLoaded', function () {
                 if (recordsSelect) {
                     const selectValue = parseInt(recordsSelect.value);
                     if (selectValue !== paginationSystem.itemsPerPage) {
-                        console.warn(`Inconsistencia detectada: Selector=${selectValue}, Sistema=${paginationSystem.itemsPerPage}`);
-                        console.log('Corrigiendo selector...');
                         recordsSelect.value = paginationSystem.itemsPerPage.toString();
                     } else {
                         console.log(`Selector y sistema sincronizados: ${selectValue} registros por página`);
@@ -451,9 +418,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 }
             }, 500);
 
-            console.log('Sistema de paginación inicializado');
         } else {
-            console.log('No hay filas - reintentando en 2 segundos...');
 
             setTimeout(() => {
                 const retryRows = tableBody ? tableBody.querySelectorAll('tr[data-image-id]') : [];
@@ -499,12 +464,8 @@ window.verifyPagination = function () {
     const tableBody = document.getElementById('imagesTableBody');
     if (!tableBody) return;
 
-    console.log('VERIFICACIÓN COMPLETA DE PAGINACIÓN:');
-
     const allRows = Array.from(tableBody.querySelectorAll('tr[data-image-id]'));
 
-    // Análisis detallado de cada fila
-    console.log('ANÁLISIS POR FILA:');
     allRows.forEach((row, index) => {
         const ordenSit = row.querySelector('[data-column="orden-sit"]')?.textContent || `Fila-${index}`;
         const classes = Array.from(row.classList);
@@ -520,7 +481,6 @@ window.verifyPagination = function () {
     });
 
     // Estado del sistema
-    console.log('ESTADO DEL SISTEMA:');
     console.log({
         totalFilas: allRows.length,
         filasDisponibles: paginationSystem.allAvailableRows.length,
@@ -537,7 +497,6 @@ window.verifyPagination = function () {
             !row.classList.contains('filtered-out');
     });
 
-    console.log('CÁLCULO MANUAL:');
     console.log({
         filasDisponiblesManual: manualAvailable.length,
         coincideConSistema: manualAvailable.length === paginationSystem.totalItems
@@ -545,7 +504,6 @@ window.verifyPagination = function () {
 
     // Si no coincide, forzar corrección
     if (manualAvailable.length !== paginationSystem.totalItems) {
-        console.log('INCONSISTENCIA DETECTADA - Corrigiendo...');
         paginationSystem.allAvailableRows = manualAvailable;
         paginationSystem.totalItems = manualAvailable.length;
         paginationSystem.totalPages = Math.ceil(paginationSystem.totalItems / paginationSystem.itemsPerPage);
@@ -554,11 +512,8 @@ window.verifyPagination = function () {
         updatePaginationInfo();
         updatePaginationNavigation();
         showCurrentPageRows();
-
-        console.log('CORRECCIÓN APLICADA');
     }
 };
-
 
 // ===== VERIFICAR CONSISTENCIA DEL SELECTOR =====
 function verifySelectConsistency() {
@@ -569,11 +524,9 @@ function verifySelectConsistency() {
     const systemValue = paginationSystem.itemsPerPage;
 
     if (selectValue !== systemValue) {
-        console.warn(`INCONSISTENCIA: Selector=${selectValue}, Sistema=${systemValue}`);
 
         // Corregir automáticamente
         recordsSelect.value = systemValue.toString();
-        console.log(`Selector corregido a: ${systemValue}`);
 
         return false;
     }
@@ -583,6 +536,3 @@ function verifySelectConsistency() {
 
 // Agregar al objeto global para debug
 window.verifySelectConsistency = verifySelectConsistency;
-
-
-console.log('Sistema de paginación simple cargado');

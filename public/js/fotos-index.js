@@ -2,7 +2,7 @@
  * Fotografías de Prendas - Sistema Completo
  * Description: Sistema completo para gestión de fotografías de prendas
  *
- * NOTA: Todo javascript funcional
+ * NOTA: Javascript funcional
  */
 // ================================================================================================
 // VARIABLES GLOBALES Y CONFIGURACIÓN - CONSOLIDADAS
@@ -35,17 +35,13 @@ const CONFIG = {
 
 // MEJORAR la verificación de inicialización
 document.addEventListener("DOMContentLoaded", function () {
-    console.log('DOM cargado, iniciando sistema...');
-
     // Verificación más estricta
     if (window.fotografiasSystemInitialized === true) {
-        console.warn('Sistema ya inicializado, ABORTANDO completamente');
         return;
     }
 
     // Prevenir múltiples inicializaciones con flag inmediato
     if (window.fotografiasSystemInitializing === true) {
-        console.warn('Sistema en proceso de inicialización, ABORTANDO');
         return;
     }
 
@@ -56,16 +52,11 @@ document.addEventListener("DOMContentLoaded", function () {
 
 function initializeCompleteSystem() {
     try {
-        console.log('Iniciando todos los sistemas...');
-
         // Sistemas principales
         initializeLightbox();  // Visualizar imagenes
         initializeNotifications(); // Toast notifications
         initializeSearch();        // Búsqueda general
         initializeTipoFotografiaFilter(); // Dropdown
-
-        console.log('Sistema completo inicializado correctamente');
-
     } catch (error) {
         console.error('Error durante la inicialización:', error);
     }
@@ -88,14 +79,11 @@ function openCommentsModal(button) {
 // ================================================================================================
 
 function filterByTipoFotografia() {
-    console.log('Aplicando filtro por tipo de fotografía...');
-
     const muestraCheck = document.getElementById('filtroMuestra');
     const prendaFinalCheck = document.getElementById('filtroPrendaFinal');
     const validacionACCheck = document.getElementById('filtroValidacionAC');
 
     if (!muestraCheck || !prendaFinalCheck || !validacionACCheck) {
-        console.error('No se encontraron los checkboxes');
         return;
     }
 
@@ -106,8 +94,6 @@ function filterByTipoFotografia() {
     if (validacionACCheck.checked) tipoFotografiaFilter.selectedTypes.push('VALIDACION AC');
 
     tipoFotografiaFilter.active = tipoFotografiaFilter.selectedTypes.length > 0;
-
-    console.log('Tipos seleccionados:', tipoFotografiaFilter.selectedTypes);
 
     applyTipoFotografiaFilter();
     updateTipoFotografiaUI();
@@ -120,7 +106,6 @@ function filterByTipoFotografia() {
 function applyTipoFotografiaFilter() {
     const tableBody = document.getElementById('imagesTableBody');
     if (!tableBody) {
-        console.error('No se encontró el tbody de la tabla');
         return;
     }
 
@@ -132,7 +117,6 @@ function applyTipoFotografiaFilter() {
         const tipoCell = row.querySelector('td[data-column="tipo-fotografia"]');
 
         if (!tipoCell) {
-            console.warn('Fila sin columna de tipo fotografía');
             return;
         }
 
@@ -160,8 +144,6 @@ function applyTipoFotografiaFilter() {
             window.responsiveSystem.refresh();
         }, 100);
     }
-
-    console.log(`Filtro aplicado: ${visibleCount} visibles, ${hiddenCount} ocultas`);
 }
 
 /* ======================================================================================= */
@@ -210,8 +192,6 @@ function updateFilterStatusIndicator() {
 }
 
 function selectAllTipoFotografia() {
-    console.log('Seleccionando todos los tipos...');
-
     const muestraCheck = document.getElementById('filtroMuestra');
     const prendaFinalCheck = document.getElementById('filtroPrendaFinal');
     const validacionACCheck = document.getElementById('filtroValidacionAC');
@@ -221,13 +201,9 @@ function selectAllTipoFotografia() {
     if (validacionACCheck) validacionACCheck.checked = true;
 
     filterByTipoFotografia();
-
-    console.log('Todos los tipos seleccionados');
 }
 
 function clearTipoFotografiaFilter() {
-    console.log('Limpiando filtro de tipo fotografía...');
-
     const muestraCheck = document.getElementById('filtroMuestra');
     const prendaFinalCheck = document.getElementById('filtroPrendaFinal');
     const validacionACCheck = document.getElementById('filtroValidacionAC');
@@ -255,15 +231,11 @@ function clearTipoFotografiaFilter() {
             window.responsiveSystem.refresh();
         }, 100);
     }
-
-    console.log('Filtro limpiado');
 }
 
 /* =========================================================================== */
 //  Inicialización del filtro con indicadores
 function initializeTipoFotografiaFilter() {
-    console.log('Inicializando filtro de tipo fotografía...');
-
     updateFilterStatusIndicator();
 
     const dropdownMenu = document.getElementById('tipoFotografiaMenu');
@@ -292,8 +264,6 @@ function initializeTipoFotografiaFilter() {
             subtree: true
         });
     }
-
-    console.log('Filtro de tipo fotografía inicializado');
 }
 
 // ================================================================================================
@@ -310,17 +280,13 @@ function initializeNotifications() {
     }
 }
 
-// =====>>>>>> Función para mostrar notificaciones ======>>>>>
+// =====>>>>>> Función para mostrar notificaciones en sistema en general ======>>>>>
 function showNotification(message, type = 'info', duration = 4000) {
-    console.log(`Notificación: ${message} (${type})`);
-
     const toastEl = document.getElementById('notificationToast');
     const toastMessage = document.getElementById('toastMessage');
     const toastIcon = document.getElementById('toastIcon');
 
     if (!toastEl || !toastMessage || !toastIcon) {
-        // Fallback a console si no hay elementos de toast
-        console.log(`NOTIFICACIÓN: ${message}`);
         return;
     }
 
@@ -385,8 +351,6 @@ function initializeLightbox() {
 /* ========================================================================================== */
 // ----->> Uso para visualizar fotografias
 function openImageLightbox(imageUrl, alt, description, type) {
-    console.log('Abriendo lightbox:', { imageUrl, alt, description, type });
-
     //Extraer y guardar orden SIT para descarga
     let ordenSit = null;
 
@@ -425,8 +389,6 @@ function openImageLightbox(imageUrl, alt, description, type) {
 
         lightbox.style.display = 'flex';
         document.body.style.overflow = 'hidden';
-
-        console.log('Lightbox abierto correctamente');
     } else {
         console.error('Error: No se encontraron los elementos del lightbox');
     }
@@ -496,8 +458,6 @@ function downloadImageFromLightbox() {
                 // Si no hay orden SIT, usar timestamp
                 fileName = `imagen_${Date.now()}.jpg`;
             }
-
-            console.log('Nombre de descarga generado:', fileName, 'desde ordenSit:', ordenSit);
         } catch (error) {
             console.warn('Error al generar nombre de descarga:', error);
             fileName = `imagen_${Date.now()}.jpg`;
@@ -510,8 +470,6 @@ function downloadImageFromLightbox() {
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
-
-        console.log(`Descarga completada: ${fileName}`);
     }
 }
 
@@ -537,13 +495,10 @@ function initializeSearch() {
 }
 
 function searchRecords() {
-    console.log('Iniciando búsqueda global...');
-
     const searchTerm = document.getElementById('searchInput').value.toLowerCase().trim();
     const tableBody = document.getElementById('imagesTableBody');
 
     if (!tableBody) {
-        console.warn('Tabla no encontrada');
         return;
     }
 
@@ -564,8 +519,6 @@ function searchRecords() {
                 applyAllFilters();
             }, 100);
         }
-
-        console.log('Búsqueda global limpiada');
     } else {
         // Con búsqueda - aplicar solo a columnas específicas
         allRows.forEach(row => {
@@ -594,8 +547,6 @@ function searchRecords() {
                 hiddenCount++;
             }
         });
-
-        console.log(`Búsqueda global aplicada: "${searchTerm}" - ${visibleCount} resultados encontrados`);
     }
     // Dejar que los filtros predictivos manejen su propia lógic
     // Indicador visual simple en el input
@@ -614,22 +565,16 @@ function searchRecords() {
 // ================================================================================================
 // ======PASO 1: Función principal para eliminar imagen con confirmación visual
 function deleteImage(button) {
-    console.log('Iniciando proceso de eliminación...');
-
     const row = button.closest('tr');
     if (!row) {
-        showNotification('Error: No se encontró la fila', 'error');
         return;
     }
 
     // Extraer datos de la fila
     const imageData = extractImageDataFromRow(row);
     if (!imageData) {
-        showNotification('Error: No se pudieron extraer los datos de la imagen', 'error');
         return;
     }
-
-    console.log('Datos de imagen extraídos:', imageData);
 
     // Mostrar confirmación visual
     showDeleteConfirmation(imageData, row);
@@ -662,8 +607,6 @@ function extractImageDataFromRow(row) {
 }
 //======PASO 2: Función para mostrar confirmación de eliminación usando SweetAlert===========
 function showDeleteConfirmation(imageData, row) {
-    console.log('Mostrando confirmación visual de eliminación');
-
     // HTML personalizado para el modal
     const htmlContent = `
         <div class="delete-confirmation-container">
@@ -810,7 +753,6 @@ function showDeleteConfirmation(imageData, row) {
         }
     }).then((result) => {
         if (result.isConfirmed) {
-            console.log('Usuario confirmó eliminación');
             performImageDeletion(imageData, row);
         } else {
             console.log('Usuario canceló eliminación');
@@ -820,8 +762,6 @@ function showDeleteConfirmation(imageData, row) {
 //======PASO 3: Función para ejecutar la eliminación de la imagen===========
 // Función para ejecutar la eliminación real
 function performImageDeletion(imageData, row) {
-    console.log('Ejecutando eliminación de imagen:', imageData.id);
-
     // Mostrar loading
     Swal.fire({
         title: 'Eliminando fotografía...',
@@ -845,8 +785,6 @@ function performImageDeletion(imageData, row) {
     // ====>>>> Detectar si es imagen de Backend o Frontend ====>>>
     if (imageData.isBackendImage && imageData.backendId) {
         // ===== ELIMINACIÓN DE BACKEND CON AJAX =====
-        console.log('Eliminando imagen del backend con ID:', imageData.backendId);
-
         $.ajax({
             url: `/api/fotografias/${imageData.backendId}`,
             type: 'DELETE',
@@ -855,8 +793,6 @@ function performImageDeletion(imageData, row) {
                 'Accept': 'application/json'
             },
             success: function (response) {
-                console.log('Respuesta del backend:', response);
-
                 if (response.success) {
                     // Eliminar fila de la tabla con animación
                     if (row && row.parentNode) {
@@ -896,16 +832,11 @@ function performImageDeletion(imageData, row) {
                         timerProgressBar: true,
                         showConfirmButton: false
                     });
-
-                    console.log('Imagen backend eliminada exitosamente');
-
                 } else {
                     throw new Error(response.message || 'Error del servidor');
                 }
             },
             error: function (xhr, status, error) {
-                console.error('Error AJAX eliminando imagen:', error);
-                console.error('Response:', xhr.responseText);
 
                 let errorMessage = 'Error de conexión con el servidor';
                 if (xhr.responseJSON && xhr.responseJSON.message) {
@@ -935,8 +866,6 @@ function performImageDeletion(imageData, row) {
     } else {
 
         // ===== ELIMINACION DE FRONTEND =====
-        console.log('Eliminando imagen del frontend/localStorage');
-
         setTimeout(() => {
             try {
                 // Eliminar fila de la tabla
@@ -995,9 +924,6 @@ function performImageDeletion(imageData, row) {
                         popup: 'success-popup'
                     }
                 });
-
-                console.log('Imagen frontend eliminada exitosamente');
-
             } catch (error) {
                 console.error('Error eliminando imagen frontend:', error);
 
@@ -1034,7 +960,6 @@ let selectedPhotos = [];
 function editImage(button) {
     const row = button.closest('tr');
     if (!row) {
-        showNotification('Error: No se encontró la fila', 'error');
         return;
     }
 
@@ -1045,7 +970,6 @@ function editImage(button) {
     const imageData = extractEditImageData(row);
 
     if (!imageData) {
-        showNotification('Error: No se pudieron extraer los datos de la imagen', 'error');
         return;
     }
 
@@ -1083,13 +1007,11 @@ function extractEditImageData(row) {
         // Método 1: data-image-id del tr
         if (row.dataset.imageId) {
             imageId = row.dataset.imageId;
-            console.log('ID capturado del data-image-id:', imageId);
         }
 
         // Método 2: data-backend-id si existe
         if (!imageId && row.dataset.backendId) {
             imageId = row.dataset.backendId;
-            console.log('ID capturado del data-backend-id:', imageId);
         }
 
         // Método 3: buscar en atributos del botón editar
@@ -1101,7 +1023,6 @@ function extractEditImageData(row) {
                 const backendMatch = onclickAttr.match(/editBackendImage\((\d+),/);
                 if (backendMatch) {
                     imageId = backendMatch[1];
-                    console.log('ID capturado del onclick editBackendImage:', imageId);
                 }
             }
         }
@@ -1110,14 +1031,12 @@ function extractEditImageData(row) {
         if (!imageId && img) {
             if (img.dataset.imageId) {
                 imageId = img.dataset.imageId;
-                console.log('ID capturado del img data-image-id:', imageId);
             }
         }
 
         //LIMPIAR ID si contiene prefijos
         if (imageId && imageId.startsWith('backend_')) {
             imageId = imageId.replace('backend_', '');
-            console.log('ID limpiado:', imageId);
         }
 
         //LOG detallado de captura de ID
@@ -1156,11 +1075,6 @@ function populateEditModal(imageData) {
     const imageIdInput = document.getElementById('editImageId');
     imageIdInput.value = imageData.id;
 
-    //LOG del ID que se está guardando
-    console.log('ID guardado en editImageId:', imageIdInput.value);
-    console.log('Es imagen de backend?', imageData.isBackendImage);
-    console.log('Backend ID:', imageData.backendId);
-
     // Campos del formulario
     document.getElementById('editImageId').value = imageData.id;
     document.getElementById('editTipoFotografia').value = imageData.tipo;
@@ -1171,8 +1085,6 @@ function populateEditModal(imageData) {
     document.getElementById('editPO').value = imageData.po;
     document.getElementById('editOC').value = imageData.oc;
     document.getElementById('editFechaSubida').value = imageData.fechaSubida;
-
-    console.log('Modal populado con datos:', imageData);
 }
 
 // ===== FUNCIONES PARA MÚLTIPLES FOTOS =====
@@ -1349,7 +1261,6 @@ function initializeCropTool() {
 
     // Verificar que los elementos existen
     if (!cropBtn || !applyCropBtn || !cancelCropBtn || !resetBtn) {
-        console.warn('Algunos elementos de recorte no se encontraron');
         return;
     }
 
@@ -1398,8 +1309,6 @@ function initializeCropTool() {
 
             //ASEGURAR que los flags estén correctos
             hasImageBeenCropped = true;
-            console.log('Flag hasImageBeenCropped establecido a TRUE');
-            console.log('Imagen recortada generada:', croppedBase64.substring(0, 50) + '...');
 
             // ===== Actualizar Imagen en tabla inmediatamente =====
             if (currentEditingRow) {
@@ -1424,13 +1333,11 @@ function initializeCropTool() {
                     newTableImage.addEventListener('click', function (e) {
                         e.preventDefault();
                         e.stopImmediatePropagation();
-                        console.log('Click en imagen recortada');
                         openImageLightbox(croppedBase64, 'Imagen recortada', descripcionActual, nuevoTipo);
                     });
 
                     // Reemplazar imagen
                     tableImage.parentNode.replaceChild(newTableImage, tableImage);
-                    console.log('Imagen recortada aplicada a tabla con base64');
                 }
             }
 
@@ -1522,7 +1429,6 @@ function initializePhotoUpload() {
     const cameraInput = document.getElementById('newCameraInput');
 
     if (!uploadBtn || !cameraBtn || !fileInput || !cameraInput) {
-        console.warn('Elementos de subida no encontrados');
         return;
     }
     // ==== Boton subir desde archivo ====
@@ -1545,7 +1451,6 @@ function initializePhotoUpload() {
         const files = Array.from(e.target.files);
         if (files.length === 0) return;
 
-        console.log(`${files.length} foto(s) tomada(s) con cámara`);
         processUploadedFiles(files, 'camera');
     });
 }
@@ -1569,19 +1474,16 @@ function processUploadedFiles(files, source) {
     });
 
     if (validFiles.length === 0) {
-        console.log('No hay archivos válidos para procesar');
         return;
     }
 
     // Validación: Solo una imagen en modal de edición
     if (validFiles.length > 1) {
-        showNotification('Solo se permite subir una imagen a la vez en el modo de edición', 'warning');
         return;
     }
 
     // Procesar imagen única
     const file = validFiles[0];
-    console.log(`Procesando imagen desde ${source}:`, file.name);
 
     // Mostrar información del método de captura
     showCaptureMethodInfo(source, file);
@@ -1595,7 +1497,6 @@ function processUploadedFiles(files, source) {
         const modalImage = document.getElementById('editModalImage');
         if (modalImage) {
             modalImage.src = base64Image;
-            console.log('Imagen del modal actualizada');
         }
 
         // Actualizar imagen en la tabla si hay fila actual
@@ -1614,7 +1515,6 @@ function processUploadedFiles(files, source) {
     };
 
     reader.onerror = function () {
-        showNotification('Error al leer el archivo de imagen', 'error');
     };
 
     reader.readAsDataURL(file);
@@ -1639,15 +1539,11 @@ function showCaptureMethodInfo(source, file) {
         captureText.textContent = `Archivo seleccionado: ${file.name}`;
         infoContainer.classList.remove('d-none');
     }
-
-    console.log(`Información de captura mostrada: ${source}`);
 }
 
 // ===== FUNCIÓN PARA ACTUALIZAR IMAGEN EN TABLA DESDE SUBIDA =====
 function updateCurrentRowImageFromUpload(base64Image, file, source) {
     if (!currentEditingRow) return;
-
-    console.log(`Actualizando imagen en tabla desde ${source}...`);
 
     const tableImage = currentEditingRow.querySelector('img');
     if (!tableImage) return;
@@ -1684,7 +1580,6 @@ function updateCurrentRowImageFromUpload(base64Image, file, source) {
     newTableImage.addEventListener('click', function (e) {
         e.preventDefault();
         e.stopImmediatePropagation();
-        console.log(`Click en imagen desde ${source}`);
         openImageLightbox(base64Image, file.name || finalDescripcion, finalDescripcion, finalTipo);
     });
 
@@ -1697,8 +1592,6 @@ function updateCurrentRowImageFromUpload(base64Image, file, source) {
     setTimeout(() => {
         newTableImage.style.backgroundColor = '';
     }, 1500);
-
-    console.log(`Imagen en tabla actualizada desde ${source}`);
 }
 
 /* =========================================================================== */
@@ -1714,8 +1607,6 @@ function clearCaptureMethodInfo() {
     const cameraInput = document.getElementById('newCameraInput');
     if (fileInput) fileInput.value = '';
     if (cameraInput) cameraInput.value = '';
-
-    console.log('Información de captura limpiada');
 }
 
 // ===== MEJORAR FUNCIÓN DE RESET =====
@@ -1751,8 +1642,6 @@ function resetEditVariables() {
         editCropper.destroy();
         editCropper = null;
     }
-
-    console.log('Variables de edición reseteadas');
 }
 
 /* =========================================================================== */
@@ -1764,7 +1653,6 @@ function initializePhotoDelete() {
     const deleteBtn = document.getElementById('deletePhotoBtn');
 
     if (!deleteBtn) {
-        console.warn('Botón de eliminar no encontrado');
         return;
     }
 
@@ -1819,14 +1707,11 @@ function deleteCurrentPhotoOnly() {
                 newDefaultImage.addEventListener('click', function (e) {
                     e.preventDefault();
                     e.stopImmediatePropagation();
-                    console.log('Click en imagen por defecto:', defaultImage);
                     openImageLightbox(defaultImage, 'Imagen eliminada', descripcion, tipo);
                 });
 
                 // Reemplazar imagen anterior
                 img.parentNode.replaceChild(newDefaultImage, img);
-
-                console.log('Imagen por defecto configurada correctamente');
             }
 
             // Cerrar modal
@@ -1865,8 +1750,6 @@ function saveImageChanges() {
 
     // Verificar si viene del historial de fotos cargadas (fotos-sit-add.blade)
     if (currentImageData && currentImageData.isFromHistorial) {
-        console.log('Guardando cambios desde historial...');
-
         // Actualizar datos en el array de uploadedImages
         const historialIndex = currentImageData.historialIndex;
         if (historialIndex >= 0 && historialIndex < uploadedImages.length) {
@@ -1878,8 +1761,6 @@ function saveImageChanges() {
             if (finalImageSrc !== originalImageSrc) {
                 uploadedImages[historialIndex].url = finalImageSrc;
             }
-
-            console.log('Imagen actualizada en historial:', uploadedImages[historialIndex]);
         }
 
         //ACTUALIZAR VISUALMENTE EL HISTORIAL
@@ -2026,7 +1907,6 @@ document.addEventListener('DOMContentLoaded', function () {
     const saveBtn = document.getElementById('saveChangesBtn');
 
     if (!editModal || !saveBtn) {
-        console.warn('Elementos del modal de edición no encontrados');
         return;
     }
 
@@ -2042,8 +1922,6 @@ document.addEventListener('DOMContentLoaded', function () {
     initializeCropTool();
     initializePhotoUpload();
     initializePhotoDelete();
-
-    console.log('Editor de imágenes múltiples inicializado correctamente');
 });
 
 // ===== FUNCIONES GLOBALES =====
@@ -2053,28 +1931,21 @@ window.editImage = editImage;
 window.selectPhotoForEdit = selectPhotoForEdit;
 window.removePhotoPreview = removePhotoPreview;
 
-console.log('Módulo de edición de imágenes cargado');
-
 // ================================================================================================
 // SISTEMA DE HISTORIAL
 // ================================================================================================
 
 function openHistorialModal(button) {
-    console.log('Abriendo modal de historial...');
-
     const row = button.closest('tr');
     if (!row) {
-        showNotification('Error: No se encontró la fila', 'error');
         return;
     }
 
     const imageData = extractImageDataFromRow(row);
     if (!imageData) {
-        showNotification('Error: No se pudieron extraer datos', 'error');
         return;
     }
 
-    console.log('Datos de imagen para historial:', imageData);
     loadSynchronizedHistorialData(imageData.ordenSit, imageData);
 
     const modalElement = document.getElementById('historialModal');
@@ -2082,29 +1953,20 @@ function openHistorialModal(button) {
         try {
             const modal = new bootstrap.Modal(modalElement);
             modal.show();
-            console.log('Modal de historial abierto');
         } catch (error) {
             console.error('Error abriendo modal:', error);
-            showNotification('Error al abrir el historial', 'error');
         }
     }
 }
 
 function loadSynchronizedHistorialData(ordenSit, currentImageDataParam = null) {
-    console.log('Cargando historial sincronizado para orden:', ordenSit);
-
     const allImagesFromOrder = collectAllImagesFromOrder(ordenSit);
-    console.log('Total imágenes encontradas:', allImagesFromOrder.length);
-
     const historialData = generateRealHistorialData(ordenSit, allImagesFromOrder, currentImageDataParam);
-    console.log('Historial sincronizado generado:', historialData);
 
     updateSynchronizedProgressSteps(historialData.estados);
     loadSynchronizedPhotosByCategory('muestra', historialData.fotos.muestra);
     loadSynchronizedPhotosByCategory('validacion', historialData.fotos.validacion);
     loadSynchronizedPhotosByCategory('final', historialData.fotos.final);
-
-    console.log('Historial sincronizado cargado correctamente');
 }
 
 function collectAllImagesFromOrder(ordenSit) {
@@ -2298,8 +2160,6 @@ let filterObserver = null;
 
 // ===== INICIALIZACIÓN DE FILTROS PREDICTIVOS =====
 function initializePredictiveFilters() {
-    console.log('Inicializando filtros predictivos completos...');
-
     // Recopilar todos los datos de la tabla
     extractTableData();
 
@@ -2308,34 +2168,27 @@ function initializePredictiveFilters() {
 
     // Configurar observador para cambios en la tabla
     setupTableObserver();
-
-    console.log('Filtros predictivos completos inicializados');
 }
 
 // ===== OBSERVADOR DE CAMBIOS EN LA TABLA =====
 // FUNCIÓN para limpiar observers globalmente
 function cleanupAllObservers() {
-    console.log('Limpiando todos los observers...');
-
     // Limpiar filter observer
     if (window.filterObserver) {
         window.filterObserver.disconnect();
         window.filterObserver = null;
-        console.log('Filter observer limpiado');
     }
 
     // Limpiar otros observers que puedan existir
     if (window.tipoFotografiaObserver) {
         window.tipoFotografiaObserver.disconnect();
         window.tipoFotografiaObserver = null;
-        console.log('Tipo fotografía observer limpiado');
     }
 
     // Limpiar timeouts pendientes
     if (window.observerTimeout) {
         clearTimeout(window.observerTimeout);
         window.observerTimeout = null;
-        console.log('Observer timeouts limpiados');
     }
 }
 
@@ -2343,18 +2196,15 @@ function cleanupAllObservers() {
 function setupTableObserver() {
     const tableBody = document.getElementById('imagesTableBody');
     if (!tableBody) {
-        console.warn('No se encontró imagesTableBody para observer');
         return;
     }
 
     // Limpiar observer anterior SIEMPRE
     if (window.filterObserver) {
-        console.log('Limpiando observer anterior...');
         window.filterObserver.disconnect();
         window.filterObserver = null;
     }
 
-    console.log('Creando nuevo observer...');
     window.filterObserver = new MutationObserver(function (mutations) {
         let shouldRefresh = false;
 
@@ -2374,7 +2224,6 @@ function setupTableObserver() {
             // Debounce MÁS LARGO para evitar spam
             clearTimeout(window.observerTimeout);
             window.observerTimeout = setTimeout(() => {
-                console.log('Observer: Actualizando datos de tabla...');
                 extractTableData();
                 applyAllFilters();
             }, 500); // Aumentar a 500ms
@@ -2385,8 +2234,6 @@ function setupTableObserver() {
         childList: true,
         subtree: false // Reducir scope del observer
     });
-
-    console.log('Observer configurado correctamente');
 }
 
 // ===== EXTRAER DATOS DE LA TABLA =====
@@ -2419,7 +2266,6 @@ function extractTableData() {
     });
 
     filteredData = [...allTableData];
-    console.log(`Datos extraídos: ${allTableData.length} filas (incluyendo nuevas imágenes)`);
 }
 
 // ===== CONFIGURAR EVENT LISTENERS =====
@@ -2746,7 +2592,6 @@ function applyAllFilters() {
     });
 
     updateFilterStatus();
-    console.log(`Filtros aplicados: ${filteredData.length}/${allTableData.length} filas visibles`);
 }
 
 /* ================================================================================================= */
@@ -2768,8 +2613,6 @@ function clearGlobalSearchOnly() {
     if (typeof applyAllFilters === 'function') {
         applyAllFilters();
     }
-
-    console.log('Búsqueda global limpiada, filtros predictivos mantienen su estado');
 }
 
 // Hacer función global
@@ -2896,8 +2739,6 @@ function updateFilterStatus() {
     const activeFilterCount = Object.keys(activeFilters).length;
     const visibleRows = filteredData.length;
     const totalRows = allTableData.length;
-
-    console.log(`Estado de filtros: ${activeFilterCount} activos, ${visibleRows}/${totalRows} filas visibles`);
 }
 
 // ===== FUNCIONES AUXILIARES =====
@@ -2947,7 +2788,6 @@ window.addEventListener('storage', function (e) {
 
 // AGREGAR cleanup global
 window.addEventListener('beforeunload', function () {
-    console.log('Limpiando sistema antes de salir...');
     cleanupAllObservers();
 
     // Limpiar cropper si existe
@@ -2959,19 +2799,15 @@ window.addEventListener('beforeunload', function () {
     // Reset flags
     window.fotografiasSystemInitialized = false;
     window.fotografiasSystemInitializing = false;
-
-    console.log('Sistema limpiado completamente');
 });
 
 // AGREGAR cleanup cuando se oculta la página
 document.addEventListener('visibilitychange', function () {
     if (document.hidden) {
-        console.log('Página oculta, pausando observers...');
         if (window.filterObserver) {
             window.filterObserver.disconnect();
         }
     } else {
-        console.log('Página visible, reactivando observers...');
         // Reinicializar observer si es necesario
         setTimeout(() => {
             if (!window.filterObserver && window.fotografiasSystemInitialized) {
@@ -2986,7 +2822,6 @@ window.selectSuggestion = selectSuggestion;
 window.clearAllFilters = clearAllFilters;
 window.refreshFiltersData = refreshFiltersData;
 
-console.log('Sistema de filtros predictivos completo cargado');
 // ================================================================================================
 // FUNCIONALIDAD DE BÚSQUEDA GLOBAL DINÁMICA - Ord. SIT / P.O / O.C
 // ================================================================================================
@@ -2997,20 +2832,15 @@ let globalSearchQuery = '';
 
 // ===== INICIALIZAR BÚSQUEDA GLOBAL DINÁMICA =====
 function initializeGlobalSearch() {
-    console.log('Inicializando búsqueda global dinámica...');
-
     const globalSearchInput = document.getElementById('searchInput');
     const globalSearchButton = document.getElementById('searchButton');
 
     if (!globalSearchInput) {
-        console.warn('Campo de búsqueda global no encontrado');
         return;
     }
 
     // Event listeners para búsqueda dinámica
     setupGlobalSearchListeners(globalSearchInput, globalSearchButton);
-
-    console.log('Búsqueda global dinámica inicializada');
 }
 
 // ===== CONFIGURAR EVENT LISTENERS PARA BÚSQUEDA GLOBAL =====
@@ -3028,12 +2858,9 @@ function setupGlobalSearchListeners(searchInput, searchButton) {
 
             // Cambiar estilo del input para indicar filtro activo
             searchInput.classList.add('global-search-active');
-
-            console.log(`Búsqueda global aplicada: "${query}"`);
         } else {
             // Limpiar búsqueda y restaurar tabla
             clearGlobalSearchOnly();
-            console.log('Búsqueda global limpiada');
         }
     });
 
@@ -3082,8 +2909,6 @@ function setupGlobalSearchListeners(searchInput, searchButton) {
 
 // ===== APLICAR BÚSQUEDA GLOBAL =====
 function applyGlobalSearch(query) {
-    console.log(`Aplicando búsqueda global para: "${query}"`);
-
     // Asegurar que los datos de la tabla estén actualizados
     if (typeof extractTableData === 'function') {
         extractTableData();
@@ -3151,8 +2976,6 @@ function matchesGlobalQuery(value, query) {
 
 // ===== LIMPIAR BÚSQUEDA GLOBAL =====
 function clearGlobalSearch() {
-    console.log('Limpiando búsqueda global...');
-
     // Mostrar todas las filas
     if (allTableData && allTableData.length > 0) {
         allTableData.forEach(item => {
@@ -3213,27 +3036,21 @@ function clearAllFiltersIncludingGlobal() {
     if (typeof clearAllFilters === 'function') {
         clearAllFilters();
     }
-
-    console.log('Todos los filtros limpiados (global + columnas)');
 }
 
 /* ====================================================================================================== */
 // Función para refrescar filtros predictivos después de cambios
 function refreshPredictiveFiltersData() {
-    console.log('Refrescando datos de filtros predictivos...');
-
     // Limpiar datos anteriores
     allTableData = [];
 
     // Recolectar NUEVAMENTE todos los datos actualizados de la tabla
     const tableBody = document.getElementById('imagesTableBody');
     if (!tableBody) {
-        console.warn('Tabla no encontrada');
         return;
     }
 
     const rows = tableBody.querySelectorAll('tr[data-image-id]');
-    console.log(`Recolectando datos de ${rows.length} filas...`);
 
     rows.forEach((row, index) => {
         const ordenSitCell = row.querySelector('[data-column="orden-sit"]');
@@ -3250,11 +3067,7 @@ function refreshPredictiveFiltersData() {
         };
 
         allTableData.push(rowData);
-        console.log(`Fila ${index + 1}: ${JSON.stringify(rowData, null, 2)}`);
     });
-
-    console.log(`${allTableData.length} registros actualizados en filtros predictivos`);
-
     // Actualizar sugerencias para todos los campos
     updateAllSuggestions();
 
@@ -3264,8 +3077,6 @@ function refreshPredictiveFiltersData() {
 
 // Función para actualizar todas las sugerencias
 function updateAllSuggestions() {
-    console.log('Actualizando sugerencias de autocompletado...');
-
     // Obtener valores únicos para cada columna
     const ordenSitValues = [...new Set(allTableData.map(item => item.ordenSit).filter(v => v))];
     const poValues = [...new Set(allTableData.map(item => item.po).filter(v => v))];
@@ -3297,10 +3108,7 @@ function updateAllSuggestions() {
 
 // Función para validar filtros activos
 function validateActiveFilters() {
-    console.log('Validando filtros activos...');
-
     if (!activeFilters || Object.keys(activeFilters).length === 0) {
-        console.log('No hay filtros activos que validar');
         return;
     }
 
@@ -3314,16 +3122,11 @@ function validateActiveFilters() {
 
         if (!hasMatchingData) {
             console.log(`Filtro "${column}: ${filterValue}" ya no tiene datos coincidentes`);
-            // Opcional: limpiar automáticamente el filtro
-            // delete activeFilters[column];
-            // clearSpecificFilter(column);
         }
     });
 }
 /* ====================================================================================================== */
 function clearSpecificFilter(column) {
-    console.log(`Limpiando filtro para columna: ${column}`);
-
     // Limpiar del objeto activeFilters
     if (activeFilters && activeFilters[column]) {
         delete activeFilters[column];
@@ -3339,16 +3142,12 @@ function clearSpecificFilter(column) {
     if (typeof applyAllFilters === 'function') {
         applyAllFilters();
     }
-
-    console.log(`Filtro de ${column} limpiado`);
 }
 
 /* ======================================================================================================== */
-
 // ===== FUNCIÓN PARA REFRESCAR BÚSQUEDA GLOBAL =====
 function refreshGlobalSearch() {
     if (globalSearchActive && globalSearchQuery) {
-        console.log('Refrescando búsqueda global...');
         applyGlobalSearch(globalSearchQuery);
     }
 }
@@ -3381,8 +3180,6 @@ function initializeCompleteSearch() {
 
     // Integrar con tabla dinámica
     setupGlobalSearchTableIntegration();
-
-    console.log('Sistema de búsqueda completo inicializado');
 }
 
 // ===== FUNCIONES GLOBALES =====
@@ -3404,8 +3201,6 @@ document.addEventListener('DOMContentLoaded', function () {
 function handleFileUpload(files) {
     if (!files || files.length === 0) return;
 
-    console.log('Procesando nueva imagen subida...');
-
     // ===== VALIDACIÓN: Solo permitir UNA imagen en modal de edición =====
     if (files.length > 1) {
         showNotification('Solo se permite subir una imagen a la vez en el modo de edición', 'warning');
@@ -3414,11 +3209,8 @@ function handleFileUpload(files) {
 
     const file = files[0]; // Tomar solo la primera imagen
 
-    console.log('Procesando imagen única para edición:', file.name);
-
     // Validar tipo de archivo
     if (!file.type.startsWith('image/')) {
-        showNotification('Por favor seleccione un archivo de imagen válido', 'error');
         return;
     }
 
@@ -3436,7 +3228,6 @@ function handleFileUpload(files) {
         const modalImage = document.getElementById('editModalImage');
         if (modalImage) {
             modalImage.src = base64Image;
-            console.log('Imagen del modal actualizada con base64');
         }
 
         // ===== Limpiar eventos anteriores y crear nuevos =====
@@ -3467,14 +3258,11 @@ function handleFileUpload(files) {
                 newTableImage.addEventListener('click', function (e) {
                     e.preventDefault();
                     e.stopImmediatePropagation();
-                    console.log('Click en imagen con base64:', base64Image.substring(0, 50) + '...');
                     openImageLightbox(base64Image, file.name || descripcionActual, descripcionActual, nuevoTipo);
                 });
 
                 // Reemplazar imagen anterior
                 tableImage.parentNode.replaceChild(newTableImage, tableImage);
-
-                console.log('Imagen de tabla reemplazada con base64 permanente');
             }
         }
 
@@ -3483,7 +3271,6 @@ function handleFileUpload(files) {
             currentImageData.url = base64Image;
             currentImageData.nombre = file.name;
             currentImageData.size = file.size;
-            console.log('currentImageData actualizado con base64');
         }
 
         hasImageBeenCropped = true;
@@ -3498,18 +3285,14 @@ function handleFileUpload(files) {
 // Asegurar que al guardar cambios también se actualice el onclick
 function saveEditChanges() {
     if (!currentEditingRow || !currentImageData) {
-        showNotification('Error: No hay datos para guardar', 'error');
         return;
     }
-
-    console.log('Guardando cambios de edición...');
 
     // Obtener datos del formulario
     const nuevoTipo = document.getElementById('editTipoFotografia').value;
     const nuevaDescripcion = document.getElementById('editDescripcion').value.trim();
 
     if (!nuevoTipo || !nuevaDescripcion) {
-        alert('Por favor complete todos los campos requeridos');
         return;
     }
 
@@ -3517,7 +3300,7 @@ function saveEditChanges() {
     const modalImage = document.getElementById('editModalImage');
     const imagenActual = modalImage ? modalImage.src : null;
 
-    // ✅ DETECCIÓN MÁS ESPECÍFICA para recortes e imágenes nuevas
+    //Detección más específica para recortes e imágenes nuevas
     let hayNuevaImagen = false;
     let imagenParaEnviar = null;
 
@@ -3526,29 +3309,25 @@ function saveEditChanges() {
         if (imagenActual.startsWith('data:') && imagenActual !== originalImageSrc) {
             hayNuevaImagen = true;
             imagenParaEnviar = imagenActual;
-            console.log('🖼️ DETECTADA: Imagen recortada (base64)');
         }
         // Caso 2: Imagen subida nueva (base64)
         else if (imagenActual.startsWith('data:') && originalImageSrc.startsWith('http')) {
             hayNuevaImagen = true;
             imagenParaEnviar = imagenActual;
-            console.log('🖼️ DETECTADA: Imagen nueva subida');
         }
         // Caso 3: Cambio de URL
         else if (imagenActual !== originalImageSrc) {
             hayNuevaImagen = true;
             imagenParaEnviar = imagenActual;
-            console.log('🖼️ DETECTADA: Cambio de imagen URL');
         }
         // Caso 4: Flag de recorte activo
         else if (hasImageBeenCropped && imagenActual.startsWith('data:')) {
             hayNuevaImagen = true;
             imagenParaEnviar = imagenActual;
-            console.log('🖼️ DETECTADA: Flag hasImageBeenCropped activo');
         }
     }
 
-    console.log('🖼️ Estado de imagen CORREGIDO:', {
+    console.log('Estado de imagen:', {
         hayNuevaImagen: hayNuevaImagen,
         imagenActual: imagenActual ? imagenActual.substring(0, 50) + '...' : 'null',
         originalSrc: originalImageSrc ? originalImageSrc.substring(0, 50) + '...' : 'null',
@@ -3561,14 +3340,11 @@ function saveEditChanges() {
 
     // Si tiene ID numérico, actualizar en backend
     if (imageId && !imageId.startsWith('temp_') && !isNaN(parseInt(imageId))) {
-        console.log('🔄 Actualizando en backend...');
 
-        // ✅ USAR FUNCIÓN UNIFICADA - con detección corregida
+        //Función unificada - con detección corregida
         if (hayNuevaImagen && imagenParaEnviar) {
-            console.log('📸 Enviando CON IMAGEN al backend');
             actualizarEnBackend(imageId, nuevoTipo, nuevaDescripcion, imagenParaEnviar);
         } else {
-            console.log('📝 Enviando SOLO TEXTO al backend');
             actualizarEnBackend(imageId, nuevoTipo, nuevaDescripcion);
         }
     }
@@ -3588,7 +3364,6 @@ function saveEditChanges() {
     // Actualizar imagen en tabla si cambió
     const tableImage = currentEditingRow.querySelector('img');
     if (tableImage && hayNuevaImagen && imagenParaEnviar) {
-        console.log('🔄 Actualizando imagen en tabla...');
 
         const newImage = tableImage.cloneNode(true);
         newImage.src = imagenParaEnviar; // Usar imagen recortada/nueva
@@ -3601,7 +3376,6 @@ function saveEditChanges() {
         });
 
         tableImage.parentNode.replaceChild(newImage, tableImage);
-        console.log('✅ Imagen en tabla actualizada con recorte/nueva imagen');
 
     } else if (tableImage) {
         // Solo actualizar event listener sin cambiar imagen
@@ -3615,7 +3389,6 @@ function saveEditChanges() {
         });
 
         tableImage.parentNode.replaceChild(newImage, tableImage);
-        console.log('✅ Event listener actualizado sin cambio de imagen');
     }
 
     // Cerrar modal y limpiar campos (resto igual)
@@ -3627,54 +3400,44 @@ function saveEditChanges() {
     resetEditVariables();
 
     setTimeout(() => {
-        console.log('Actualizando filtros después de edición...');
         if (typeof refreshPredictiveFiltersData === 'function') {
             refreshPredictiveFiltersData();
         }
-        console.log('Filtros actualizados después de edición');
     }, 300);
-
-    console.log('Edición completada exitosamente');
 }
-/*======================================================================================================================= */
-// ===>>> Función Simple para actualizar en backend
+/*============================================================================================================================= */
+// ===>>> Función Simple para actualizar en backend (si se Edita imagen(Recortar - Subir Foto), descripcion o tipo en tabla Index)
 
 //FUNCIÓN UNIFICADA actualizarEnBackend (texto + imagen):
 
 function actualizarEnBackend(imageId, nuevoTipo, nuevaDescripcion, imagenBase64 = null) {
-    console.log('🌐 INICIANDO actualizarEnBackend UNIFICADA con parámetros:', {
+    console.log('Iniciar actualizarEnBackend con parámetros:', {
         imageId: imageId,
         nuevoTipo: nuevoTipo,
         nuevaDescripcion: nuevaDescripcion,
         tieneImagen: !!imagenBase64
     });
 
-    // ✅ VALIDAR que el ID sea válido para backend
+    //Validar que el ID sea válido para backend
     if (!imageId || imageId.startsWith('temp_') || isNaN(parseInt(imageId))) {
-        console.warn('⚠️ ID no válido para backend:', imageId);
-        showNotification('Esta imagen no puede actualizarse en servidor (imagen local)', 'info', 3000);
         return;
     }
 
-    // ✅ VALIDAR campos requeridos
+    //Validar campos requeridos
     if (!nuevoTipo || !nuevaDescripcion.trim()) {
-        console.error('❌ Campos requeridos faltantes:', { nuevoTipo, nuevaDescripcion });
-        showNotification('Tipo y descripción son obligatorios', 'error');
         return;
     }
 
-    // ✅ DETERMINAR si es actualización con imagen o solo texto
+    //Determinar si es actualización con imagen o solo texto
     const tieneImagenNueva = imagenBase64 && imagenBase64.startsWith('data:');
 
     if (tieneImagenNueva) {
-        console.log('📸 Procesando actualización CON IMAGEN...');
         procesarConImagen();
     } else {
-        console.log('📝 Procesando actualización SOLO TEXTO...');
         procesarSoloTexto();
     }
 
-    // ✅ FUNCIÓN INTERNA para procesar SOLO TEXTO
+    //Función interna para procesar SOLO TEXTO
     function procesarSoloTexto() {
         const formData = new FormData();
         formData.append('tipo', nuevoTipo.trim());
@@ -3682,8 +3445,6 @@ function actualizarEnBackend(imageId, nuevoTipo, nuevaDescripcion, imagenBase64 
         formData.append('_method', 'PUT');
         formData.append('_token', $('meta[name="csrf-token"]').attr('content'));
 
-        // ✅ LOG del FormData
-        console.log('📋 FormData TEXTO:');
         for (let pair of formData.entries()) {
             console.log(`  ${pair[0]}: "${pair[1]}"`);
         }
@@ -3691,7 +3452,7 @@ function actualizarEnBackend(imageId, nuevoTipo, nuevaDescripcion, imagenBase64 
         enviarAlServidor(formData, 'texto-solo');
     }
 
-    // ✅ FUNCIÓN INTERNA para procesar CON IMAGEN
+    //Función interna para procesar CON IMAGEN
     function procesarConImagen() {
         // Convertir base64 a blob
         fetch(imagenBase64)
@@ -3699,20 +3460,18 @@ function actualizarEnBackend(imageId, nuevoTipo, nuevaDescripcion, imagenBase64 
             .then(blob => {
                 const formData = new FormData();
 
-                // ✅ AGREGAR imagen como archivo
+                //Agregar imagen como archivo
                 const imagenFile = new File([blob], `imagen_editada_${Date.now()}.jpg`, {
                     type: 'image/jpeg'
                 });
                 formData.append('imagen', imagenFile);
 
-                // ✅ AGREGAR campos de texto
+                //Agregar campos de texto
                 formData.append('tipo', nuevoTipo.trim());
                 formData.append('descripcion', nuevaDescripcion.trim());
                 formData.append('_method', 'PUT');
                 formData.append('_token', $('meta[name="csrf-token"]').attr('content'));
 
-                // ✅ LOG del FormData
-                console.log('📋 FormData CON IMAGEN:');
                 for (let pair of formData.entries()) {
                     if (pair[1] instanceof File) {
                         console.log(`  ${pair[0]}: File(${pair[1].name}, ${(pair[1].size / 1024).toFixed(2)}KB)`);
@@ -3724,24 +3483,15 @@ function actualizarEnBackend(imageId, nuevoTipo, nuevaDescripcion, imagenBase64 
                 enviarAlServidor(formData, 'con-imagen');
             })
             .catch(error => {
-                console.error('❌ Error convirtiendo imagen:', error);
-                showNotification('Error procesando la imagen', 'error');
+                console.error('Error convirtiendo imagen:', error);
 
-                // ✅ FALLBACK: Enviar solo texto
-                console.log('🔄 Fallback: Enviando solo texto...');
                 procesarSoloTexto();
             });
     }
 
-    // ✅ FUNCIÓN INTERNA para enviar al servidor (COMÚN para ambos casos)
+    //Función interna para enviar al servidor (COMÚN para ambos casos)
     function enviarAlServidor(formData, tipo) {
         const endpoint = `/api/fotografias/${imageId}`;
-        console.log(`🎯 Enviando ${tipo} al endpoint:`, endpoint);
-
-        // ✅ MOSTRAR loading si es con imagen
-        if (tipo === 'con-imagen') {
-            showNotification('Procesando imagen y guardando cambios...', 'info', 1000);
-        }
 
         $.ajax({
             url: endpoint,
@@ -3758,12 +3508,10 @@ function actualizarEnBackend(imageId, nuevoTipo, nuevaDescripcion, imagenBase64 
                 'X-Has-New-Image': tieneImagenNueva ? 'true' : 'false'
             },
             beforeSend: function (xhr) {
-                console.log(`🚀 Enviando request ${tipo}...`);
+                console.log(`Enviando request ${tipo}...`);
             },
             success: function (response) {
-                console.log(`✅ SUCCESS ${tipo} - Response:`, response);
-
-                // ✅ PROCESAR respuesta según el tipo
+                //Procesar respuesta según el tipo
                 if (tipo === 'con-imagen') {
                     procesarSuccessConImagen(response);
                 } else {
@@ -3771,7 +3519,7 @@ function actualizarEnBackend(imageId, nuevoTipo, nuevaDescripcion, imagenBase64 
                 }
             },
             error: function (xhr, status, error) {
-                console.error(`❌ ERROR ${tipo}:`, {
+                console.error(`ERROR ${tipo}:`, {
                     status: xhr.status,
                     responseText: xhr.responseText,
                     error: error
@@ -3784,7 +3532,7 @@ function actualizarEnBackend(imageId, nuevoTipo, nuevaDescripcion, imagenBase64 
 
     // Procesar éxito con imagen
     function procesarSuccessConImagen(response) {
-        // ✅ VERIFICAR si hay nuevo path de imagen
+        //Verificar si hay nuevo path de imagen
         let nuevoImagenPath = null;
         if (response.data && response.data.imagen_url) {
             nuevoImagenPath = response.data.imagen_url;
@@ -3794,29 +3542,23 @@ function actualizarEnBackend(imageId, nuevoTipo, nuevaDescripcion, imagenBase64 
             nuevoImagenPath = response.imagen_url;
         }
 
-        console.log('📸 Nuevo path de imagen en BD:', nuevoImagenPath);
-
         if (nuevoImagenPath) {
-            showNotification('Imagen y datos actualizados correctamente en BD', 'success', 3000);
-            console.log('✅ Nueva imagen guardada en BD con path:', nuevoImagenPath);
+            console.log('Nueva imagen guardada en BD con path:', nuevoImagenPath);
         } else {
-            console.warn('⚠️ No se recibió nuevo path de imagen');
-            showNotification('Datos guardados, pero sin confirmación de nueva imagen', 'warning', 3000);
+            console.warn('No se recibió nuevo path de imagen');
         }
     }
 
-    // ✅ FUNCIÓN INTERNA para procesar SUCCESS solo texto
+    //Función interna para procesar SUCCESS solo texto
     function procesarSuccessTexto(response) {
         if (response && (response.success || response.data)) {
-            console.log('✅ Actualización de texto exitosa en BD');
-            showNotification('Cambios guardados en base de datos', 'success', 2000);
+            console.log('Actualización de texto exitosa en BD');
         } else {
-            console.warn('⚠️ Response estructura inválida:', response);
-            showNotification('Respuesta del servidor inválida', 'warning', 3000);
+            console.warn('Response estructura inválida:', response);
         }
     }
 
-    // ✅ FUNCIÓN INTERNA para procesar errores (COMÚN)
+    //Función interna para procesar errores (COMÚN)
     function procesarError(xhr, tipo) {
         let errorMessage = 'Error actualizando en servidor';
 
@@ -3843,11 +3585,8 @@ function actualizarEnBackend(imageId, nuevoTipo, nuevaDescripcion, imagenBase64 
             console.error('Error parseando respuesta de error:', parseError);
         }
 
-        showNotification(`Error: ${errorMessage}`, 'error', 5000);
-
-        // ✅ FALLBACK específico según el tipo
+        //Fallback específico según el tipo
         if (tipo === 'con-imagen' && imagenBase64) {
-            console.log('🔄 Fallback con imagen: Intentando solo texto...');
             procesarSoloTexto();
         } else {
             console.log('Los cambios se mantienen localmente');
@@ -3880,8 +3619,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
 // ===== FUNCIÓN PARA ACTUALIZAR PAGINACIÓN DESPUÉS DE CAMBIOS =====
 function updatePaginationAfterChange(action = 'unknown') {
-    console.log(`Actualizando paginación después de: ${action}`);
-
     // Verificar si el sistema de paginación existe
     if (typeof refreshPagination === 'function') {
         setTimeout(() => {
@@ -3894,12 +3631,11 @@ function updatePaginationAfterChange(action = 'unknown') {
 
 // ===== INTERCEPTAR FUNCIÓN DE AGREGAR IMAGEN =====
 // Buscar la función existente que agrega filas a la tabla y modificarla
+// ==>> addImageToTable => se usa para agregar filas dinámicamente
 if (typeof addImageToTable === 'function') {
     const originalAddImageToTable = addImageToTable;
 
     window.addImageToTable = function (...args) {
-        console.log('Agregando imagen a tabla...');
-
         // Llamar función original
         const result = originalAddImageToTable.apply(this, args);
 
@@ -3917,8 +3653,6 @@ if (typeof deleteImageFromTable === 'function') {
     const originalDeleteImageFromTable = deleteImageFromTable;
 
     window.deleteImageFromTable = function (...args) {
-        console.log('Eliminando imagen de tabla...');
-
         // Llamar función original
         const result = originalDeleteImageFromTable.apply(this, args);
 
@@ -3933,7 +3667,6 @@ if (typeof deleteImageFromTable === 'function') {
 function setupTableObserver() {
     const tableBody = document.getElementById('imagesTableBody');
     if (!tableBody) {
-        console.warn('No se pudo configurar observer - tabla no encontrada');
         return;
     }
 
@@ -3955,7 +3688,6 @@ function setupTableObserver() {
 
                 if (hasRowChanges) {
                     shouldUpdate = true;
-                    console.log('Observer detectó cambios en filas de la tabla');
                 }
             }
         });
@@ -3970,9 +3702,6 @@ function setupTableObserver() {
         childList: true,
         subtree: false
     });
-
-    console.log('Observer de tabla configurado');
-
     // Guardar referencia global para poder desactivarlo si es necesario
     window.tableObserver = observer;
 }
@@ -3988,8 +3717,6 @@ function interceptAjaxSuccess() {
         // Interceptar solo llamadas relacionadas con fotografías
         if (options.url && (options.url.includes('fotografia') || options.url.includes('/api/'))) {
             options.success = function (data, textStatus, jqXHR) {
-                console.log('AJAX exitoso detectado para fotografías');
-
                 // Llamar callback original
                 if (originalSuccess) {
                     originalSuccess.call(this, data, textStatus, jqXHR);
@@ -4004,18 +3731,13 @@ function interceptAjaxSuccess() {
 
         return originalAjax.call(this, options);
     };
-
-    console.log('Interceptor AJAX configurado');
 }
 
 // ===== FUNCIÓN MANUAL PARA REFRESCAR PAGINACIÓN =====
 window.manualRefreshPagination = function () {
-    console.log('Refrescando paginación manualmente...');
-
     const tableBody = document.getElementById('imagesTableBody');
     if (tableBody) {
         const rows = tableBody.querySelectorAll('tr[data-image-id]');
-        console.log(`Filas detectadas: ${rows.length}`);
 
         if (typeof refreshPagination === 'function') {
             refreshPagination();
@@ -4032,12 +3754,10 @@ window.countCurrentRows = function () {
     const tableBody = document.getElementById('imagesTableBody');
     if (tableBody) {
         const rows = tableBody.querySelectorAll('tr[data-image-id]');
-        console.log(`Total de filas actuales: ${rows.length}`);
 
         const visibleRows = Array.from(rows).filter(row =>
             window.getComputedStyle(row).display !== 'none'
         );
-        console.log(`Filas visibles: ${visibleRows.length}`);
 
         return {
             total: rows.length,
@@ -4066,5 +3786,3 @@ window.extractImageDataFromRow = extractImageDataFromRow || function () { consol
 window.filterByTipoFotografia = filterByTipoFotografia;
 window.selectAllTipoFotografia = selectAllTipoFotografia || function () { console.warn('selectAllTipoFotografia no definida'); };
 window.clearTipoFotografiaFilter = clearTipoFotografiaFilter || function () { console.warn('clearTipoFotografiaFilter no definida'); };
-
-console.log('Sistema JS completo cargado correctamente');

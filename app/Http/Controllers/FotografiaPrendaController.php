@@ -142,113 +142,137 @@ class FotografiaPrendaController extends Controller
     // ==== Subir nueva fotografía ====
     public function store(Request $request)
     {
-        $validator = Validator::make($request->all(), [
-            'imagen' => 'required|image|mimes:jpeg,png,jpg,gif|max:10240', // 10MB máximo
-            'orden_sit' => 'required|string|max:20',
-            'po' => 'required|string|max:20',
-            'oc' => 'nullable|string|max:20',
-            'descripcion' => 'required|string|max:500',
-            'tipo' => 'required|in:MUESTRA,PRENDA FINAL,VALIDACION AC'
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Datos inválidos',
-                'errors' => $validator->errors()
-            ], 422);
-        }
-
         try {
-            $imagen = $request->file('imagen');
-
-            // Generar HASH único para la imagen
-            $fileContent = file_get_contents($imagen->getPathname());
-            $hashContent = hash('sha256', $fileContent);
-            $base64Hash = base64_encode($hashContent);
-
-            //Limpiar Base64 para nombre de archivo
-            $cleanHash = str_replace(['+', '/', '='], ['-', '_', ''], $base64Hash);
-            $cleanHash = substr($cleanHash, 0, 32); // Limitar Longitud
-            $nombreArchivo = $cleanHash . '.jpeg';
-
-            // Organizar por año/mes
-            $rutaDestino = 'fotografias/' . date('Y') . '/' . date('m');
-
-            // Guardar imagen
-            $rutaCompleta = $rutaDestino . '/' . $nombreArchivo;
-
-            // Verificar si ya existe archivo con mismo HASH
-            $existingPhoto = FotografiaPrenda::where('imagen_path', 'LIKE', '%' . $cleanHash . '%')->first();
-
-            if ($existingPhoto && Storage::disk('public')->exists($rutaCompleta)) {
-                //Archivo duplicado - Reutilizar imagen existente
-                $imageUrl = asset('storage/' . $existingPhoto->imagen_path);
-                $rutaFinal = $existingPhoto->imagen_path;
-            } else {
-                // Archivo nuevo - Guardarlo
-                $rutaFinal = $imagen->storeAs($rutaDestino, $nombreArchivo, 'public');
-                $imageUrl = asset('storage/' . $rutaFinal);
-            }
-
-            // Crear registro en BD
-            $fotografia = FotografiaPrenda::create([
-                'orden_sit' => $request->orden_sit,
-                'po' => $request->po,
-                'oc' => $request->oc,
-                'descripcion' => $request->descripcion,
-                'tipo' => $request->tipo,
-                'imagen_path' => $rutaFinal,
-                'imagen_url' => $imageUrl,
-                'imagen_original_name' => $imagen->getClientOriginalName(),
-                'imagen_size' => $imagen->getSize(),
-                'imagen_mime_type' => $imagen->getMimeType(),
-                'fecha_subida' => now(),
-                'subido_por' => auth()->user()->name ?? 'Sistema',
-                'metadatos' => [
-                    'ip_address' => $request->ip(),
-                    'user_agent' => $request->userAgent(),
-                    'upload_timestamp' => time(),
-                    'origen_vista' => $request->origen_vista ?? 'unknown',
-                    'hash_sha256' => $hashContent, // Guardar hash original
-                    'hash_filename' => $cleanHash  // Guardar hash limpio
-                ]
+            $validator = Validator::make($request->all(), [
+                'imagen' => 'required|image|mimes:jpeg,png,jpg,gif|max:10240', // 10MB máximo
+                'orden_sit' => 'required|string|max:20',
+                'po' => 'required|string|max:20',
+                'oc' => 'nullable|string|max:20',
+                'descripcion' => 'required|string|max:500',
+                'tipo' => 'required|in:MUESTRA,PRENDA FINAL,VALIDACION AC'
             ]);
 
-            // Verificar que el archivo realmente existe
-            $fullPath = public_path('storage/' . $rutaFinal);
-            if (!file_exists($fullPath)) {
-                \Log::error('Archivo no encontrado: ' . $fullPath);
-                throw new \Exception('Archivo no se guardó correctamente');
+            if ($validator->fails()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Datos inválidos',
+                    'errors' => $validator->errors()
+                ], 422);
             }
 
-            \Log::info('Fotografía subida correctamente', [
-                'id' => $fotografia->id,
-                'hash' => $cleanHash,
-                'path' => $rutaFinal,
-                'url' => $imageUrl,
-                'file_exists' => file_exists($fullPath),
-                'is_duplicate' => isset($existingPhoto)
-            ]);
+            if ($request->hasFile('imagen')) {
+                $imagen = $request->file('imagen');
 
-            return response()->json([
-                'success' => true,
-                'message' => 'Fotografía subida correctamente',
-                'data' => [
-                    'id' => $fotografia->id,
-                    'orden_sit' => $fotografia->orden_sit,
-                    'po' => $fotografia->po,
-                    'oc' => $fotografia->oc ?? '-',
-                    'descripcion' => $fotografia->descripcion,
-                    'tipo' => $fotografia->tipo,
-                    'imagen_url' => $imageUrl,
+                // Obtener datos únicos del request para generar hash diferente
+                $uniqueIdentifier = $request->input('unique_identifier', '');
+                $batchIndex = $request->input('batch_index', '0');
+                $timestamp = $request->input('timestamp', now()->toISOString());
+                $originalFileName = $request->input('file_original_name', $imagen->getClientOriginalName());
+
+                // GENERAR HASH MÁS ÚNICO incluyendo metadatos adicionales
+                $imageContent = file_get_contents($imagen->getPathname());
+                $additionalData = $uniqueIdentifier . $batchIndex . $timestamp . $originalFileName . $imagen->getSize();
+                $combinedContent = $imageContent . $additionalData;
+                $hashSha256 = hash('sha256', $combinedContent);
+
+                //Limpiar base64 para nombre de archivo (versión corta)
+                $base64Hash = base64_encode($hashSha256);
+                $cleanHash = str_replace(['+', '/', '='], ['-', '_', ''], $base64Hash);
+                $cleanHash = substr($cleanHash, 0, 32); // Limitar Longitud
+
+                // LOG para verificar unicidad
+                \Log::info('Generando hash único para imagen', [
+                    'unique_identifier' => $uniqueIdentifier,
+                    'batch_index' => $batchIndex,
+                    'timestamp' => $timestamp,
+                    'original_filename' => $originalFileName,
+                    'image_size' => $imagen->getSize(),
+                    'hash_sha256_completo' => $hashSha256,
+                    'hash_primeros_8' => substr($hashSha256, 0, 8),
+                    'clean_hash_final' => $cleanHash,
+                    'longitud_clean_hash' => strlen($cleanHash)
+                ]);
+
+                $nombreArchivo = $cleanHash . '.jpeg';
+
+                // Organizar por año/mes
+                $rutaDestino = 'fotografias/' . date('Y') . '/' . date('m');
+
+                // Guardar imagen
+                $rutaCompleta = $rutaDestino . '/' . $nombreArchivo;
+
+                // Verificar si ya existe archivo con mismo HASH
+                $existingPhoto = FotografiaPrenda::where('imagen_path', 'LIKE', '%' . $cleanHash . '%')->first();
+
+                if ($existingPhoto && Storage::disk('public')->exists($rutaCompleta)) {
+                    //Archivo duplicado - Reutilizar imagen existente
+                    $imageUrl = asset('storage/' . $existingPhoto->imagen_path);
+                    $rutaFinal = $existingPhoto->imagen_path;
+                } else {
+                    // Archivo nuevo - Guardarlo
+                    $rutaFinal = $imagen->storeAs($rutaDestino, $nombreArchivo, 'public');
+                    $imageUrl = asset('storage/' . $rutaFinal);
+                }
+
+                // Crear registro en BD
+                $fotografia = FotografiaPrenda::create([
+                    'orden_sit' => $request->orden_sit,
+                    'po' => $request->po,
+                    'oc' => $request->oc,
+                    'descripcion' => $request->descripcion,
+                    'tipo' => $request->tipo,
                     'imagen_path' => $rutaFinal,
-                    'fecha_subida' => $fotografia->created_at->format('d-m-Y H:i'),
-                    'hash_filename' => $cleanHash,
-                    'created_at' => $fotografia->created_at,
+                    'imagen_url' => $imageUrl,
+                    'imagen_original_name' => $imagen->getClientOriginalName(),
+                    'imagen_size' => $imagen->getSize(),
+                    'imagen_mime_type' => $imagen->getMimeType(),
+                    'fecha_subida' => now(),
+                    'subido_por' => auth()->user()->name ?? 'Sistema',
+                    'metadatos' => [
+                        'ip_address' => $request->ip(),
+                        'user_agent' => $request->userAgent(),
+                        'upload_timestamp' => time(),
+                        'origen_vista' => $request->origen_vista ?? 'unknown',
+                        'hash_sha256' => $hashSha256, // Guardar hash original
+                        'hash_filename' => $cleanHash  // Guardar hash limpio
+                    ]
+                ]);
+
+                // Verificar que el archivo realmente existe
+                $fullPath = public_path('storage/' . $rutaFinal);
+                if (!file_exists($fullPath)) {
+                    \Log::error('Archivo no encontrado: ' . $fullPath);
+                    throw new \Exception('Archivo no se guardó correctamente');
+                }
+
+                \Log::info('Fotografía subida correctamente', [
+                    'id' => $fotografia->id,
+                    'hash' => $cleanHash,
+                    'path' => $rutaFinal,
+                    'url' => $imageUrl,
+                    'file_exists' => file_exists($fullPath),
                     'is_duplicate' => isset($existingPhoto)
-                ]
-            ]);
+                ]);
+
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Fotografía subida correctamente',
+                    'data' => [
+                        'id' => $fotografia->id,
+                        'orden_sit' => $fotografia->orden_sit,
+                        'po' => $fotografia->po,
+                        'oc' => $fotografia->oc ?? '-',
+                        'descripcion' => $fotografia->descripcion,
+                        'tipo' => $fotografia->tipo,
+                        'imagen_url' => $imageUrl,
+                        'imagen_path' => $rutaFinal,
+                        'fecha_subida' => $fotografia->created_at->format('d-m-Y H:i'),
+                        'hash_filename' => $cleanHash,
+                        'created_at' => $fotografia->created_at,
+                        'is_duplicate' => isset($existingPhoto)
+                    ]
+                ]);
+            }
         } catch (\Exception $e) {
             \Log::error('Error subiendo fotografía: ' . $e->getMessage());
             return response()->json([

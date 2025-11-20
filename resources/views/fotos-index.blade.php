@@ -1055,6 +1055,16 @@ function showBatchImageModal(imageDataArray, uploadBtn) {
             const poUnificado = generatePONumber();
             const ocUnificado = generateOCNumber();
 
+            // ✅ VALIDAR que se generaron correctamente
+            if (!DESARROLLO_MODE && (!ordenSitActual || !poUnificado || !ocUnificado)) {
+                throw new Error('Error: Faltan datos de orden válidos para producción');
+            }
+
+            // ✅ USAR valores por defecto si es necesario en producción
+            const ordenFinal = ordenSitActual || 'SIN_ORDEN';
+            const poFinal = poUnificado || 'SIN_PO';
+            const ocFinal = ocUnificado || 'SIN_OC';
+
             //COPIAR LÓGICA SECUENCIAL DE FOTOS-SIT-ADD
             for (let i = 0; i < imageDataArray.length; i++) {
                 const imageData = imageDataArray[i];
@@ -1071,9 +1081,9 @@ function showBatchImageModal(imageDataArray, uploadBtn) {
                     //CREAR FormData CON ORDEN UNIFICADA (IGUAL QUE FOTOS-SIT-ADD)
                     const formData = new FormData();
                     formData.append('imagen', file);
-                    formData.append('orden_sit', ordenSitActual); //MISMA ORDEN PARA TODAS
-                    formData.append('po', poUnificado);           //MISMO PO PARA TODAS
-                    formData.append('oc', ocUnificado);           //MISMO OC PARA TODAS
+                    formData.append('orden_sit', ordenFinal); //MISMA ORDEN PARA TODAS
+                    formData.append('po', poFinal);           //MISMO PO PARA TODAS
+                    formData.append('oc', ocFinal);           //MISMO OC PARA TODAS
                     formData.append('descripcion', descripcionVal);
                     formData.append('tipo', tipoFotografia);      //SIN .toUpperCase()
                     formData.append('origen_vista', 'fotos-index');
@@ -1258,9 +1268,6 @@ function addSimpleInfo(imageCount) {
             <p class="mb-1">
                 <strong>Orden SIT:</strong> ${ordenSitActual}
             </p>
-            <p class="mb-0 text-muted">
-                Los datos que ingreses se aplicarán a todas las imágenes.
-            </p>
         </div>
     `;
 
@@ -1292,10 +1299,15 @@ function getCurrentOrdenSit() {
         return lastOrdenSit;
     }
 
-    // 3. Generar nueva orden SIT
-    const newOrdenSit = generateOrderNumber();
-    localStorage.setItem('lastOrdenSit', newOrdenSit);
-    return newOrdenSit;
+    // 3. Generar nueva orden SIT solo si esta en modo desarrollo
+    if (DESARROLLO_MODE) {
+        const newOrdenSit = generateOrderNumber();
+        if (newOrdenSit) {
+            localStorage.setItem('lastOrdenSit', newOrdenSit);
+            return newOrdenSit;
+        }
+    }
+
 }
 
 function uploadToBackendIndex(formData) {
@@ -1660,16 +1672,28 @@ function uploadToBackendIndex(formData) {
         handleImageUpload(files, isCamera ? 'camera' : 'file');
     }
 
-    // Utility functions para generar números
+    /*==============================================================================================*/
+    //==>> Booleano cambiar a conveniencia
+    const DESARROLLO_MODE = true; // Cambiar a false en producción
+
     function generateOrderNumber() {
+        if (!DESARROLLO_MODE) {
+            return null;
+        }
         return '100' + Math.floor(Math.random() * 90000 + 10000);
     }
 
     function generatePONumber() {
+        if (!DESARROLLO_MODE) {
+            return null;
+        }
         return '6000' + Math.floor(Math.random() * 900000 + 100000);
     }
 
     function generateOCNumber() {
+        if (!DESARROLLO_MODE) {
+            return null;
+        }
         return '4200' + Math.floor(Math.random() * 9000000 + 1000000);
     }
 

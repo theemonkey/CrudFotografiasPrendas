@@ -8,6 +8,8 @@
 {{--INDICADOR DE ROL --}}
 <script>
     const isAdmin = false; // false -> usuario normal, true -> administrador
+
+    const DESARROLLO_MODE = true; // Cambiar a false en producción
 </script>
 
 <div class="container mt-4">
@@ -230,33 +232,52 @@
                         }
                     } else {
                         //ORDEN NO EXISTE
-                        if (isAdmin) {
-                            //Redirección directa a tabla
-                            redirectToTableAdmin(value);
+                        if (DESARROLLO_MODE) {
+                            //DESARROLLO: Permitir continuar
+                            if (isAdmin) {
+                                redirectToTableAdmin(value);
+                            } else {
+                                mostrarOrdenNueva(value);
+                            }
                         } else {
-                            //Usuario normal -> permitir crear nueva orden
-                            mostrarOrdenNueva(value);
+                            //PRODUCCIÓN: Mostrar error
+                            showNotification(`Orden SIT ${value} no encontrada en la base de datos`, 'error', 4000);
+
+                            const ordenSitCard = document.getElementById('ordenSitCard');
+                            if (ordenSitCard) {
+                                ordenSitCard.style.display = 'none';
+                            }
                         }
                     }
                 } else {
                     console.error('Error en respuesta:', response.message);
 
-                    if (isAdmin) {
-                        //Redirección directa a tabla
-                        redirectToTableAdmin(value);
+                    if (DESARROLLO_MODE) {
+                        // 🧪 DESARROLLO: Permitir continuar
+                        if (isAdmin) {
+                            redirectToTableAdmin(value);
+                        } else {
+                            mostrarOrdenNueva(value);
+                        }
                     } else {
-                    mostrarOrdenNueva(value); // Fallback a nueva orden
-                }
+                        // ❌ PRODUCCIÓN: Mostrar error
+                        showNotification('Error de conexión con la base de datos', 'error', 3000);
+                    }
               }
             },
-            error: function(xhr, status, error) {
+           error: function(xhr, status, error) {
                 console.error('Error buscando orden:', error);
 
-                if (isAdmin) {
-                    //Redirección directa a tabla
-                    redirectToTableAdmin(value);
+                if (DESARROLLO_MODE) {
+                    // 🧪 DESARROLLO: Permitir continuar
+                    if (isAdmin) {
+                        redirectToTableAdmin(value);
+                    } else {
+                        mostrarOrdenNueva(value);
+                    }
                 } else {
-                    mostrarOrdenNueva(value); // Fallback a nueva orden
+                    // ❌ PRODUCCIÓN: Mostrar error
+                    showNotification('Error de conexión con la base de datos', 'error', 3000);
                 }
             }
         });
@@ -277,6 +298,11 @@
         const prendaPreview = document.getElementById('prendaPreview');
         const ordenSitCard = document.getElementById('ordenSitCard');
         const limpiarBoton = document.getElementById('limpiarBoton');
+
+        //Asegurar que los listeners esten configurados una sola vez
+        if (!uploadListenersInitialized) {
+            initializeUploadButtons();
+        }
 
         // Llenar datos existentes
         ordenSitValue.textContent = primeraFoto.orden_sit;
@@ -314,6 +340,11 @@
         const descripcion = document.getElementById('descripcion');
         const prendaPreview = document.getElementById('prendaPreview');
         const ordenSitCard = document.getElementById('ordenSitCard');
+
+        //Asegurar que los listeners esten configurados una sola vez
+        if (!uploadListenersInitialized) {
+            initializeUploadButtons();
+        }
 
         // Configurar para nueva orden
         ordenSitValue.textContent = numeroOrden;
@@ -528,41 +559,78 @@
 <script>
     // ===== SCRIPT FUNCIONALIDAD SUBIDA DE IMAGENES =====
 
+    let uploadListenersInitialized = false; // Flag para evitar duplicados
+
     function initializeUploadButtons() {
+
+        //Evitar inicialización múltiple
+        if (uploadListenersInitialized) {
+            return;
+        }
+
         const cameraUpload = document.getElementById('cameraUpload');
         const fileUpload = document.getElementById('fileUpload');
         const cameraInput = document.getElementById('cameraInput');
         const fileInput = document.getElementById('fileInput');
 
-        // Camera upload click
-        if (cameraUpload && cameraInput) {
-            cameraUpload.addEventListener('click', function() {
-                console.log(' Activando cámara...');
-                cameraInput.click();
-            });
-
-            cameraInput.addEventListener('change', function(e) {
-                handleImageUpload(e.target.files, 'camera');
-            });
+        if (!cameraUpload || !fileUpload || !cameraInput || !fileInput) {
+            return;
         }
 
-        // File upload click
-        if (fileUpload && fileInput) {
-            fileUpload.addEventListener('click', function() {
-                console.log(' Abriendo selector de archivos...');
-                fileInput.click();
-            });
+        //Limpiar listeners anteriores antes de agregar nuevos
+        cleanupUploadListeners();
 
-            fileInput.addEventListener('change', function(e) {
-                handleImageUpload(e.target.files, 'file');
-            });
-        }
+        //Definir funciones con nombres específicos para poder removerlas
+        const handleCameraClick = function() {
+            cameraInput.click();
+        };
+
+        const handleFileClick = function() {
+            fileInput.click();
+        };
+
+        const handleCameraChange = function(e) {
+            handleImageUpload(e.target.files, 'camera');
+        };
+
+        const handleFileChange = function(e) {
+            handleImageUpload(e.target.files, 'file');
+        };
+
+        //Agregar event listeners únicos
+        cameraUpload.addEventListener('click', handleCameraClick);
+        cameraInput.addEventListener('change', handleCameraChange);
+        fileUpload.addEventListener('click', handleFileClick);
+        fileInput.addEventListener('change', handleFileChange);
+
+        //Guardar referencias para cleanup posterior
+        window.uploadEventListeners = {
+            cameraUpload: { element: cameraUpload, event: 'click', handler: handleCameraClick },
+            cameraInput: { element: cameraInput, event: 'change', handler: handleCameraChange },
+            fileUpload: { element: fileUpload, event: 'click', handler: handleFileClick },
+            fileInput: { element: fileInput, event: 'change', handler: handleFileChange }
+        };
 
         // Drag and drop functionality
         initializeDragAndDrop();
-        //console.log('Sistema de subida inicializado');
+
+        //Marcar como inicializado
+        uploadListenersInitialized = true;
     }
 
+    /*==============================================================================================================*/
+    // ==>> Función de limpieza de event listeners <<==
+    function cleanupUploadListeners() {
+        if (window.uploadEventListeners) {
+            Object.values(window.uploadEventListeners).forEach(listener => {
+                if (listener.element && listener.handler) {
+                    listener.element.removeEventListener(listener.event, listener.handler);
+                }
+            });
+            window.uploadEventListeners = null;
+        }
+    }
+    /*==============================================================================================================*/
     function handleImageUpload(files, source) {
         if (!files || files.length === 0) {
             showNotification('No se seleccionaron archivos', 'warning');
@@ -873,8 +941,6 @@
                             }, 1000);
                         } else {
                             //USUARIO NORMAL: Solo guardar sin redirigir
-                            agregarImagenesHistorial(savedImages);
-
                             setTimeout(() => {
                                 guardarUsuarioNormal(savedImages);
                             }, 1000);
@@ -924,9 +990,6 @@
                         <i class="fas fa-images me-2"></i>
                         ${imageCount} imagen(es) seleccionada(s)
                     </h5>
-                    <p class="mb-0 text-muted">
-                        Los datos que ingreses se aplicarán a todas las imágenes.
-                    </p>
             </div>
         `;
 
@@ -1222,10 +1285,16 @@
     }
 
     function generatePONumber() {
+        if (!DESARROLLO_MODE) {
+            return null;
+        }
         return '6000' + Math.floor(Math.random() * 900000 + 100000);
     }
 
     function generateOCNumber() {
+        if (!DESARROLLO_MODE) {
+            return null;
+        }
         return '4200' + Math.floor(Math.random() * 9000000 + 1000000);
     }
 
@@ -1729,25 +1798,6 @@ function cerrarModalEdicion() {
         }
     }, 500);
 }
-
-    /*=====================================================================================================================*/
-
-    //AGREGAR función para prevenir duplicados:
-    function agregarImagenesHistorial(nuevasImagenes) {
-        nuevasImagenes.forEach(imagen => {
-            //VERIFICAR si ya existe por ID
-            const existeId = uploadedImages.find(img => img.id === imagen.id);
-            const existeUrl = uploadedImages.find(img => img.url === imagen.url);
-
-            if (!existeId && !existeUrl) {
-                uploadedImages.push(imagen);
-                console.log(`Imagen agregada: ID ${imagen.id}`);
-            } else {
-                console.log(`Imagen duplicada omitida: ID ${imagen.id}`);
-            }
-        });
-    }
-
     /*========================================================================================================================*/
 
     // ====>>>>> Inicialización principal fotos-sit-add
@@ -1791,17 +1841,26 @@ function cerrarModalEdicion() {
 // ================================================================================================
 
 function limpiarOperacion() {
-    // 1. Limpiar inputs de archivo
-    const fileInputs = document.querySelectorAll('input[type="file"]');
-    fileInputs.forEach(input => input.value = '');
 
-    // 2. Limpiar campo de búsqueda
+    // 1. Limpiar event listeners para evitar duplicados
+    cleanupUploadListeners();
+
+    // 2. Limpiar inputs de archivo
+    const fileInputs = document.querySelectorAll('input[type="file"]');
+    fileInputs.forEach(input => {
+        input.value = '';
+        //Limpiar event listeners de inputs
+        const newInput = input.cloneNode(true);
+        input.parentNode.replaceChild(newInput, input);
+    });
+
+    // 3. Limpiar campo de búsqueda
     const ordenSitInput = document.getElementById('ordenSitInput');
     if (ordenSitInput) {
         ordenSitInput.value = '';
     }
 
-    // 3. Ocultar cards
+    // 4. Ocultar cards
     const ordenSitCard = document.getElementById('ordenSitCard');
     const historialCard = document.getElementById('historialFotosCard');
     const limpiarBoton = document.getElementById('limpiarBoton');
@@ -1818,13 +1877,13 @@ function limpiarOperacion() {
         limpiarBoton.style.display = 'none';
     }
 
-    // 4. Resetear la vista previa al placeholder
+    // 5. Resetear la vista previa al placeholder
     const prendaPreview = document.getElementById('prendaPreview');
     if (prendaPreview) {
         mostrarPlaceholderImagen(prendaPreview);
     }
 
-    // 5. Limpiar variables globales
+    // 6. Limpiar variables globales
     if (typeof uploadedImages !== 'undefined') {
         uploadedImages = [];
     }
@@ -1835,12 +1894,20 @@ function limpiarOperacion() {
         tipoSeleccionado = null;
     }
 
-    // 6. Limpiar localStorage
+    // 7. Resetear flag de inicialización
+    uploadListenersInitialized = false;
+
+    // 8. Limpiar localStorage
     localStorage.removeItem('newUploadedImages');
     localStorage.removeItem('uploadedImages');
 
-    // 7. Limpiar historial visual
+    // 9. Limpiar historial visual
     limpiarHistorialVisual();
+
+    //Reinicializar listeners limpios
+    setTimeout(() => {
+        initializeUploadButtons();
+    }, 100);
 }
 
 // Configurar el botón al cargar la página

@@ -2739,6 +2739,8 @@ function updateFilterStatus() {
     const activeFilterCount = Object.keys(activeFilters).length;
     const visibleRows = filteredData.length;
     const totalRows = allTableData.length;
+
+    console.log(`Estado de filtros: ${activeFilterCount} activos, ${visibleRows}/${totalRows} filas visibles`);
 }
 
 // ===== FUNCIONES AUXILIARES =====
@@ -3644,8 +3646,6 @@ if (typeof addImageToTable === 'function') {
 
         return result;
     };
-} else {
-    console.log('Función addImageToTable no encontrada, buscando alternativas...');
 }
 
 // ===== INTERCEPTAR FUNCIONES DE ELIMINACIÓN =====

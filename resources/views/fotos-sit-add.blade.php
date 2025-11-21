@@ -9,7 +9,7 @@
 <script>
     const isAdmin = false; // false -> usuario normal, true -> administrador
 
-    const DESARROLLO_MODE = true; // Cambiar a false en producción
+    const DESARROLLO_MODE = false; // Cambiar a False en producción - True funciona con datos generados de prueba
 </script>
 
 <div class="container mt-4">
@@ -222,6 +222,14 @@
                         //ORDEN EXISTE - Mostrar datos existentes
                         const primeraFoto = fotografias[0];
 
+                        window.currentImageData = {
+                            orden_sit: primeraFoto.orden_sit,
+                            po: primeraFoto.po,
+                            oc: primeraFoto.oc,
+                            isReal: true,
+                            source: 'database'
+                        }
+
                         //Comportamiento según ROL
                         if (isAdmin) {
                             //Redirección directa a tabla
@@ -253,14 +261,14 @@
                     console.error('Error en respuesta:', response.message);
 
                     if (DESARROLLO_MODE) {
-                        // 🧪 DESARROLLO: Permitir continuar
+                        //DESARROLLO: Permitir continuar
                         if (isAdmin) {
                             redirectToTableAdmin(value);
                         } else {
                             mostrarOrdenNueva(value);
                         }
                     } else {
-                        // ❌ PRODUCCIÓN: Mostrar error
+                        //PRODUCCIÓN: Mostrar error
                         showNotification('Error de conexión con la base de datos', 'error', 3000);
                     }
               }
@@ -269,14 +277,14 @@
                 console.error('Error buscando orden:', error);
 
                 if (DESARROLLO_MODE) {
-                    // 🧪 DESARROLLO: Permitir continuar
+                    //DESARROLLO: Permitir continuar
                     if (isAdmin) {
                         redirectToTableAdmin(value);
                     } else {
                         mostrarOrdenNueva(value);
                     }
                 } else {
-                    // ❌ PRODUCCIÓN: Mostrar error
+                    //PRODUCCIÓN: Mostrar error
                     showNotification('Error de conexión con la base de datos', 'error', 3000);
                 }
             }
@@ -782,6 +790,18 @@
 
         // ================= FUNCIÓN: Modal para lote de imágenes ===================
         function showBatchImageModal(imageDataArray, uploadBtn) {
+            if (!DESARROLLO_MODE) {
+                const ordenSitValue = document.getElementById('ordenSitValue')?.textContent;
+                if (!ordenSitValue || ordenSitValue === 'N/A') {
+                    throw new Error('Debe buscar una orden SIT válida antes de subir imágenes');
+                }
+
+                // Verificar que hay datos de orden
+                if (!window.currentImageData || !window.currentImageData.isReal) {
+                    throw new Error('Solo se pueden subir imágenes a órdenes SIT existentes en la base de datos');
+                }
+            }
+
             //VALIDACIÓN ADICIONAL
             if (!imageDataArray || imageDataArray.length === 0) {
                 setUploadState(uploadBtn, 'normal');
@@ -862,12 +882,21 @@
                             const fileName = imageData.name || `imagen_${Date.now()}_${i}.jpg`;
                             const file = new File([blob], fileName, { type: blob.type });
 
+                            //Búsqueda de P.O y O.C en DB
+                            const poValue = window.currentImageData?.po || generatePONumber();
+                            const ocValue = window.currentImageData?.oc || generateOCNumber();
+
+                            // Validar que hay datos válidos
+                            if (!DESARROLLO_MODE && (!poValue || !ocValue)) {
+                                throw new Error('Error: No se pueden obtener P.O y O.C válidos en producción');
+                            }
+
                             // Crear FormData
                             const formData = new FormData();
                             formData.append('imagen', file);
                             formData.append('orden_sit', ordenSitValue);
-                            formData.append('po', generatePONumber());
-                            formData.append('oc', generateOCNumber());
+                            formData.append('po', poValue || 'SIN_PO');
+                            formData.append('oc', ocValue || 'SIN_OC');
                             formData.append('descripcion', descripcionVal);
                             formData.append('tipo', tipoFotografia.toUpperCase());
                             formData.append('origen_vista', 'fotos-sit-add');

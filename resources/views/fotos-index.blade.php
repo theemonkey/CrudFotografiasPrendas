@@ -1055,12 +1055,12 @@ function showBatchImageModal(imageDataArray, uploadBtn) {
             const poUnificado = generatePONumber();
             const ocUnificado = generateOCNumber();
 
-            // ✅ VALIDAR que se generaron correctamente
+            //VALIDAR que se generaron correctamente
             if (!DESARROLLO_MODE && (!ordenSitActual || !poUnificado || !ocUnificado)) {
                 throw new Error('Error: Faltan datos de orden válidos para producción');
             }
 
-            // ✅ USAR valores por defecto si es necesario en producción
+            //USAR valores por defecto si es necesario en producción
             const ordenFinal = ordenSitActual || 'SIN_ORDEN';
             const poFinal = poUnificado || 'SIN_PO';
             const ocFinal = ocUnificado || 'SIN_OC';
@@ -1674,7 +1674,7 @@ function uploadToBackendIndex(formData) {
 
     /*==============================================================================================*/
     //==>> Booleano cambiar a conveniencia
-    const DESARROLLO_MODE = true; // Cambiar a false en producción
+    const DESARROLLO_MODE = false; // Cambiar a False en producción - True funciona con datos generados de prueba
 
     function generateOrderNumber() {
         if (!DESARROLLO_MODE) {

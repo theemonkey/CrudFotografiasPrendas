@@ -614,6 +614,16 @@
 <script src="{{ asset('js/pagination.js') }}"></script>
 
 <script>
+
+    //DETECTAR TIPO DE USUARIO SIMPLE
+    const urlParams = new URLSearchParams(window.location.search);
+    const isUserAccess = urlParams.get('user_access') === 'true';
+    const isAdminAccess = urlParams.get('admin_access') === 'true';
+
+    //CONFIGURAR PERMISOS GLOBALES SIMPLES
+    window.showDeleteButtons = isAdminAccess; // Solo admins ven botón eliminar
+    window.showEditButtons = isAdminAccess;   // Solo admins ven botón editar
+
     // === Funcion crear filas de imagen ===
     function createImageRowHTML(data, source = 'frontend') {
         const isBackend = source === 'backend';
@@ -655,22 +665,54 @@
             <td data-column="descripcion">${descripcion}</td>
             <td data-column="tipo-fotografia">${tipo}</td>
             <td data-column="acciones">
-                <button class="btn btn-danger btn-sm me-1 btn-delete" onclick="${deleteFunction}" title="Eliminar imagen">
-                    <i class="fas fa-trash"></i>
-                </button>
-                <button class="btn btn-warning btn-sm me-1 btn-edit" onclick="${editFunction}" title="Editar información">
-                    <i class="fas fa-edit"></i>
-                </button>
-                <button class="btn btn-info btn-sm comment-btn me-1" onclick="openCommentsModal(this)" title="Ver comentarios">
-                    <i class="fas fa-comments"></i>
-                </button>
-                <button class="btn btn-success btn-sm btn-historial" onclick="openHistorialModal(this)" title="Historial">
-                    <i class="fas fa-history"></i>
-                </button>
+                ${generateActionButtons(data, source)}
             </td>
         `;
     }
-/*==============================================================================================================*/
+
+    /*===========================================================================================================*/
+    // Agregar esta función para crear u ocultar botones segun corresponda:
+    function generateActionButtons(data, source) {
+        const showDelete = window.showDeleteButtons !== false; // Por defecto true, false solo si se especifica
+        const showEdit = window.showEditButtons !== false;     // Por defecto true, false solo si se especifica
+        const isBackend = source === 'backend';
+
+        let buttonsHTML = '';
+
+        //Botón eliminar - Solo si está permitido
+        if (showDelete) {
+            const deleteFunction = isBackend ? `deleteBackendImage(${data.id}, this)` : 'deleteImage(this)';
+            buttonsHTML += `
+                <button class="btn btn-danger btn-sm me-1 btn-delete" onclick="${deleteFunction}" title="Eliminar imagen">
+                    <i class="fas fa-trash"></i>
+                </button>
+            `;
+        }
+
+        // Botón editar - Solo si está permitido
+        if (showEdit) {
+            const editFunction = isBackend ? `editBackendImage(${data.id}, this)` : 'editImage(this)';
+            buttonsHTML += `
+                <button class="btn btn-warning btn-sm me-1 btn-edit" onclick="${editFunction}" title="Editar información">
+                    <i class="fas fa-edit"></i>
+                </button>
+            `;
+        }
+
+        //Botones de comentarios e historial - Siempre visibles para todos los roles de usuario
+        buttonsHTML += `
+            <button class="btn btn-info btn-sm comment-btn me-1" onclick="openCommentsModal(this)" title="Ver comentarios">
+                <i class="fas fa-comments"></i>
+            </button>
+            <button class="btn btn-success btn-sm btn-historial" onclick="openHistorialModal(this)" title="Historial">
+                <i class="fas fa-history"></i>
+            </button>
+        `;
+
+        return buttonsHTML;
+    }
+
+  /*==============================================================================================================*/
     // ===== FUNCIONES DE LIGHTBOX CORREGIDAS =====
     function openLightbox(imageUrl, description, type) {
         //VALIDA QUE LA URL NO ESTÉ VACÍA
@@ -1674,7 +1716,7 @@ function uploadToBackendIndex(formData) {
 
     /*==============================================================================================*/
     //==>> Booleano cambiar a conveniencia
-    const DESARROLLO_MODE = false; // Cambiar a False en producción - True funciona con datos generados de prueba
+    const DESARROLLO_MODE = true; // Cambiar a False en producción - True funciona con datos generados de prueba
 
     function generateOrderNumber() {
         if (!DESARROLLO_MODE) {

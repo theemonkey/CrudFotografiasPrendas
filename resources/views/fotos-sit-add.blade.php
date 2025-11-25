@@ -7,9 +7,9 @@
 
 {{--INDICADOR DE ROL --}}
 <script>
-    const isAdmin = false; // false -> usuario normal, true -> administrador
+    const isAdmin = true; // false -> usuario normal, true -> administrador
 
-    const DESARROLLO_MODE = false; // Cambiar a False en producción - True funciona con datos generados de prueba
+    const DESARROLLO_MODE = true; // Cambiar a False en producción - True funciona con datos generados de prueba
 </script>
 
 <div class="container mt-4">
@@ -233,7 +233,9 @@
                         //Comportamiento según ROL
                         if (isAdmin) {
                             //Redirección directa a tabla
-                            redirectToTableAdmin(primeraFoto.orden_sit);
+                            setTimeout(() => {
+                                window.location.href = `{{ route('fotos-index') }}?orden_sit=${encodeURIComponent(primeraFoto.orden_sit)}&admin_access=true`;
+                            }, 1500);
                         } else {
                             //Usuario normal -> mostrar interfaz de subida
                             mostrarOrdenExistente(primeraFoto, fotografias.length);
@@ -333,6 +335,40 @@
             limpiarBoton.style.display = 'inline-block';
         }
 
+        //Agregar botón ver tabla para usuarios normales
+        if (!isAdmin) {
+        // Verificar que no exista ya el botón
+            const existingBtn = document.querySelector('.ver-tabla-btn-container');
+            if (!existingBtn) {
+                // CREAR CONTENEDOR DEL BOTÓN EN LA MISMA ÁREA DE UPLOAD
+                const uploadButtonsContainer = document.querySelector('.upload-buttons');
+                if (uploadButtonsContainer) {
+                    const verTablaContainer = document.createElement('div');
+                    verTablaContainer.className = 'ver-tabla-btn-container mt-2 d-flex justify-content-end';
+
+                    const verTablaBtn = document.createElement('button');
+                    verTablaBtn.className = 'btn btn-outline-success btn-sm';
+                    verTablaBtn.innerHTML = '<i class="fas fa-table me-1"></i> Ver Tabla';
+                    verTablaBtn.onclick = () => {
+                        window.location.href = `{{ route('fotos-index') }}?orden_sit=${encodeURIComponent(primeraFoto.orden_sit)}&user_access=true`;
+                    };
+
+                    //ESTILOS PARA POSICIONAR EN ESQUINA:
+                    verTablaBtn.style.cssText = `
+                        padding: 6px 12px;
+                        font-size: 13px;
+                        border-radius: 6px;
+                        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+                        transition: all 0.3s ease;
+                        margin-top: 8px;
+                    `;
+
+                    verTablaContainer.appendChild(verTablaBtn);
+                    uploadButtonsContainer.parentNode.insertBefore(verTablaContainer, uploadButtonsContainer.nextSibling);
+                }
+            }
+        }
+
         // AGREGAR: Mostrar historial si hay imágenes
         if (uploadedImages.length > 0) {
             mostrarHistorialCard();
@@ -371,10 +407,46 @@
             limpiarBoton.style.display = 'inline-block';
         }
 
-        // AGREGAR: Mostrar historial si hay imágenes
-        if (uploadedImages.length > 0) {
-            mostrarHistorialCard();
+        //Agregar botón ver tabla para usuarios normales
+        if (!isAdmin) {
+            // Verificar que no exista ya el botón
+            const existingBtn = document.querySelector('.ver-tabla-btn-container');
+            if (!existingBtn) {
+                //Crear contenedor del boton en la misma area de upload
+                const uploadButtonsContainer = document.querySelector('.upload-buttons');
+                if (uploadButtonsContainer) {
+                    const verTablaContainer = document.createElement('div');
+                    verTablaContainer.className = 'ver-tabla-btn-container mt-2 d-flex justify-content-end';
+
+                    const verTablaBtn = document.createElement('button');
+                    verTablaBtn.className = 'btn btn-outline-primary btn-sm';
+                    verTablaBtn.innerHTML = '<i class="fas fa-table me-1"></i> Ver Tabla';
+                    verTablaBtn.onclick = () => {
+                        window.location.href = `{{ route('fotos-index') }}?orden_sit=${encodeURIComponent(numeroOrden)}&user_access=true`;
+                    };
+
+                    //Estilos para posicionar zona inferior derecha
+                    verTablaBtn.style.cssText = `
+                        padding: 6px 12px;
+                        font-size: 13px;
+                        border-radius: 6px;
+                        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+                        transition: all 0.3s ease;
+                        margin-top: 8px;
+                    `;
+
+                    verTablaContainer.appendChild(verTablaBtn);
+
+                    //Insertar después del contenedor de botones upload
+                    uploadButtonsContainer.parentNode.insertBefore(verTablaContainer, uploadButtonsContainer.nextSibling);
+                }
+            }
         }
+
+            // AGREGAR: Mostrar historial si hay imágenes
+            if (uploadedImages.length > 0) {
+                mostrarHistorialCard();
+            }
     }
 
     /*=====================================================================================================*/
@@ -951,6 +1023,49 @@
                     if (savedImages.length > 0) {
                         uploadedImages.push(...savedImages);
                         modal.hide();
+
+                        //===>>> Agregar botón "VER TABLA" después de subida exitosa
+                        if (!isAdmin && savedImages.length > 0) {
+                            setTimeout(() => {
+                                const existingBtn = document.querySelector('.ver-tabla-btn-container');
+                                if (!existingBtn) {
+                                    const uploadButtonsContainer = document.querySelector('.upload-buttons');
+                                    if (uploadButtonsContainer) {
+                                        const verTablaContainer = document.createElement('div');
+                                        verTablaContainer.className = 'ver-tabla-btn-container mt-2 d-flex justify-content-end';
+
+                                        const verTablaBtn = document.createElement('button');
+                                        verTablaBtn.className = 'btn btn-success btn-sm';
+                                        verTablaBtn.innerHTML = '<i class="fas fa-table me-1"></i> Ver Tabla';
+                                        verTablaBtn.onclick = () => {
+                                            const ordenActual = document.getElementById('ordenSitValue')?.textContent;
+                                            window.location.href = `{{ route('fotos-index') }}?orden_sit=${encodeURIComponent(ordenActual)}&user_access=true`;
+                                        };
+
+                                        //Estilos para botón
+                                        verTablaBtn.style.cssText = `
+                                            padding: 6px 12px;
+                                            font-size: 13px;
+                                            border-radius: 6px;
+                                            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+                                            transition: all 0.3s ease;
+                                            margin-top: 8px;
+                                            opacity: 0;
+                                            transform: translateY(10px);
+                                        `;
+
+                                        verTablaContainer.appendChild(verTablaBtn);
+                                        uploadButtonsContainer.parentNode.insertBefore(verTablaContainer, uploadButtonsContainer.nextSibling);
+
+                                        //Animación de aparición
+                                        setTimeout(() => {
+                                            verTablaBtn.style.opacity = '1';
+                                            verTablaBtn.style.transform = 'translateY(0)';
+                                        }, 100);
+                                    }
+                                }
+                            }, 1000);
+                        }
 
                         // Actualizar vista previa con la primera imagen subida
                         updateCardPreview(savedImages[0]);
@@ -1905,6 +2020,10 @@ function limpiarOperacion() {
     if (limpiarBoton) {
         limpiarBoton.style.display = 'none';
     }
+
+    // 4.5 Limpiar botones dinámicos agregados
+    const dynamicButtons = document.querySelectorAll('.ver-tabla-btn, .ver-tabla-btn-container');
+    dynamicButtons.forEach(btn => btn.remove());
 
     // 5. Resetear la vista previa al placeholder
     const prendaPreview = document.getElementById('prendaPreview');

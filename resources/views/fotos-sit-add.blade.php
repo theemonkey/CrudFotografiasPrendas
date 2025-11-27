@@ -7,7 +7,7 @@
 
 {{--INDICADOR DE ROL --}}
 <script>
-    const isAdmin = true; // false -> usuario normal, true -> administrador
+    const isAdmin = false; // false -> usuario normal, true -> administrador
 
     const DESARROLLO_MODE = true; // Cambiar a False en producción - True funciona con datos generados de prueba
 </script>
@@ -350,7 +350,32 @@
                     verTablaBtn.className = 'btn btn-outline-success btn-sm';
                     verTablaBtn.innerHTML = '<i class="fas fa-table me-1"></i> Ver Tabla';
                     verTablaBtn.onclick = () => {
-                        window.location.href = `{{ route('fotos-index') }}?orden_sit=${encodeURIComponent(primeraFoto.orden_sit)}&user_access=true`;
+                        //Forzar transferencia de datos
+                        if (uploadedImages.length > 0) {
+                            const dataToTransfer = {
+                                images: uploadedImages.map(img => ({
+                                    id: img.id,
+                                    backendId: img.id,
+                                    url: img.url,
+                                    imagen_url: img.url,
+                                    orden_sit: img.orden_sit,
+                                    po: img.po,
+                                    oc: img.oc,
+                                    descripcion: img.descripcion,
+                                    tipo: img.tipo,
+                                    created_at: img.created_at,
+                                    fecha_subida: img.created_at,
+                                    source: 'backend-confirmed',
+                                    isBackendImage: true,
+                                    fromSitAdd: true
+                                })),
+                                timestamp: Date.now(),
+                                totalImages: uploadedImages.length
+                            };
+                            localStorage.setItem('newUploadedImages', JSON.stringify(dataToTransfer));
+                        }
+
+                        window.location.href = `{{ route('fotos-index') }}?orden_sit=${encodeURIComponent(primeraFoto.orden_sit)}&user_access=true&reload_data=true`;
                     };
 
                     //ESTILOS PARA POSICIONAR EN ESQUINA:
@@ -422,7 +447,32 @@
                     verTablaBtn.className = 'btn btn-outline-primary btn-sm';
                     verTablaBtn.innerHTML = '<i class="fas fa-table me-1"></i> Ver Tabla';
                     verTablaBtn.onclick = () => {
-                        window.location.href = `{{ route('fotos-index') }}?orden_sit=${encodeURIComponent(numeroOrden)}&user_access=true`;
+                        //Forzar transferencia de datos
+                        if (uploadedImages.length > 0) {
+                            const dataToTransfer = {
+                                images: uploadedImages.map(img => ({
+                                    id: img.id,
+                                    backendId: img.id,
+                                    url: img.url,
+                                    imagen_url: img.url,
+                                    orden_sit: img.orden_sit,
+                                    po: img.po,
+                                    oc: img.oc,
+                                    descripcion: img.descripcion,
+                                    tipo: img.tipo,
+                                    created_at: img.created_at,
+                                    fecha_subida: img.created_at,
+                                    source: 'backend-confirmed',
+                                    isBackendImage: true,
+                                    fromSitAdd: true
+                                })),
+                                timestamp: Date.now(),
+                                totalImages: uploadedImages.length
+                            };
+                            localStorage.setItem('newUploadedImages', JSON.stringify(dataToTransfer));
+                        }
+
+                        window.location.href = `{{ route('fotos-index') }}?orden_sit=${encodeURIComponent(numeroOrden)}&user_access=true&reload_data=true`;
                     };
 
                     //Estilos para posicionar zona inferior derecha
@@ -554,12 +604,39 @@
     /*=========================================================================================*/
     //Función para USUARIOS NORMALES
     function guardarUsuarioNormal(savedImages) {
-        // Mostrar confirmación sin redirección
-        /*showNotification(
-            `${savedImages.length} imagen(es) guardada(s) correctamente. Puede continuar subiendo más fotos.`,
-            'success',
-            4000
-        );*/
+        //Preparar datos completos para transferir a fotos-index
+        const dataToTransfer = {
+            images: savedImages.map(img => ({
+                //Datos del backend (ya subido)
+                id: img.id,
+                backendId: img.id,
+                url: img.url,
+                imagen_url: img.url, // Para compatibilidad con backend
+                orden_sit: img.orden_sit,
+                po: img.po,
+                oc: img.oc,
+                descripcion: img.descripcion,
+                tipo: img.tipo,
+                created_at: img.created_at,
+                fecha_subida: img.created_at,
+
+                //Metadatos adicionales
+                origenVista: 'fotos-sit-add',
+                procesadoPor: 'fotos-sit-add',
+                displayOnly: false,  //Puede ser editada
+                uploaded: true,     //Ya subida
+                isBackendImage: true,  //Es imagen de backend
+                source: 'backend-confirmed',
+                fromSitAdd: true,
+                transferTimestamp: Date.now()
+            })),
+            timestamp: Date.now(),
+            totalImages: savedImages.length,
+            ordenSit: document.getElementById('ordenSitValue')?.textContent || 'N/A'
+        };
+
+        //Guardar en localStorage
+        localStorage.setItem('newUploadedImages', JSON.stringify(dataToTransfer));
 
         // Actualizar historial de fotos
         mostrarHistorialCard();

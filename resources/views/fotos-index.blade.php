@@ -619,10 +619,125 @@
     const urlParams = new URLSearchParams(window.location.search);
     const isUserAccess = urlParams.get('user_access') === 'true';
     const isAdminAccess = urlParams.get('admin_access') === 'true';
+    const shouldReloadData = urlParams.get('reload_data') === 'true';
+    const ordenSitParam = urlParams.get('orden_sit');
 
-    //CONFIGURAR PERMISOS GLOBALES SIMPLES
-    window.showDeleteButtons = isAdminAccess; // Solo admins ven botón eliminar
-    window.showEditButtons = isAdminAccess;   // Solo admins ven botón editar
+    //Determinar tipo de usuario
+    let isReallyAdmin;
+
+    if (isUserAccess === true) {
+        // Explícitamente marcado como usuario normal
+        isReallyAdmin = false;
+    } else if (isAdminAccess === true) {
+        // Explícitamente marcado como administrador
+        isReallyAdmin = true;
+    } else {
+        //Verificar si viene desde fotos-sit-add
+        const transferredData = localStorage.getItem('newUploadedImages');
+        const hasTransferredImages = transferredData && JSON.parse(transferredData)?.images?.length > 0;
+
+        if (hasTransferredImages) {
+            // Si hay imágenes transferidas, probablemente es usuario normal
+            isReallyAdmin = false;
+        } else {
+            // Acceso directo sin contexto -> Admin por defecto
+            isReallyAdmin = true;
+        }
+    }
+
+    //CONFIGURAR PERMISO GLOBAL SIMPLE
+    window.showDeleteButtons = isReallyAdmin;
+    window.showEditButtons = isReallyAdmin;
+
+    console.log('Tipo de acceso:', {
+        isUserAccess,
+        isAdminAccess,
+        isReallyAdmin,
+        ordenSitParam,
+        showDeleteButtons: window.showDeleteButtons,
+        showEditButtons: window.showEditButtons,
+        accessType: isReallyAdmin ? 'ADMINISTRADOR' : 'USUARIO NORMAL'
+    });
+
+    if (isAdminAccess && !ordenSitParam) {
+        setTimeout(() => {
+            if (typeof loadPhotosFromBackend === 'function') {
+                loadPhotosFromBackend();
+            }
+        }, 800);
+    }
+
+    //Procesar datos transferidos desde fotos-sit-add
+    document.addEventListener('DOMContentLoaded', function() {
+        //Procesar datos transferidos primero
+        const transferredData = localStorage.getItem('newUploadedImages');
+        let hasTransferredData = false;
+        let processedTransferredImages = 0;
+
+        if (transferredData) {
+            try {
+                const data = JSON.parse(transferredData);
+
+                if (data.images && data.images.length > 0) {
+                    hasTransferredData = true;
+
+                    //Procesar cada imagen transferida
+                    data.images.forEach((imageData, index) => {
+                        console.log(`Imagen transferida ${index + 1}:`, {
+                            id: imageData.id,
+                            url: imageData.imagen_url || imageData.url,
+                            descripcion: imageData.descripcion,
+                            fromSitAdd: imageData.fromSitAdd
+                        });
+
+                        //Normalizar datos para compatibilidad
+                        const normalizedImageData = {
+                            id: imageData.id || imageData.backendId,
+                            imagen_url: imageData.imagen_url || imageData.url,
+                            url: imageData.imagen_url || imageData.url,
+                            orden_sit: imageData.orden_sit,
+                            po: imageData.po,
+                            oc: imageData.oc,
+                            descripcion: imageData.descripcion,
+                            tipo: imageData.tipo,
+                            created_at: imageData.created_at,
+                            fecha_subida: imageData.created_at,
+                            fromSitAdd: true,
+                            transferTimestamp: Date.now()
+                        };
+
+                        //Agregar con delay para animación
+                        setTimeout(() => {
+                            addBackendImageToTable(normalizedImageData);
+                            processedTransferredImages++;
+                        }, index * 100);
+                    });
+                }
+
+                //Limpiar localStorage después de procesar
+                localStorage.removeItem('newUploadedImages');
+
+            } catch (error) {
+                console.error('Error procesando datos transferidos:', error);
+                localStorage.removeItem('newUploadedImages');
+            }
+        } else {
+            console.log('No hay datos transferidos');
+        }
+
+        // Cargar backend después de transferidas
+        const delayBackendLoad = hasTransferredData ? 2000 : 800; // 2s si hay transferidos, 0.8s si no
+
+        setTimeout(() => {
+            console.log('niciando carga del backend...');
+            if (typeof loadPhotosFromBackend === 'function') {
+                loadPhotosFromBackend();
+            } else {
+                console.error('Función loadPhotosFromBackend no está definida');
+            }
+        }, delayBackendLoad);
+    });
+  /*=================================================================================================================================*/
 
     // === Funcion crear filas de imagen ===
     function createImageRowHTML(data, source = 'frontend') {
@@ -673,13 +788,14 @@
     /*===========================================================================================================*/
     // Agregar esta función para crear u ocultar botones segun corresponda:
     function generateActionButtons(data, source) {
-        const showDelete = window.showDeleteButtons !== false; // Por defecto true, false solo si se especifica
-        const showEdit = window.showEditButtons !== false;     // Por defecto true, false solo si se especifica
+        //Verificar permisos globales
+        const showDelete = window.showDeleteButtons === true;
+        const showEdit = window.showEditButtons === true;
         const isBackend = source === 'backend';
 
         let buttonsHTML = '';
 
-        //Botón eliminar - Solo si está permitido
+        //BOTÓN ELIMINAR - Solo para administradores
         if (showDelete) {
             const deleteFunction = isBackend ? `deleteBackendImage(${data.id}, this)` : 'deleteImage(this)';
             buttonsHTML += `
@@ -689,7 +805,7 @@
             `;
         }
 
-        // Botón editar - Solo si está permitido
+        //BOTÓN EDITAR - Solo para administradores
         if (showEdit) {
             const editFunction = isBackend ? `editBackendImage(${data.id}, this)` : 'editImage(this)';
             buttonsHTML += `
@@ -699,7 +815,7 @@
             `;
         }
 
-        //Botones de comentarios e historial - Siempre visibles para todos los roles de usuario
+        //BOTONES SIEMPRE VISIBLES - Para todos los usuarios
         buttonsHTML += `
             <button class="btn btn-info btn-sm comment-btn me-1" onclick="openCommentsModal(this)" title="Ver comentarios">
                 <i class="fas fa-comments"></i>
@@ -1755,33 +1871,92 @@ function uploadToBackendIndex(formData) {
 <script>
     //FUNCIÓN PARA CARGAR DATOS DEL BACKEND AL INICIAR
     function loadPhotosFromBackend() {
+        //Obtener parametros de url
+        const urlParams = new URLSearchParams(window.location.search);
+        const ordenSitParam = urlParams.get('orden_sit');
+        const isAdminAccess = urlParams.get('admin_access') === 'true';
+
+        //Preparar datos de consulta - siempre cargar todas las fotos
+        const queryData = {
+            per_page: 100 // Cargar todas las fotografías disponibles
+        };
+
         $.ajax({
             url: '/api/fotografias',
             type: 'GET',
-            data: {
-                per_page: 100 // Cargar muchos registros inicialmente
-            },
+            data: queryData,
             headers: {
                 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
             },
+            timeout: 15000,
             success: function(response) {
                 if (response.success) {
-                    const fotografias = response.data || [];
+                    //Extraer datos correctamente
+                    let fotografias = [];
 
-                    // Agregar cada fotografía a la tabla
-                    fotografias.forEach((foto, index) => {
-                        setTimeout(() => {
-                            addBackendImageToTable(foto);
-                        }, index * 50); // Pequeño delay para animación
-                    });
+                    if (response.data && Array.isArray(response.data.data)) {
+                        fotografias = response.data.data; // Paginación Laravel
+                    } else if (response.data && Array.isArray(response.data)) {
+                        fotografias = response.data; // Array directo
+                    } else if (Array.isArray(response)) {
+                        fotografias = response; // Respuesta directa
+                    }
 
-                    //showNotification(`${fotografias.length} fotografías cargadas`, 'success');
+                    if (fotografias.length > 0) {
+                        //Verificar duplicados
+                        const tableBody = document.getElementById('imagesTableBody');
+                        const existingIds = new Set();
+
+                        if (tableBody) {
+                            tableBody.querySelectorAll('tr[data-image-id]').forEach(row => {
+                                const imageId = row.dataset.imageId;
+                                if (imageId) {
+                                    existingIds.add(imageId.replace('backend_', ''));
+                                }
+                            });
+                        }
+
+                        //Filtrar solo duplicados, no por orden Sit
+                        const fotografiasNuevas = fotografias.filter(foto => {
+                            const isNew = !existingIds.has(foto.id?.toString());
+                            if (!isNew) {
+                            }
+                            return isNew;
+                        });
+
+                        //Agregar todas las fotografías nuevas
+                        if (fotografiasNuevas.length > 0) {
+                            fotografiasNuevas.forEach((foto, index) => {
+                                setTimeout(() => {
+                                    addBackendImageToTable(foto);
+                                }, index * 50);
+                            });
+                        }
+                    } else {
+                        // Solo mostrar mensaje si no hay datos transferidos
+                        const tableBody = document.getElementById('imagesTableBody');
+                        const hasExistingData = tableBody && tableBody.children.length > 0;
+
+                        if (!hasExistingData && typeof showNotification === 'function') {
+                            showNotification('No hay fotografías disponibles en la base de datos', 'info', 2000);
+                        }
+                    }
                 } else {
-                    console.warn('No se pudieron cargar fotografías:', response.message);
+                    if (typeof showNotification === 'function') {
+                        showNotification('Error obteniendo datos del servidor', 'warning', 3000);
+                    }
                 }
             },
             error: function(xhr, status, error) {
-                console.error('Error cargando fotografías:', error);
+                console.error('Error cargando fotografías del backend:', {
+                    status: xhr.status,
+                    statusText: xhr.statusText,
+                    error: error
+                });
+
+                if (typeof showNotification === 'function') {
+                    showNotification('Error de conexión con el servidor', 'error', 4000);
+                }
             }
         });
     }
@@ -1810,7 +1985,8 @@ function uploadToBackendIndex(formData) {
             return;
         }
 
-        const existingRow = tableBody.querySelector(`tr[data-image-id="backend_${fotografiaData.id}"]`);
+        const imageId = `backend_${fotografiaData.id}`;
+        const existingRow = tableBody.querySelector(`tr[data-image-id="${imageId}"]`);
         if (existingRow) {
             return;
         }
@@ -1823,7 +1999,7 @@ function uploadToBackendIndex(formData) {
         });
 
         const row = document.createElement('tr');
-        row.setAttribute('data-image-id', `backend_${fotografiaData.id}`);
+        row.setAttribute('data-image-id', imageId);
         row.setAttribute('data-fecha-creacion', fotografiaData.fecha_subida || fotografiaData.created_at);
 
         //Marcar origen en el DOM
@@ -1875,7 +2051,7 @@ function uploadToBackendIndex(formData) {
         showDeleteConfirmation(imageData, row);
     }
 
-/*===================================================================================================*/
+ /*===================================================================================================*/
     //FUNCIÓN PARA EDITAR IMAGEN DEL BACKEND
     function editBackendImage(fotografiaId, button) {
         // Reutilizar la función existente de edición
